@@ -1,0 +1,76 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ */
+function linkchecker_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli': {
+      db_query(" CREATE TABLE `linkchecker_tasks` (
+                `taskid` int(10) unsigned NOT NULL default '0',
+                `nodeid` int(10) NOT NULL default '0',
+                `status` int(10) NOT NULL default '0',
+                `update` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+                 PRIMARY KEY  (`taskid`)
+                 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+      db_query(" CREATE TABLE `linkchecker_results` (
+                 `taskid` int(10) NOT NULL default '0',
+                 `url` text NOT NULL,
+                 `response` varchar(255) NOT NULL default '0',
+                 KEY `taskid` (`taskid`)
+                 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+         ");
+      db_query ("INSERT INTO `linkchecker_tasks` ( `taskid` , `nodeid` , `status` , `update` )
+                 VALUES ('0', '0', '0', '0');");
+     }
+      break;
+   /* ToDo - add support for Postgres
+    case 'pgsql':
+
+      break;
+   */
+  }
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function linkchecker_uninstall() {
+  db_query('DROP TABLE {linkchecker_tasks}');
+  db_query('DROP TABLE {linkchecker_results}');
+}
+
+
+/**
+ * Update table definitions.
+ */
+function linkchecker_update_1000() {
+  $ret = array();
+
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("CREATE TABLE `linkchecker_tasks` (
+                 `taskid` INT( 10 ) UNSIGNED NOT NULL AUTO_INCREMENT ,
+                 `nodeid` INT( 10 ) NOT NULL ,
+                 `status` INT( 10 ) DEFAULT '0' NOT NULL ,
+                 `update` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                  PRIMARY KEY ( `taskid` )
+                 ) TYPE = MYISAM;");
+      $ret[] = update_sql("CREATE TABLE `linkchecker_results` (
+                 `taskid` int(10) NOT NULL default '0',
+                 `url` text NOT NULL,
+                 `response` varchar(255) NOT NULL default '0',
+                 KEY `taskid` (`taskid`)
+                 ) ENGINE=MyISAM DEFAULT CHARSET=utf8; ");
+      break;
+    /* ToDo - add support for Postgres
+     case 'pgsql':
+      
+      break;
+    */
+  }
+  return $ret;
+}

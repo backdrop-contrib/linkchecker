@@ -1,0 +1,3 @@
+name = Link checker
+description = Periodically checks for broken links in by drupal nodes and reports the results
+core = 5.x
