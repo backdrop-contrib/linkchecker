@@ -22,7 +22,7 @@ function linkchecker_install() {
                  KEY `taskid` (`taskid`)
                  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
          ");
-      db_query ("INSERT INTO `linkchecker_tasks` ( `taskid` , `nodeid` , `status` , `update` )
+      db_query("INSERT INTO `linkchecker_tasks` ( `taskid` , `nodeid` , `status` , `update` )
                  VALUES ('0', '0', '0', '0');");
      }
       break;
@@ -68,7 +68,7 @@ function linkchecker_update_1000() {
       break;
     /* ToDo - add support for Postgres
      case 'pgsql':
-      
+
       break;
     */
   }
