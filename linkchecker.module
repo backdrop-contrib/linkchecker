@@ -375,7 +375,7 @@ function lc_CheckRuntime ($maxtime) {
 function lc_GetUrls( $html ) {
   // Finds any links in the HTML
   $matches = array();
-  preg_match_all("|href\=\"?'?`?([[:alnum:]:?=&@/;, %+._-]+)\"?'?`?|i", $html, $matches);
+  preg_match_all("@<\s*(a|area)\s(.(?!(href)))*?\s*(href\s*=\s*['\"]?([^\'\">]*[^\'\"> ])\s*['\"]?)@iex", $html, $matches);
   $links = array();
   $ret = $matches[1];
   for($i=0;isset($ret[$i]);$i++) {
@@ -520,5 +520,4 @@ function d_($foo) {
   if ($DEBUG_LC) {
     echo "<br />$foo";
   }
-}
 }
