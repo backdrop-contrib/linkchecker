@@ -58,19 +58,29 @@ function linkchecker_admin_settings() {
 
  $form['instructions'] = array('#type' => 'markup', '#value' => $instruction_text);
 
+ $form['linkchecker_rebuild'] = array(
+   '#default_value' => variable_get( 'linkchecker_rebuild', 1 ),
+   '#type' => 'select',
+   '#title' => t('Delete all existing reports and scheduled tasks and start linkchecker from scratch'),
+   '#description' =>  t("Choose how often should linkchecker inspect all existing nodes again. Menwhile, the linkchecker operates in an incremental mode, when only newly added and updated nodes are being checked."),
+   '#options'=> array("0" => t("Never"),
+                      "1" => t("Next cron run"),
+                 "604800" => t("Weekly"),
+                "2419200" => t("Monthly"))
+ );
 
  $form['linkchecker_fqdn_only'] = array(
    '#default_value' => variable_get( 'linkchecker_fqdn_only', 1 ),
    '#type' => 'checkbox',
-   '#title' => t('Check only fully qualified URLs only (that practically means remote sites only)'),
+   '#title' => t('Consider only fully qualified URLs ( not local links )'),
    '#description' =>  ""
  );
 
- $form['linkchecker_ignore_403'] = array(
-   '#default_value' => variable_get( 'linkchecker_ignore_403', 1 ),
-   '#type' => 'checkbox',
-   '#title' => t('Ignore 403/401 (access denied) errors'),
-   '#description' =>  ""
+ $form['linkchecker_ignore_responses'] = array(
+   '#default_value' => variable_get( 'linkchecker_ignore_responses', "401\n403" ),
+   '#type' => 'textarea',
+   '#title' => t("Don't treat those response codes as errors"),
+   '#description' =>  "One per line, HTTP code only (e.g. 403) or full response string (e.g. 402 Payment Required)"
  );
 
  $form['linkchecker_maxtime'] = array(
@@ -118,13 +128,7 @@ function linkchecker_admin_settings() {
    '#description' => t('If the linkchecker keeps timing out on a node, give up on it after this number of attempts.')
  );
 
- $form['linkchecker_rebuild'] = array(
-   '#default_value' => variable_get( 'linkchecker_rebuild', 1 ),
-   '#type' => 'checkbox',
-   '#title' => t('Delete all existing reports and scheduled tasks and start linkchecker from scratch'),
-   '#description' =>  t("Checking this will cause the linkchecker table to be rebuilt at the next cron run. You want this to be done if you have a feeling that the link checker has gone out of it's way. If this is not ticked, the linkchecker will operate in it's normal, incremental mode, where only recently added or updated nodes are being checked."),
-   '#default_value' => variable_get( 'linkchecker_rebuild', 1 )
- );
+
   return system_settings_form($form);
 }
 
@@ -190,14 +194,38 @@ function linkchecker_cron() {
   }
   else {
    // Check if the table needs rebuilding
+   $rebuildnow = false;
    $rebuild = variable_get('linkchecker_rebuild', 1);
    if ( $rebuild ) {
+     $res = db_query("SELECT * FROM `linkchecker_tasks` WHERE taskid=0;");
+     $foo = db_fetch_array($res);
+     if ( empty ($foo) ) {  // the 0 record is missing, add it
+       $sql = "INSERT INTO `linkchecker_tasks` VALUES (0,".  lc_now_to_int() .",0,NOW());";
+       db_query($sql);
+       d_("Cannot find time record, adding it: $sql.");
+       $foo["status"] = 0;
+     }
+     else {
+
+       $age = lc_int_to_age($foo["nodeid"]);
+       d_("The entire site check has been initiated less than $age seconds ago.");
+       d_("Maxage is set to $rebuild.");
+       if ($age > $rebuild) {
+         $rebuildnow = true;
+         d_("Should rebuild now");
+       }
+     }
+   }
+   if ( $rebuildnow ) {
       d_("Completely rebuilding the table");
       watchdog( "linkchecker", t("Rebuilding the entire linkchecker database from scratch") );
       db_query("TRUNCATE TABLE linkchecker_tasks;"); //would be nice to find a slightly less destructive way
       db_query("TRUNCATE TABLE linkchecker_results;");
+      db_query("INSERT INTO `linkchecker_tasks` VALUES (0,".  lc_now_to_int() .",0,NOW());");
       $lastrun = 0;
-      variable_set('linkchecker_rebuild', 0);
+      if ($rebuild == 1) { // next cron run then never
+        variable_set('linkchecker_rebuild', 0);
+      }
   }
 
  // Tasks table maintenance
@@ -288,15 +316,17 @@ function lc_DoLinkChecks($task, $maxtime, &$report) {
       return false;
     }
     d_("<br />Testing $url found in node $nid");
-    $r = lc_GetResponse($url);
-    list($code) = split(" ", trim($r));
+    $r = trim(lc_GetResponse($url));
+    list($code) = split(" ", $r);
     d_("<br />Got response code: $code ( $r )");
-    $maxok = "400";
-    if (variable_get( 'linkchecker_ignore_403', 1 )) {
-      $maxok = "404";
+    if ($code >= "400" || $code < 0 ) {
+      if (! lc_ignore_response($r,$code)) {
+        $report[] = array('taskid' => $task["taskid"], 'url' => $url, 'response' => $r );
+      }
+      else {
+        d_("<br />Ignoring response: $code ( $r )");
+      }
     }
-    if ($code == "400" || $code >= $maxok || $code < 0 )
-      $report[] = array('taskid' => $task["taskid"], 'url' => $url, 'response' => $r );
   }
   unset ($node);
   unset ($nodecontent);
@@ -351,11 +381,18 @@ function lc_AddReport($task, $report) {
 
 function lc_CheckRuntime($maxtime) {
    d_("Checking time, max time is $maxtime seconds");
+   /* TASK ID 0 is used in a special way
+     taskid  - 0
+     nodeid  - timestamp of the last database rebuild
+     status  - 1 - running, 0 - not running
+     update  - timestamp of the last start
+   */
    $res = db_query("SELECT * FROM `linkchecker_tasks` WHERE taskid=0;");
    $foo = db_fetch_array($res);
    if ( empty ($foo) ) {  // the 0 record is missing, add it
-      db_query("INSERT INTO `linkchecker_tasks` VALUES (0,0,0,0);");
-      d_("Cannot find time record, adding it.");
+      $sql = "INSERT INTO `linkchecker_tasks` VALUES (0,".  lc_now_to_int() .",0,NOW());";
+      db_query($sql);
+      d_("Cannot find time record, adding it: $sql.");
       $foo["status"] = 0;
    }
    if ( ( $foo["status"] ) == 0 ) { // not running yet
@@ -543,4 +580,26 @@ function d_($foo) {
   if ($_LINKCHECKER_DEBUG) {
     echo "<br />$foo";
   }
+}
+
+function lc_now_to_int() {
+ return date("Ymd",time());
+}
+
+function lc_int_to_age($when) {
+ $y= substr($when, 0, 4 );
+ $m = substr($when, 4, 2 );
+ $d = substr($when, 6, 2 );
+ $time = time() - mktime(0, 0, 0, $m, $d, $y);
+ return $time;
+}
+
+function lc_ignore_response ($response, $code) {
+  $ignored = split ("\n",variable_get('linkchecker_ignore_responses', ""));
+  var_dump($ignored);
+  foreach ($ignored as $i)  {
+    if ($code == trim($i)) return true;
+    if ($response == trim($i)) return true;
+  }
+  return false;
 }
