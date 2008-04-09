@@ -295,9 +295,11 @@ function lc_DoLinkChecks($task, $maxtime, &$report) {
     if (variable_get( 'linkchecker_ignore_403', 1 )) {
       $maxok = "404";
     }
-    if ($code == "400" || $code > $maxok || $code < 0 )
+    if ($code == "400" || $code >= $maxok || $code < 0 )
       $report[] = array('taskid' => $task["taskid"], 'url' => $url, 'response' => $r );
   }
+  unset ($node);
+  unset ($nodecontent);
  return true;
 }
 
@@ -368,6 +370,7 @@ function lc_CheckRuntime($maxtime) {
    if ( $time < $maxtime ) { //
       $ret = true;
       d_("Time left:". ( $maxtime - $time));
+      d_("Memory usage:". number_format(memory_get_usage(), 0, '.', ',') . " bytes");
    }
    else {
       d_("No time left, switching to state 0 (not running)");
@@ -381,9 +384,18 @@ function lc_CheckRuntime($maxtime) {
 function lc_GetUrls( $html ) {
   // Finds any links in the HTML
   $matches = array();
-  preg_match_all("|href\=\"?'?`?([[:alnum:]:?=&@/;, %+._-]+)\"?'?`?|i", $html, $matches);
+  preg_match_all("@
+  <
+  (a|area)
+  \s
+  (.(?!(href)))*?
+  \s*
+   (href\s*=\s*['\"]?
+    ([^\'#\[%\">][^\'\">]*[^\'\"> ])
+    \s*['\"]?)
+  @iex", $html, $matches);
   $links = array();
-  $ret = $matches[1];
+  $ret = $matches[5];
   for ($i=0;isset($ret[$i]);$i++) {
      if (preg_match("|^http://(.*)|i", $ret[$i])) {
       $links[] = $ret[$i];
@@ -395,6 +407,7 @@ function lc_GetUrls( $html ) {
   }
   return $links;
 }
+
 
 // Gets Unique Urls
 function lc_GetUniqueUrls( $html ) {
