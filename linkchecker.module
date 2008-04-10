@@ -10,6 +10,8 @@
 /**
  * Implementation of hook_help().
  */
+
+
 function linkchecker_help($section) {
   switch ($section) {
     case 'admin/help#linkchecker':
@@ -60,72 +62,74 @@ function linkchecker_admin_settings() {
 
  $form['linkchecker_rebuild'] = array(
    '#default_value' => variable_get( 'linkchecker_rebuild', 1 ),
-   '#type' => 'select',
-   '#title' => t('Delete all existing reports and scheduled tasks and start linkchecker from scratch'),
-   '#description' =>  t("Choose how often should linkchecker inspect all existing nodes again. Menwhile, the linkchecker operates in an incremental mode, when only newly added and updated nodes are being checked."),
-   '#options'=> array("0" => t("Never"),
-                      "1" => t("Next cron run"),
-                 "604800" => t("Weekly"),
-                "2419200" => t("Monthly"))
+   '#type'          => 'select',
+   '#title'         => t('Delete all existing reports and scheduled tasks and start linkchecker from scratch'),
+   '#description'   =>  t("Choose how often should linkchecker inspect all existing nodes again. Meanwhile, the linkchecker operates in an incremental mode, when only newly added and updated nodes are being checked."),
+   '#options'       => array(
+                             "0" => t("Never"),
+                             "1"    => t("Next cron run"),
+                             "604800" => t("Weekly"),
+                             "2419200" => t("Monthly")
+                            )
  );
 
  $form['linkchecker_fqdn_only'] = array(
    '#default_value' => variable_get( 'linkchecker_fqdn_only', 1 ),
-   '#type' => 'checkbox',
-   '#title' => t('Consider only fully qualified URLs ( not local links )'),
-   '#description' =>  ""
+   '#type'          => 'checkbox',
+   '#title'         => t('Consider only fully qualified URLs ( not local links )'),
+   '#description'   =>  ""
  );
 
  $form['linkchecker_ignore_responses'] = array(
    '#default_value' => variable_get( 'linkchecker_ignore_responses', "401\n403" ),
-   '#type' => 'textarea',
-   '#title' => t("Don't treat those response codes as errors"),
-   '#description' =>  "One per line, HTTP code only (e.g. 403) or full response string (e.g. 402 Payment Required)"
+   '#type'          => 'textarea',
+   '#title'         => t("Don't treat these response codes as errors"),
+   '#description'   =>  "One per line, HTTP code only (e.g. 403) or full response string (e.g. 402 Payment Required)"
  );
 
  $form['linkchecker_maxtime'] = array(
    '#default_value' => variable_get('linkchecker_maxtime', 30),
-   '#type' => 'textfield',
-   '#title' => t('Maximum runtime'),
-   '#size' => 50,
-   '#maxlength' => 100,
-   '#description' => t('Maximum allowed time (in seconds) that can be spent on link checking every cron job run. The default value is 30 seconds. ')
+   '#type'          => 'textfield',
+   '#title'         => t('Maximum runtime'),
+   '#size'          => 50,
+   '#maxlength'     => 100,
+   '#description'   => t('Maximum allowed time (in seconds) that can be spent on link checking every cron job run. The default value is 30 seconds. ')
  );
 
  $form['linkchecker_socket_timeout'] = array(
    '#default_value' => variable_get('linkchecker_socket_timeout', 3),
-   '#type' => 'textfield',
-   '#title' => t('Socket timeout (seconds)'),
-   '#size' => 50,
-   '#maxlength' => 100,
-   '#description' => t('If the linkchecker does not get at least some response from a remote site within the socket timeout, the link is considered broken.')
+   '#type'          => 'textfield',
+   '#title'         => t('Socket timeout (seconds)'),
+   '#size'          => 50,
+   '#maxlength'     => 100,
+   '#description'   => t('If the linkchecker does not get at least some response from a remote site within the socket timeout, the link is considered broken.')
  );
 
   $form['linkchecker_max_links_per_node'] = array(
    '#default_value' => variable_get('linkchecker_max_links_per_node', 0),
-   '#type' => 'textfield',
-   '#title' => t('Max links per node'),
-   '#size' => 50,
-   '#maxlength' => 100,
-   '#description' => t('Set this limit if you have nodes with many links for which the link checking often takes longer than maximum runtime (you will see messages in the log files). 0 means no limit (default).')
+   '#type'          => 'textfield',
+   '#title'         => t('Max links per node'),
+   '#size'          => 50,
+   '#maxlength'     => 100,
+   '#description'   => t('Set this limit if you have nodes with many links for which the link checking often takes longer than maximum runtime (you will see messages in the log files). 0 means no limit (default).')
  );
 
  $form['linkchecker_remove_after'] = array(
    '#default_value' => variable_get('linkchecker_remove_after', 30),
-   '#type' => 'textfield',
-   '#title' => t('Days to keep reports'),
-   '#size' => 50,
-   '#maxlength' => 100,
-   '#description' => t('If the node is not fixed within this number of days, we remove it.')
+   '#type'          => 'textfield',
+   '#title'         => t('Days to keep reports'),
+   '#size'          => 50,
+   '#maxlength'     => 100,
+   '#description'   => t('If the node is not fixed within this number of days, we remove its entry in the report.')
  );
 
  $form['linkchecker_give_up'] = array(
    '#default_value' => variable_get('linkchecker_give_up', 5),
-   '#type' => 'textfield',
-   '#title' => t('Max attempts'),
-   '#size' => 50,
-   '#maxlength' => 100,
-   '#description' => t('If the linkchecker keeps timing out on a node, give up on it after this number of attempts.')
+   '#type'          => 'textfield',
+   '#title'         => t('Max attempts'),
+   '#size'          => 50,
+   '#maxlength'     => 100,
+   '#description'   => t('If the linkchecker keeps timing out on a node, give up on it after this number of attempts.')
  );
 
 
@@ -154,24 +158,27 @@ function linkchecker_report( ) {
 
   $result = pager_query('SELECT * FROM `linkchecker_tasks` INNER JOIN linkchecker_results ON linkchecker_tasks.taskid = linkchecker_results.taskid  '. tablesort_sql($header), 3000, 0, 'SELECT COUNT(*) `linkchecker_tasks`;');
   while ($foo = db_fetch_object($result)) {
-    $rows[] = array('<a href="/node/'. $foo->nodeid .'">'. $foo->nodeid .'</a>',
+    $rows[] = array(l($foo->nodeid, "node/". $foo->nodeid ),
                     $foo->url,
                     $foo->response
-                    );
+                   );
   }
 
   drupal_set_title(check_plain($node->title));
-  $output = theme('table', $header, $rows);
+  $output  = theme('table', $header, $rows);
   $output .= theme('pager', NULL, 3000, 0);
   print theme('page', $output, FALSE);
 
 }
 
 function linkchecker_debug_run() {
-  global $_LINKCHECKER_DEBUG;
+  global $_LINKCHECKER_DEBUG, $_LINKCHECKER_DEBUG_OUT;
   $_LINKCHECKER_DEBUG = true;
+  $_LINKCHECKER_DEBUG_OUT = "";
   linkchecker_cron();
-  die("<br /> *** ". t("Debugging finished") ."  ***");
+  $_LINKCHECKER_DEBUG_OUT .= "<br /> *** ". t("Debugging finished") ."  ***";
+  print theme('page', $_LINKCHECKER_DEBUG_OUT, FALSE);
+  unset ($_LINKCHECKER_DEBUG_OUT);
 }
 
 /**
@@ -185,7 +192,7 @@ function linkchecker_cron() {
   $finish = false;
   $debug_report="Linkchecker run";
   $lastrun = $foo["update"]?strtotime ($foo["update"]):0;
-  d_("Lastrun: $lastrun");
+  d_("Lastrun: ". lc_dateformat($lastrun));
   // Check if linkchecking process has not exceeded it's maximum run time
   $maxtime = variable_get('linkchecker_maxtime', 30);
   if ( lc_CheckRuntime($maxtime) == false ) {
@@ -231,8 +238,9 @@ function linkchecker_cron() {
  // Tasks table maintenance
  // - garbage collect
    $maxage = time() - 24*60*60*variable_get('linkchecker_remove_after', 30);
-   d_("SELECT * FROM `linkchecker_tasks` WHERE `update` < FROM_UNIXTIME($maxage)");
-   $res = db_query("SELECT * FROM `linkchecker_tasks` WHERE `update` < FROM_UNIXTIME($maxage)");
+   $sql = "SELECT * FROM `linkchecker_tasks` WHERE ( `update` < FROM_UNIXTIME($maxage) ) AND (`taskid` > 0) ";
+   d_($sql);
+   $res = db_query($sql);
    while ( $task = db_fetch_array($res) ) {
      d_("Remove aged task: $task[taskid]");
      lc_RemoveTask($task);
@@ -258,7 +266,7 @@ function linkchecker_cron() {
     }
     $debug_report .= ", loaded $i new or updated nodes";
  //  - load tasks one by one and process them
-    $res = db_query("SELECT * FROM `linkchecker_tasks` WHERE `nodeid` > 0 AND `status` < 999 ORDER BY status ASC;");
+    $res = db_query("SELECT * FROM `linkchecker_tasks` WHERE ( `nodeid` > 0 ) AND ( `taskid` > 0 ) AND ( `status` < 999 ) ORDER BY status ASC;");
     $i=0;
     $j=0;
     while ( $task = db_fetch_array($res) ) {
@@ -320,7 +328,7 @@ function lc_DoLinkChecks($task, $maxtime, &$report) {
     list($code) = split(" ", $r);
     d_("<br />Got response code: $code ( $r )");
     if ($code >= "400" || $code < 0 ) {
-      if (! lc_ignore_response($r,$code)) {
+      if (! lc_ignore_response($r, $code)) {
         $report[] = array('taskid' => $task["taskid"], 'url' => $url, 'response' => $r );
       }
       else {
@@ -328,8 +336,8 @@ function lc_DoLinkChecks($task, $maxtime, &$report) {
       }
     }
   }
-  unset ($node);
-  unset ($nodecontent);
+  unset($node);
+  unset($nodecontent);
  return true;
 }
 
@@ -353,7 +361,7 @@ function lc_RemoveTask($task) {
 
 // Add task to the table
 function lc_PushTask($task) {
-    $res = db_query("SELECT max( taskid ) AS maxid FROM `linkchecker_tasks`");
+    $res = db_query("SELECT max( taskid ) AS maxid FROM `linkchecker_tasks` WHERE (`taskid` > 0) ");
     $foo = db_fetch_array($res);
     $newid = $foo["maxid"]?$foo["maxid"]+1:1;
     // Have we seen and processed this node ? If yes, delete it first
@@ -407,7 +415,7 @@ function lc_CheckRuntime($maxtime) {
    if ( $time < $maxtime ) { //
       $ret = true;
       d_("Time left:". ( $maxtime - $time));
-      d_("Memory usage:". number_format(memory_get_usage(), 0, '.', ',') . " bytes");
+      d_("Memory usage:". number_format(memory_get_usage(), 0, '.', ',') ." bytes");
    }
    else {
       d_("No time left, switching to state 0 (not running)");
@@ -526,7 +534,7 @@ function lc_GetHeaders($url) {
 function lc_GetStatusCode($header) {
 
   // Splits the headers into an array
-  $headers = explode( "\r\n", $header );
+  $headers = explode( "\r\n", $header );echo "$_LINKCHECKER_DEBUG_OUT";
   unset( $header );
   for ( $i=0;isset( $headers[$i] );$i++ ) {
 
@@ -541,7 +549,7 @@ function lc_GetStatusCode($header) {
 }
 
 function lc_GetResponse($url) {
-   $headers = lc_GetHeaders( $url );
+   $headers = lc_GetHeaders( $url );echo "$_LINKCHECKER_DEBUG_OUT";
    if (!$headers) {
      $response = "-1 Unable to connect";
    }
@@ -576,14 +584,14 @@ function lc_RandReduce($urls) {
 
 // Debug function
 function d_($foo) {
-  global $_LINKCHECKER_DEBUG;
+  global $_LINKCHECKER_DEBUG, $_LINKCHECKER_DEBUG_OUT;
   if ($_LINKCHECKER_DEBUG) {
-    echo "<br />$foo";
+      $_LINKCHECKER_DEBUG_OUT .= "<br />$foo";
   }
 }
 
 function lc_now_to_int() {
- return date("Ymd",time());
+ return date("Ymd", time());
 }
 
 function lc_int_to_age($when) {
@@ -594,12 +602,16 @@ function lc_int_to_age($when) {
  return $time;
 }
 
-function lc_ignore_response ($response, $code) {
-  $ignored = split ("\n",variable_get('linkchecker_ignore_responses', ""));
-  var_dump($ignored);
+function lc_ignore_response($response, $code) {
+  $ignored = split("\n", variable_get('linkchecker_ignore_responses', ""));
   foreach ($ignored as $i)  {
     if ($code == trim($i)) return true;
     if ($response == trim($i)) return true;
   }
   return false;
 }
+
+function lc_dateformat($timestamp) {
+  return date("D M j H:i:s Y");
+}
+
