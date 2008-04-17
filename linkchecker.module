@@ -156,7 +156,7 @@ function linkchecker_report( ) {
                   array('data' => t('Error'), 'field' => 'response')
                   );
 
-  $result = pager_query('SELECT * FROM `linkchecker_tasks` INNER JOIN linkchecker_results ON linkchecker_tasks.taskid = linkchecker_results.taskid  '. tablesort_sql($header), 3000, 0, 'SELECT COUNT(*) `linkchecker_tasks`;');
+  $result = pager_query('SELECT * FROM `{linkchecker_tasks}` INNER JOIN linkchecker_results ON linkchecker_tasks.taskid = linkchecker_results.taskid  '. tablesort_sql($header), 3000, 0, 'SELECT COUNT(*) `{linkchecker_tasks}`;');
   while ($foo = db_fetch_object($result)) {
     $rows[] = array(l($foo->nodeid, "node/". $foo->nodeid ),
                     $foo->url,
@@ -187,7 +187,7 @@ function linkchecker_debug_run() {
  */
 
 function linkchecker_cron() {
-  $res = db_query("SELECT * FROM `linkchecker_tasks` WHERE `taskid` = 0;");
+  $res = db_query("SELECT * FROM `{linkchecker_tasks}` WHERE `taskid` = 0;");
   $foo = db_fetch_array($res);
   $finish = false;
   $debug_report="Linkchecker run";
@@ -204,10 +204,10 @@ function linkchecker_cron() {
    $rebuildnow = false;
    $rebuild = variable_get('linkchecker_rebuild', 1);
    if ( $rebuild ) {
-     $res = db_query("SELECT * FROM `linkchecker_tasks` WHERE taskid=0;");
+     $res = db_query("SELECT * FROM `{linkchecker_tasks}` WHERE taskid=0;");
      $foo = db_fetch_array($res);
      if ( empty ($foo) ) {  // the 0 record is missing, add it
-       $sql = "INSERT INTO `linkchecker_tasks` VALUES (0,".  lc_now_to_int() .",0,NOW());";
+       $sql = "INSERT INTO `{linkchecker_tasks}` VALUES (0,".  lc_now_to_int() .",0,NOW());";
        db_query($sql);
        d_("Cannot find time record, adding it: $sql.");
        $foo["status"] = 0;
@@ -228,7 +228,7 @@ function linkchecker_cron() {
       watchdog( "linkchecker", t("Rebuilding the entire linkchecker database from scratch") );
       db_query("TRUNCATE TABLE linkchecker_tasks;"); //would be nice to find a slightly less destructive way
       db_query("TRUNCATE TABLE linkchecker_results;");
-      db_query("INSERT INTO `linkchecker_tasks` VALUES (0,".  lc_now_to_int() .",0,NOW());");
+      db_query("INSERT INTO `{linkchecker_tasks}` VALUES (0,".  lc_now_to_int() .",0,NOW());");
       $lastrun = 0;
       if ($rebuild == 1) { // next cron run then never
         variable_set('linkchecker_rebuild', 0);
@@ -238,7 +238,7 @@ function linkchecker_cron() {
  // Tasks table maintenance
  // - garbage collect
    $maxage = time() - 24*60*60*variable_get('linkchecker_remove_after', 30);
-   $sql = "SELECT * FROM `linkchecker_tasks` WHERE ( `update` < FROM_UNIXTIME($maxage) ) AND (`taskid` > 0) ";
+   $sql = "SELECT * FROM `{linkchecker_tasks}` WHERE ( `update` < FROM_UNIXTIME($maxage) ) AND (`taskid` > 0) ";
    d_($sql);
    $res = db_query($sql);
    while ( $task = db_fetch_array($res) ) {
@@ -246,9 +246,9 @@ function linkchecker_cron() {
      lc_RemoveTask($task);
    }
  // Find and delete orphaned reports
-   $res = db_query("SELECT DISTINCT taskid FROM `linkchecker_results`;");
+   $res = db_query("SELECT DISTINCT taskid FROM `{linkchecker_results}`;");
    while ( $task = db_fetch_array($res) ) {
-     $res2 = db_query("SELECT * FROM `linkchecker_tasks` WHERE `taskid` = ". $task["taskid"] .";");
+     $res2 = db_query("SELECT * FROM `{linkchecker_tasks}` WHERE `taskid` = ". $task["taskid"] .";");
      if ( ! db_result($res2) ) {
        d_("Remove orphaned report for task : ". $task["taskid"]);
        lc_RemoveTask($task);
@@ -256,7 +256,7 @@ function linkchecker_cron() {
    }
 
  //  - add new tasks
-    $res = db_query("SELECT * FROM `node` WHERE `changed` > '$lastrun'");
+    $res = db_query("SELECT * FROM `{node}` WHERE `changed` > '$lastrun'");
     $i=0;
     while ( $foo = db_fetch_array($res) ) {
       $task= array("nodeid" => $foo["nid"]);
@@ -266,7 +266,7 @@ function linkchecker_cron() {
     }
     $debug_report .= ", loaded $i new or updated nodes";
  //  - load tasks one by one and process them
-    $res = db_query("SELECT * FROM `linkchecker_tasks` WHERE ( `nodeid` > 0 ) AND ( `taskid` > 0 ) AND ( `status` < 999 ) ORDER BY status ASC;");
+    $res = db_query("SELECT * FROM `{linkchecker_tasks}` WHERE ( `nodeid` > 0 ) AND ( `taskid` > 0 ) AND ( `status` < 999 ) ORDER BY status ASC;");
     $i=0;
     $j=0;
     while ( $task = db_fetch_array($res) ) {
@@ -290,7 +290,7 @@ function linkchecker_cron() {
           watchdog("linkchecker", "Linkchecker was unable to check node $task[nodeid] for $max_attempts times, giving up on it for good." );
         }
         else {
-          db_query("UPDATE `linkchecker_tasks` SET `status` = ". ($task["status"]+1) .", `update` = NOW() WHERE taskid = ". $task["taskid"] .";");
+          db_query("UPDATE `{linkchecker_tasks}` SET `status` = ". ($task["status"]+1) .", `update` = NOW() WHERE taskid = ". $task["taskid"] .";");
           watchdog("linkchecker", "Linkchecker was unable to check node ". $task["nodeid"] ." within the given maximum runtime.");
         }
         d_("Finishing early");
@@ -300,7 +300,7 @@ function linkchecker_cron() {
         break;
       }
     }
-    db_query("UPDATE `linkchecker_tasks` SET `status` = 0, `update` = NOW() WHERE taskid=0;");
+    db_query("UPDATE `{linkchecker_tasks}` SET `status` = 0, `update` = NOW() WHERE taskid=0;");
     if (!$finish) {
       d_("Finishing properly");
       $debug_report .= ", processed $i";
@@ -351,8 +351,8 @@ function lc_RemoveTask($task) {
    $tid = $task["taskid"];
    d_("Removing task $tid");
    if ( is_numeric ( $tid ) ) {
-     db_query( "DELETE FROM `linkchecker_tasks` WHERE `taskid` = $tid;" );
-     db_query( "DELETE FROM `linkchecker_results` WHERE `taskid` = $tid;" );
+     db_query( "DELETE FROM `{linkchecker_tasks}` WHERE `taskid` = $tid;" );
+     db_query( "DELETE FROM `{linkchecker_results}` WHERE `taskid` = $tid;" );
    }
    else {
      // Error: invalid task id
@@ -361,11 +361,11 @@ function lc_RemoveTask($task) {
 
 // Add task to the table
 function lc_PushTask($task) {
-    $res = db_query("SELECT max( taskid ) AS maxid FROM `linkchecker_tasks` WHERE (`taskid` > 0) ");
+    $res = db_query("SELECT max( taskid ) AS maxid FROM `{linkchecker_tasks}` WHERE (`taskid` > 0) ");
     $foo = db_fetch_array($res);
     $newid = $foo["maxid"]?$foo["maxid"]+1:1;
     // Have we seen and processed this node ? If yes, delete it first
-    $res = db_query("SELECT * FROM `linkchecker_tasks` where `status` = 999 AND `nodeid` = $task[nodeid]");
+    $res = db_query("SELECT * FROM `{linkchecker_tasks}` where `status` = 999 AND `nodeid` = $task[nodeid]");
     $foo = db_fetch_array($res);
     $taskid =  $foo["taskid"];
     if ( $taskid ) {
@@ -373,16 +373,16 @@ function lc_PushTask($task) {
       d_("Removing task $taskid and it's reports since node $task[nodeid] has been updated");
     }
     // Push task into a queue for (re)checking
-    db_query( "INSERT INTO `linkchecker_tasks` ( `taskid` , `nodeid` , `status` , `update` )
+    db_query( "INSERT INTO `{linkchecker_tasks}` ( `taskid` , `nodeid` , `status` , `update` )
                 VALUES ($newid, $task[nodeid], '0', NOW( ));");
 }
 
 function lc_AddReport($task, $report) {
-   db_query("DELETE FROM `linkchecker_results` WHERE `taskid` = ". $task["taskid"] .";");
+   db_query("DELETE FROM `{linkchecker_results}` WHERE `taskid` = ". $task["taskid"] .";");
    foreach ($report as $r) {
-      db_query("INSERT INTO `linkchecker_results` VALUES ('". $task["taskid"] ."','". $r["url"] ."','". $r["response"] ."');");
+      db_query("INSERT INTO `{linkchecker_results}` VALUES ('". $task["taskid"] ."','". $r["url"] ."','". $r["response"] ."');");
    }
-   db_query("UPDATE `linkchecker_tasks` SET `status` = 999, `update` = NOW() WHERE taskid = ". $task["taskid"] .";");
+   db_query("UPDATE `{linkchecker_tasks}` SET `status` = 999, `update` = NOW() WHERE taskid = ". $task["taskid"] .";");
 }
 
 // Checks how long we have been running, if runtime is 0 (not running) it starts counting and returns true, if we have exceeded maxtime it stops counting and returns false
@@ -395,17 +395,17 @@ function lc_CheckRuntime($maxtime) {
      status  - 1 - running, 0 - not running
      update  - timestamp of the last start
    */
-   $res = db_query("SELECT * FROM `linkchecker_tasks` WHERE taskid=0;");
+   $res = db_query("SELECT * FROM `{linkchecker_tasks}` WHERE taskid=0;");
    $foo = db_fetch_array($res);
    if ( empty ($foo) ) {  // the 0 record is missing, add it
-      $sql = "INSERT INTO `linkchecker_tasks` VALUES (0,".  lc_now_to_int() .",0,NOW());";
+      $sql = "INSERT INTO `{linkchecker_tasks}` VALUES (0,".  lc_now_to_int() .",0,NOW());";
       db_query($sql);
       d_("Cannot find time record, adding it: $sql.");
       $foo["status"] = 0;
    }
    if ( ( $foo["status"] ) == 0 ) { // not running yet
       d_("Setting the process state to 1 (running)");
-      db_query("UPDATE `linkchecker_tasks` SET `status` = 1, `update` = NOW() WHERE taskid=0;");
+      db_query("UPDATE `{linkchecker_tasks}` SET `status` = 1, `update` = NOW() WHERE taskid=0;");
       $time = 0;
    }
    else { // has been running for a while, check time
@@ -419,7 +419,7 @@ function lc_CheckRuntime($maxtime) {
    }
    else {
       d_("No time left, switching to state 0 (not running)");
-      db_query("UPDATE `linkchecker_tasks` SET `status` = 0, `update` = NOW() WHERE taskid=0;");
+      db_query("UPDATE `{linkchecker_tasks}` SET `status` = 0, `update` = NOW() WHERE taskid=0;");
       $ret = false;
    }
    return $ret;
