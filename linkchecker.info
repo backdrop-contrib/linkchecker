@@ -1,9 +1,4 @@
+; $Id$
 name = Link checker
-description = Periodically checks for broken links in by drupal nodes and reports the results
-core = 5.x
-
-; Information added by drupal.org packaging script on 2008-04-08
-version = "5.x-1.0"
-project = "linkchecker"
-datestamp = "1207662018"
-
+description = "Periodically checks for broken links in node types, blocks and cck fields and reports the results."
+core = 6.x
