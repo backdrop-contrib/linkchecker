@@ -174,9 +174,14 @@ function _linkchecker_status_handling($link, $response) {
           $text_items[] = 'body';
           $text_items[] = 'teaser';
 
-          // Update weblink nodes from 'links' module package.
+          // Update 'weblink' nodes from 'links' module package.
           if (module_exists('links_weblink') && isset($node->links_weblink_url)) {
             $text_items[] = 'links_weblink_url';
+          }
+
+          // Update 'weblinks' nodes from 'weblinks' module.
+          if (module_exists('weblinks') && isset($node->url)) {
+            $text_items[] = 'url';
           }
 
           // Now replace the outdated link with the permanently moved one in all node fields.
@@ -425,9 +430,14 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
   $text_items[] = check_markup($node->body, $node->format, FALSE);
   $text_items[] = check_markup($node->teaser, $node->format, FALSE);
 
-  // Search for links in weblink nodes from 'links' module package.
+  // Search for links in 'weblink' nodes from 'links' module package.
   if (module_exists('links_weblink') && isset($node->links_weblink_url)) {
     $text_items[] = _filter_url($node->links_weblink_url, $node->format);
+  }
+
+  // Search for links in 'weblinks' nodes from 'weblinks' module.
+  if (module_exists('weblinks') && isset($node->url)) {
+    $text_items[] = _filter_url($node->url, $node->format);
   }
 
   // Search for CCK-fields of types 'link' and 'text'.
