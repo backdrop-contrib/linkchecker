@@ -179,7 +179,10 @@ EOT;
     $folder2 = $this->randomName(5);
 
     // Allow the user to use the 'Full HTML' format.
-    db_query("UPDATE {filter_formats} SET roles = '%s' WHERE format = %d", ',2,', 2);
+    db_update('filter_format')
+      ->condition('format', 2)
+      ->fields(array('roles' => ',2,'))
+      ->execute();
 
     // Fill node array.
     $edit = array();
@@ -345,13 +348,13 @@ EOT;
    *   Link object.
    */
   function getLinkCheckerLink($url) {
-    return db_fetch_object(db_query("SELECT * FROM {linkchecker_links} WHERE urlhash = '%s'", md5($url)));
+    return db_query('SELECT * FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => md5($url)));
   }
 
   /**
    * Get the current number of links in linkchecker_links table.
    */
   function getLinkCheckerLinksCount() {
-    return db_result(db_query("SELECT count(1) FROM {linkchecker_links}"));
+    return db_result(db_query('SELECT COUNT(1) FROM {linkchecker_link}'));
   }
 }

@@ -1,4 +1,11 @@
 ; $Id$
 name = Link checker
 description = "Periodically checks for broken links in node types, blocks and cck fields and reports the results."
-core = 6.x
+core = 7.x
+
+files[] = linkchecker.admin.inc
+files[] = linkchecker.batch.inc
+files[] = linkchecker.install
+files[] = linkchecker.module
+files[] = linkchecker.pages.inc
+files[] = linkchecker.test

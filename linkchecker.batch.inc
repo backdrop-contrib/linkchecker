@@ -13,14 +13,19 @@
  */
 function _linkchecker_batch_import_nodes($node_types = array()) {
   // Get all active {node}.nid's.
-  $result = db_query('SELECT n.nid FROM {node} n WHERE n.status = %d AND n.type IN (' . db_placeholders($node_types, 'varchar') . ') ORDER BY n.nid', array_merge(array(1), $node_types));
+  $result = db_select('node', 'n')
+    ->fields('n', array('nid'))
+    ->condition('n.status', 1)
+    ->condition('n.type', $node_types, 'IN')
+    ->orderBy('n.nid')
+    ->execute();
 
   $operations = array();
-  while ($row = db_fetch_array($result)) {
-    $operations[] = array('_linkchecker_batch_node_import_op', array($row['nid']));
+  foreach ($result as $row) {
+    $operations[] = array('_linkchecker_batch_node_import_op', array($row->nid));
   }
   $batch = array(
-    'file' => drupal_get_path('module', 'linkchecker') .'/includes/linkchecker.batch.inc',
+    'file' => drupal_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_node_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -57,14 +62,21 @@ function _linkchecker_batch_node_import_finished($success, $results, $operations
  */
 function _linkchecker_batch_import_comments($node_types = array()) {
   // Get all active {comments}.cid's.
-  $result = db_query('SELECT c.cid FROM {comments} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.status = %d AND n.status = %d AND n.type IN (' . db_placeholders($node_types, 'varchar') . ') ORDER BY c.cid', array_merge(array(COMMENT_PUBLISHED, 1), $node_types));
+  $result = db_select('comment', 'c')
+    ->innerJoin('node', 'n', 'n.nid = c.nid')
+    ->fields('c', array('cid'))
+    ->condition('c.status', COMMENT_PUBLISHED)
+    ->condition('n.status', 1)
+    ->condition('n.type', $node_types, 'IN')
+    ->orderBy('c.cid')
+    ->execute();
 
   $operations = array();
-  while ($row = db_fetch_array($result)) {
-    $operations[] = array('_linkchecker_batch_comments_import_op', array($row['cid']));
+  foreach ($result as $row) {
+    $operations[] = array('_linkchecker_batch_comments_import_op', array($row->cid));
   }
   $batch = array(
-    'file' => drupal_get_path('module', 'linkchecker') .'/includes/linkchecker.batch.inc',
+    'file' => drupal_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_comments_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -78,12 +90,12 @@ function _linkchecker_batch_import_comments($node_types = array()) {
  */
 function _linkchecker_batch_comments_import_op($cid, &$context) {
   // Load the comment and scan for links.
-  $comment = _linkchecker_comment_load($cid);
+  $comment = comment_load($cid);
   _linkchecker_add_comment_links($comment);
 
   // Store results for post-processing in the finished callback.
-  $context['results'][] = $comment['cid'];
-  $context['message'] = t('Comment: @title', array('@title' => $comment['subject']));
+  $context['results'][] = $comment->cid;
+  $context['message'] = t('Comment: @title', array('@title' => $comment->subject));
 }
 
 function _linkchecker_batch_comments_import_finished($success, $results, $operations) {
@@ -101,14 +113,17 @@ function _linkchecker_batch_comments_import_finished($success, $results, $operat
  */
 function _linkchecker_batch_import_boxes() {
   // Get all active {boxes}.bid's.
-  $result = db_query('SELECT b.bid FROM {boxes} b ORDER BY b.bid');
+  $result = db_select('box', 'b')
+    ->fields('b', array('bid'))
+    ->orderBy('b.cid')
+    ->execute();
 
   $operations = array();
-  while ($row = db_fetch_array($result)) {
-    $operations[] = array('_linkchecker_batch_import_boxes_op', array($row['bid']));
+  foreach ($result as $row) {
+    $operations[] = array('_linkchecker_batch_import_boxes_op', array($row->bid));
   }
   $batch = array(
-    'file' => drupal_get_path('module', 'linkchecker') .'/includes/linkchecker.batch.inc',
+    'file' => drupal_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_box_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -159,7 +174,7 @@ function _linkchecker_batch_import_single_node($nid, $missing_links_count) {
     $operations[] = array('_linkchecker_batch_single_node_import_op', array($nid));
   }
   $batch = array(
-    'file' => drupal_get_path('module', 'linkchecker') .'/includes/linkchecker.batch.inc',
+    'file' => drupal_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_single_node_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -208,7 +223,7 @@ function _linkchecker_batch_import_single_comment($cid, $missing_links_count) {
     $operations[] = array('_linkchecker_batch_single_comment_import_op', array($cid));
   }
   $batch = array(
-    'file' => drupal_get_path('module', 'linkchecker') .'/includes/linkchecker.batch.inc',
+    'file' => drupal_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_single_comment_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -219,12 +234,12 @@ function _linkchecker_batch_import_single_comment($cid, $missing_links_count) {
 }
 
 function _linkchecker_batch_single_comment_import_op($nid, &$context) {
-  $comment = _linkchecker_comment_load($cid);
+  $comment = comment_load($cid);
   _linkchecker_add_comment_links($comment, TRUE);
 
   // Store results for post-processing in the finished callback.
-  $context['results'][] = $comment['cid'];
-  $context['message'] = t('Comment: @title', array('@title' => $comment['subject']));
+  $context['results'][] = $comment->cid;
+  $context['message'] = t('Comment: @title', array('@title' => $comment->subject));
 }
 
 function _linkchecker_batch_single_comment_import_finished($success, $results, $operations) {
@@ -256,7 +271,7 @@ function _linkchecker_batch_import_single_box($bid, $missing_links_count) {
     $operations[] = array('_linkchecker_batch_single_box_import_op', array($nid));
   }
   $batch = array(
-    'file' => drupal_get_path('module', 'linkchecker') .'/includes/linkchecker.batch.inc',
+    'file' => drupal_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_single_box_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),

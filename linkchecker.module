@@ -49,7 +49,24 @@ define('LINKCHECKER_DEFAULT_FILTER_BLACKLIST', 'filter/1|insert_node/0|insert_vi
  * Implementation of hook_perm().
  */
 function linkchecker_perm() {
-  return array('access broken links report', 'access own broken links report', 'administer linkchecker', 'edit link settings');
+  return array(
+    'access broken links report' => array(
+      'title' => t('Access broken links report'),
+      'description' => t('Allows users to access the global broken links report.'),
+    ),
+    'access own broken links report' => array(
+      'title' => t('Access own broken links report'),
+      'description' => t('Allows users to access their user specific broken links report.'),
+    ),
+    'administer linkchecker' => array(
+      'title' => t('Administer linkchecker'),
+      'description' => t('Allows users to administer linkchecker settings.'),
+    ),
+    'edit link settings' => array(
+      'title' => t('Edit link settings'),
+      'description' => t('Allows users to edit broken link settings.'),
+    ),
+  );
 }
 
 /**
@@ -73,7 +90,6 @@ function linkchecker_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('linkchecker_admin_settings_form'),
     'access arguments' => array('administer linkchecker'),
-    'file' => 'includes/linkchecker.admin.inc',
   );
   $items['admin/reports/linkchecker'] = array(
     'title' => 'Broken links',
@@ -81,7 +97,6 @@ function linkchecker_menu() {
     'page callback' => 'linkchecker_admin_report_page',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access broken links report'),
-    'file' => 'includes/linkchecker.pages.inc',
   );
   // Add the user menu item after node/edit tab.
   $items['user/%user/linkchecker'] = array(
@@ -91,7 +106,6 @@ function linkchecker_menu() {
     'page arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
     'access arguments' => array('access own broken links report'),
-    'file' => 'includes/linkchecker.pages.inc',
     'weight' => 3,
   );
   $items['linkchecker/%linkchecker_link/edit'] = array(
@@ -99,7 +113,6 @@ function linkchecker_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('linkchecker_link_edit_form', 1),
     'access arguments' => array('edit link settings'),
-    'file' => 'includes/linkchecker.pages.inc',
     'type' => MENU_CALLBACK,
   );
 
@@ -112,9 +125,9 @@ function linkchecker_menu() {
 function linkchecker_cron() {
 
   // Remove outdated links no longer in use once per day.
-  if (time() - variable_get('linkchecker_cleanup_links_last', 0) >= 86400) {
+  if (REQUEST_TIME - variable_get('linkchecker_cleanup_links_last', 0) >= 86400) {
     _linkchecker_cleanup_links();
-    variable_set('linkchecker_cleanup_links_last', time());
+    variable_set('linkchecker_cleanup_links_last', REQUEST_TIME);
   }
 
   // TODO: Implement cURL support.
@@ -133,10 +146,10 @@ function linkchecker_cron() {
   $useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
 
   // Get URLs for checking.
-  $result = db_query_range("SELECT * FROM {linkchecker_links} WHERE last_checked < %d AND status = %d ORDER BY last_checked, lid ASC", time() - $check_links_interval, 1, 0, $check_links_max_per_cron_run);
-  while ($link = db_fetch_object($result)) {
+  $result = db_query_range('SELECT * FROM {linkchecker_link} WHERE last_checked < :last_checked AND status = :status ORDER BY last_checked, lid ASC', array(':last_checked' => REQUEST_TIME - $check_links_interval, ':status' => 1), 0, $check_links_max_per_cron_run);
+  foreach ($result as $link) {
     // Fetch URL.
-    $response = drupal_http_request($link->url, array('User-Agent' => 'User-Agent: ' . $useragent), $link->method, NULL, 1);
+    $response = drupal_http_request($link->url, array('headers' => array('User-Agent' => 'User-Agent: ' . $useragent)), 'method' => $link->method, 'max_redirects' => 1));
     _linkchecker_status_handling($link, $response);
 
     if ((timer_read('page') / 1000) > (ini_get('max_execution_time') / 2)) {
@@ -174,12 +187,29 @@ function _linkchecker_status_handling($link, $response) {
   switch ($response->code) {
     case 200:
     case 304:
-      db_query("UPDATE {linkchecker_links} SET code = %d, error = '%s', fail_count = %d, last_checked = %d WHERE lid = %d", $response->code, $response->error, 0, time(), $link->lid);
+      db_update('linkchecker_link')
+        ->condition('lid', $link->lid)
+        ->fields(array(
+          'code' => $response->code,
+          'error' => $response->error,
+          'fail_count' = 0,
+          'last_checked' = time()
+        ))
+        ->execute();
       //watchdog('linkchecker', 'Checked %link successfully.', array('%link' => $link->url), WATCHDOG_INFO);
       break;
 
     case 301:
-      db_query("UPDATE {linkchecker_links} SET code = %d, error = '%s', fail_count = fail_count+1, last_checked = %d WHERE lid = %d", $response->code, $response->error, time(), $link->lid);
+      // FIXME: fail_count+1 may be broken
+      db_update('linkchecker_link')
+        ->condition('lid', $link->lid)
+        ->fields(array(
+          'code' => $response->code,
+          'error' => $response->error,
+          'fail_count' = 'fail_count+1',
+          'last_checked' = time()
+        ))
+        ->execute();
 
       // A HTTP status code of 301 tells us an existing link have changed to
       // a new link. The remote site owner was so kind to provide us the new
@@ -189,8 +219,8 @@ function _linkchecker_status_handling($link, $response) {
       if ($auto_repair_301 && $auto_repair_301 <= ($link->fail_count+1) && $response->redirect_code == 200 && valid_url($response->redirect_url, TRUE)) {
 
         // NODES: Autorepair all nodes having this outdated link.
-        $res = db_query("SELECT * FROM {linkchecker_nodes} WHERE lid = %d", $link->lid);
-        while ($row = db_fetch_object($res)) {
+        $result = db_query('SELECT * FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid));
+        foreach ($result as $row) {
           $node = node_load(array('nid' => $row->nid));
 
           // Create array of node fields to scan (for e.g. $node->title, $node->links_weblink_url).
@@ -216,6 +246,7 @@ function _linkchecker_status_handling($link, $response) {
 
           // Search for CCK-fields of types 'link' and 'text'.
           if (module_exists('content')) {
+            // FIMXE: D7 upgrade path???
             $fields = content_fields(NULL, $node->type);
             foreach ($fields as $field) {
               if (isset($node->{$field['field_name']})) {
@@ -243,9 +274,9 @@ function _linkchecker_status_handling($link, $response) {
 
         // COMMENTS: Autorepair all comments having this outdated link.
         if (module_exists('comment')) {
-          $res = db_query("SELECT * FROM {linkchecker_comments} WHERE lid = %d", $link->lid);
-          while ($row = db_fetch_object($res)) {
-            $comment = _linkchecker_comment_load($row->cid);
+          $result = db_query('SELECT * FROM {linkchecker_comment} WHERE lid = :lid', array(':lid' => $link->lid));
+          foreach ($result as $row) {
+            $comment = comment_load($row->cid);
 
             // Create array of comment fields to scan (for e.g. $comment->subject, $comment->comment).
             $text_items = array();
@@ -264,8 +295,8 @@ function _linkchecker_status_handling($link, $response) {
         }
 
         // BOXES: Autorepair all boxes having this outdated link.
-        $res = db_query("SELECT * FROM {linkchecker_boxes} WHERE lid = %d", $link->lid);
-        while ($row = db_fetch_object($res)) {
+        $result = db_query('SELECT * FROM {linkchecker_box} WHERE lid = :lid', array(':lid' => $link->lid));
+        foreach ($result as $row) {
           $box = block_box_get($row->bid);
 
           // Create array of box fields to scan.
@@ -280,10 +311,10 @@ function _linkchecker_status_handling($link, $response) {
           }
 
           // Save changed node and update the node link list.
-          block_box_save($box, $row->bid);
+          block_box_save($box, $box->bid);
           // There is no hook that fires on block_box_save(), therefore do it programmatically.
-          _linkchecker_add_box_links($box, $row->bid);
-          watchdog('linkchecker', 'Changed permanently moved link in box %bid from %src to %dst.', array('%bid' => $row->bid, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+          _linkchecker_add_box_links($box, $box->bid);
+          watchdog('linkchecker', 'Changed permanently moved link in box %bid from %src to %dst.', array('%bid' => $box->bid, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
         }
 
       }
@@ -293,7 +324,16 @@ function _linkchecker_status_handling($link, $response) {
       break;
 
     case 404:
-      db_query("UPDATE {linkchecker_links} SET code = %d, error = '%s', fail_count = fail_count+1, last_checked = %d WHERE lid = %d", $response->code, $response->error, time(), $link->lid);
+      // FIXME: fail_count+1 may be broken
+      db_update('linkchecker_link')
+        ->condition('lid', $link->lid)
+        ->fields(array(
+          'code' => $response->code,
+          'error' => $response->error,
+          'fail_count' = 'fail_count+1',
+          'last_checked' = time()
+        ))
+        ->execute();
       watchdog('linkchecker', 'Broken link %link has been found.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
 
       // If unpublishing limit is reached, unpublish all nodes having this link.
@@ -305,12 +345,31 @@ function _linkchecker_status_handling($link, $response) {
 
     case 405:
       // Special error handling if method is not allowed. Switch link checking to GET method and try again.
-      $response = drupal_http_request($link->url, array('User-Agent' => 'User-Agent: ' . $useragent), 'GET', NULL, 0);
+      $response = drupal_http_request($link->url, array('headers' => array('User-Agent' => 'User-Agent: ' . $useragent)), 'method' => 'GET', 'max_redirects' => 0));
       if ($response->code == 200) {
-        db_query("UPDATE {linkchecker_links} SET code = %d, error = '%s', fail_count = %d, last_checked = %d, method = '%s' WHERE lid = %d", $response->code, $response->error, 0, time(), 'GET', $link->lid);
+        db_update('linkchecker_link')
+          ->condition('lid', $link->lid)
+          ->fields(array(
+            'code' => $response->code,
+            'error' => $response->error,
+            'fail_count' = 0,
+            'last_checked' = time(),
+            'method' => 'GET'
+          ))
+          ->execute();
       }
       else {
-        db_query("UPDATE {linkchecker_links} SET code = %d, error = '%s', fail_count = fail_count+1, last_checked = %d, method = '%s' WHERE lid = %d", $response->code, $response->error, time(), 'GET', $link->lid);
+        // FIXME: fail_count+1 may be broken
+        db_update('linkchecker_link')
+          ->condition('lid', $link->lid)
+          ->fields(array(
+            'code' => $response->code,
+            'error' => $response->error,
+            'fail_count' = 'fail_count+1',
+            'last_checked' = time(),
+            'method' => 'GET'
+          ))
+          ->execute();
       }
       watchdog('linkchecker', 'Method HEAD is not allowed for link %link. Method has been changed to GET.', array('%link' => $link->url), WATCHDOG_INFO, l(t('Broken links'), 'admin/reports/linkchecker'));
       break;
@@ -318,68 +377,89 @@ function _linkchecker_status_handling($link, $response) {
     default:
       // Don't treat ignored response codes as errors.
       if (in_array($response->code, $ignore_response_codes)) {
-        db_query("UPDATE {linkchecker_links} SET code = %d, error = '%s', fail_count = %d, last_checked = %d WHERE lid = %d", $response->code, $response->error, 0, time(), $link->lid);
+        db_update('linkchecker_link')
+          ->condition('lid', $link->lid)
+          ->fields(array(
+            'code' => $response->code,
+            'error' => $response->error,
+            'fail_count' = 0,
+            'last_checked' = time(),
+          ))
+          ->execute();
         //watchdog('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
       else {
-        db_query("UPDATE {linkchecker_links} SET code = %d, error = '%s', fail_count = fail_count+1, last_checked = %d WHERE lid = %d", $response->code, $response->error, time(), $link->lid);
+        db_update('linkchecker_link')
+          ->condition('lid', $link->lid)
+          ->fields(array(
+            'code' => $response->code,
+            'error' => $response->error,
+            'fail_count' = 'fail_count+1',
+            'last_checked' = time(),
+          ))
+          ->execute();
         //watchdog('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
   }
 }
 
-function linkchecker_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  switch ($op) {
-    case 'insert':
-    case 'update':
-      // The node is going to be published.
-      if ($node->status && _linkchecker_scan_nodetype($node->type)) {
-        _linkchecker_add_node_links($node);
-      }
-      break;
+function linkchecker_node_delete($node) {
+  _linkchecker_delete_node_links($node->nid);
+}
 
-    case 'delete':
-      _linkchecker_delete_node_links($node->nid);
-      break;
-
-    case 'prepare':
-      // Node edit tab is viewed.
-      if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'edit') {
-        // Show a message on node edit page if a link check failed once or more.
-        $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"));
-        $links = db_query("SELECT url, code, fail_count FROM {linkchecker_nodes} ln INNER JOIN {linkchecker_links} ll ON ln.lid = ll.lid WHERE ln.nid = %d AND ll.fail_count > %d AND ll.status = %d AND ll.code NOT IN (" . db_placeholders($ignore_response_codes, 'int') . ")", array_merge(array($node->nid, 0, 1), $ignore_response_codes));
-        while ($link = db_fetch_object($links)) {
-          drupal_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
-        }
-      }
-      break;
+function linkchecker_node_insert($node) {
+  // The node is going to be published.
+  if ($node->status && _linkchecker_scan_nodetype($node->type)) {
+    _linkchecker_add_node_links($node);
   }
 }
 
-function linkchecker_comment($comment, $op) {
-  // Convert $comment object (admin/content/comment) to array (comment/edit/[cid]).
-  $comment = (array) $comment;
+function linkchecker_node_update($node) {
+  linkchecker_node_insert($node);
+}
 
-  switch ($op) {
-    case 'publish':
-      $node_type = db_result(db_query("SELECT type FROM {node} WHERE nid = %d", $comment['nid']));
-      if (_linkchecker_scan_nodetype($node_type)) {
-        _linkchecker_add_comment_links($comment);
-      }
-      break;
+function linkchecker_node_prepare($node) {
+  // Node edit tab is viewed.
+  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'edit') {
+    // Show a message on node edit page if a link check failed once or more.
+    $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"));
 
-    case 'unpublish':
-    case 'delete':
-      _linkchecker_delete_comment_links($comment['cid']);
-      break;
+    $links = db_select('linkchecker_node', 'ln')
+      ->innerJoin('linkchecker_link', 'll', 'll.lid = ln.lid')
+      ->fields('ll', array('url', 'code', 'fail_count'))
+      ->condition('ln.nid', $node->nid)
+      ->condition('ll.fail_count', 0, '>')
+      ->condition('ll.status', 1)
+      ->condition('ll.code', $ignore_response_codes, 'NOT IN')
+      ->execute();
+
+    foreach ($links as $link) {
+      drupal_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
+    }
   }
 }
 
-function linkchecker_form_alter(&$form, $form_state, $form_id) {
+function linkchecker_comment_publish($comment) {
+  $node_type = db_result(db_query('SELECT type FROM {node} WHERE nid = :nid', array(':nid' => $comment->nid)));
+  if (_linkchecker_scan_nodetype($node_type)) {
+    _linkchecker_add_comment_links($comment);
+  }
+}
+
+function linkchecker_comment_unpublish($comment) {
+  linkchecker_comment_delete($comment);
+}
+
+function linkchecker_comment_delete($comment) {
+  _linkchecker_delete_comment_links($comment->nid);
+}
+
+function linkchecker_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
     // Catch the block add/configure form and add custom submit handler.
     case 'block_add_block_form':
       // Add custom submit handler to block add form.
+      // FIXME D7 -> hook_block_save()?
       $form['#submit'][] = 'linkchecker_block_add_form_submit';
       break;
 
@@ -388,8 +468,17 @@ function linkchecker_form_alter(&$form, $form_state, $form_id) {
       if (empty($form_state['post']) && is_numeric(arg(5))) {
         // Show a message on block edit page if a link check failed once or more.
         $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"));
-        $links = db_query("SELECT url, code, fail_count FROM {linkchecker_boxes} lb INNER JOIN {linkchecker_links} ll ON lb.lid = ll.lid WHERE lb.bid = %d AND ll.fail_count > %d AND ll.status = %d AND ll.code NOT IN (" . db_placeholders($ignore_response_codes, 'int') . ")", array_merge(array(arg(5), 0, 1), $ignore_response_codes));
-        while ($link = db_fetch_object($links)) {
+
+        $links = db_select('linkchecker_box', 'lb')
+          ->innerJoin('linkchecker_link', 'll', 'll.lid = lb.lid')
+          ->fields('ll', array('url', 'code', 'fail_count'))
+          ->condition('lb.bid', arg(5))
+          ->condition('ll.fail_count', 0, '>')
+          ->condition('ll.status', 1)
+          ->condition('ll.code', $ignore_response_codes, 'NOT IN')
+          ->execute();
+
+        foreach ($links as $link) {
           drupal_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
         }
       }
@@ -407,8 +496,17 @@ function linkchecker_form_alter(&$form, $form_state, $form_id) {
       if ((empty($form_state['post']) || isset($form_state['post']['op']) && $form_state['post']['op'] == t('Preview')) && arg(0) == 'comment' && arg(1) == 'edit' && is_numeric(arg(2))) {
         // Show a message on comment edit page if a link check failed once or more.
         $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"));
-        $links = db_query("SELECT url, code, fail_count FROM {linkchecker_comments} lc INNER JOIN {linkchecker_links} ll ON lc.lid = ll.lid WHERE lc.cid = %d AND ll.fail_count > %d AND ll.status = %d AND ll.code NOT IN (" . db_placeholders($ignore_response_codes, 'int') . ")", array_merge(array(arg(2), 0, 1), $ignore_response_codes));
-        while ($link = db_fetch_object($links)) {
+
+        $links = db_select('linkchecker_comment', 'lc')
+          ->innerJoin('linkchecker_link', 'll', 'll.lid = lc.lid')
+          ->fields('ll', array('url', 'code', 'fail_count'))
+          ->condition('lc.cid', arg(2))
+          ->condition('ll.fail_count', 0, '>')
+          ->condition('ll.status', 1)
+          ->condition('ll.code', $ignore_response_codes, 'NOT IN')
+          ->execute();
+
+        foreach ($links as $link) {
           drupal_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
         }
       }
@@ -420,6 +518,7 @@ function linkchecker_form_alter(&$form, $form_state, $form_id) {
  * Custom submit handler for block add page.
  */
 function linkchecker_block_add_form_submit($form, &$form_state) {
+  // FIXME db_last_insert_id no longer available.
   $bid = db_last_insert_id('boxes', 'bid');
   _linkchecker_add_box_links($form_state['values'], $bid);
 }
@@ -467,11 +566,13 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
 
   // Search for CCK-fields of types 'link' and 'text'.
   if (module_exists('content')) {
+    // FIXME: D7???
     $fields = content_fields(NULL, $node->type);
     foreach ($fields as $field) {
       if (isset($node->{$field['field_name']})) {
         if (module_exists('link') && $field['type'] == 'link') {
           foreach ($node->$field['field_name'] as $delta => $item) {
+            // FIXME D7: needs language parameter for check_markup.
             $text_items[] = _filter_url($item['url'], $node->format);
           }
         }
@@ -502,14 +603,19 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
     $i = 0;
     foreach ($missing_links as $url) {
       $urlhash = md5($url);
-      $link = db_fetch_object(db_query("SELECT lid FROM {linkchecker_links} WHERE urlhash = '%s'", $urlhash));
+      $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash));
       if (!$link) {
         $link->urlhash = $urlhash;
         $link->url = $url;
         $link->status = _linkchecker_link_check_status_filter($url);
-        drupal_write_record('linkchecker_links', $link);
+        drupal_write_record('linkchecker_link', $link);
       }
-      db_query("INSERT INTO {linkchecker_nodes} (nid, lid) VALUES (%d, %d)", $node->nid, $link->lid);
+      db_insert('linkchecker_node')
+        ->fields(array(
+          'nid' => $node->nid,
+          'lid' => $link->lid,
+        ))
+        ->execute();
 
       // Break processing if max links limit per run has been reached.
       $i++;
@@ -518,11 +624,11 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
       }
     }
 
-    // The first chunk of links not yet found in the {linkchecker_links} table
+    // The first chunk of links not yet found in the {linkchecker_link} table
     // have now been imported by the above code. If the number of missing links
     // still exceeds the scan limit defined in LINKCHECKER_SCAN_MAX_LINKS_PER_RUN
     // the content need to be re-scanned until all links have been collected and
-    // saved in {linkchecker_links} table.
+    // saved in {linkchecker_link} table.
     //
     // Above code has already scanned a number of LINKCHECKER_SCAN_MAX_LINKS_PER_RUN
     // links and need to be substracted from the number of missing links to
@@ -533,7 +639,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
     // that it is running a batch job and the number of required re-scan rounds.
     $missing_links_count = count($missing_links) - LINKCHECKER_SCAN_MAX_LINKS_PER_RUN;
     if (!$skip_missing_links_detection && $missing_links_count > 0) {
-      module_load_include('inc', 'linkchecker', '/includes/linkchecker.batch');
+      module_load_include('inc', 'linkchecker', 'linkchecker.batch');
       batch_set(_linkchecker_batch_import_single_node($node->nid, $missing_links_count));
 
       // If batches were set in the submit handlers, we process them now,
@@ -554,7 +660,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
  * Add comment links to database.
  *
  * @param $comment
- *   The fully populated comment array.
+ *   The fully populated comment object.
  *
  * @param $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
@@ -563,13 +669,13 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
 function _linkchecker_add_comment_links($comment, $skip_missing_links_detection = FALSE) {
   // Create array of comment fields to scan.
   $text_items = array();
-  $text_items[] = _filter_url($comment['subject'], $comment['format']);
-  $text_items[] = _linkchecker_check_markup($comment['comment'], $comment['format'], FALSE);
+  $text_items[] = _filter_url($comment->subject, $comment->format);
+  $text_items[] = _linkchecker_check_markup($comment->comment, $comment->format, FALSE);
 
   // Get the absolute node path for extraction of relative links.
   $languages = language_list();
-  $node_language = db_result(db_query("SELECT language FROM {node} WHERE nid = %d", $comment['nid']));
-  $path = url('node/'. $comment['nid'], array('language' => $languages[$node_language], 'absolute' => TRUE));
+  $node_language = db_result(db_query('SELECT language FROM {node} WHERE nid = :nid', array(':nid' => $comment->nid)));
+  $path = url('node/'. $comment->nid, array('language' => $languages[$node_language], 'absolute' => TRUE));
 
   // Extract all links in a comment.
   $links = _linkchecker_extract_links(implode(' ', $text_items), $path);
@@ -578,20 +684,25 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
   if (!empty($links)) {
     // Remove all links from the links array already in the database
     // and only add missing links to database.
-    $missing_links = _linkchecker_comment_links_missing($comment['cid'], $links);
+    $missing_links = _linkchecker_comment_links_missing($comment->cid, $links);
 
     // Only add unique links to database that do not exist.
     $i = 0;
     foreach ($missing_links as $url) {
       $urlhash = md5($url);
-      $link = db_fetch_object(db_query("SELECT lid FROM {linkchecker_links} WHERE urlhash = '%s'", $urlhash));
+      $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash));
       if (!$link) {
         $link->urlhash = $urlhash;
         $link->url = $url;
         $link->status = _linkchecker_link_check_status_filter($url);
-        drupal_write_record('linkchecker_links', $link);
+        drupal_write_record('linkchecker_link', $link);
       }
-      db_query("INSERT INTO {linkchecker_comments} (cid, lid) VALUES (%d, %d)", $comment['cid'], $link->lid);
+      db_insert('linkchecker_comment')
+        ->fields(array(
+          'cid' => $comment->cid,
+          'lid' => $link->lid,
+        ))
+        ->execute();
 
       // Break processing if max links limit per run has been reached.
       $i++;
@@ -600,11 +711,11 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
       }
     }
 
-    // The first chunk of links not yet found in the {linkchecker_links} table
+    // The first chunk of links not yet found in the {linkchecker_link} table
     // have now been imported by the above code. If the number of missing links
     // still exceeds the scan limit defined in LINKCHECKER_SCAN_MAX_LINKS_PER_RUN
     // the content need to be re-scanned until all links have been collected and
-    // saved in {linkchecker_links} table.
+    // saved in {linkchecker_link} table.
     //
     // Above code has already scanned a number of LINKCHECKER_SCAN_MAX_LINKS_PER_RUN
     // links and need to be substracted from the number of missing links to
@@ -615,8 +726,8 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
     // that it is running a batch job and the number of required re-scan rounds.
     $missing_links_count = count($missing_links) - LINKCHECKER_SCAN_MAX_LINKS_PER_RUN;
     if (!$skip_missing_links_detection && $missing_links_count > 0) {
-      module_load_include('inc', 'linkchecker', '/includes/linkchecker.batch');
-      batch_set(_linkchecker_batch_import_single_comment($comment['cid'], $missing_links_count));
+      module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+      batch_set(_linkchecker_batch_import_single_comment($comment->cid, $missing_links_count));
 
       // If batches were set in the submit handlers, we process them now,
       // possibly ending execution. We make sure we do not react to the batch
@@ -629,25 +740,27 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
   }
 
   // Remove dead link references for cleanup reasons as very last step.
-  _linkchecker_cleanup_comment_references($comment['cid'], $links);
+  _linkchecker_cleanup_comment_references($comment->cid, $links);
 }
 
 /**
  * Add block links to database.
  *
  * @param $box
- *   The fully populated block array.
+ *   The fully populated block object.
  *
  * @param $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
  *   the need for content re-scans is detected by the number of missing links.
  */
 function _linkchecker_add_box_links($box, $bid, $skip_missing_links_detection = FALSE) {
+  // FIXME: D7 may need (object)$box conversion.
+
   // Create array of box fields to scan.
   $text_items = array();
-  $text_items[] = _filter_url($box['info'], $box['format']);
-  $text_items[] = _filter_url($box['title'], $box['format']);
-  $text_items[] = _linkchecker_check_markup($box['body'], $box['format'], FALSE);
+  $text_items[] = _filter_url($box->info, $box->format);
+  $text_items[] = _filter_url($box->title, $box->format);
+  $text_items[] = _linkchecker_check_markup($box->body, $box->format, FALSE);
 
   // Extract all links in a box.
   $links = _linkchecker_extract_links(implode(' ', $text_items));
@@ -662,14 +775,19 @@ function _linkchecker_add_box_links($box, $bid, $skip_missing_links_detection = 
     $i = 0;
     foreach ($missing_links as $url) {
       $urlhash = md5($url);
-      $link = db_fetch_object(db_query("SELECT lid FROM {linkchecker_links} WHERE urlhash = '%s'", $urlhash));
+      $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash));
       if (!$link) {
         $link->urlhash = $urlhash;
         $link->url = $url;
         $link->status = _linkchecker_link_check_status_filter($url);
-        drupal_write_record('linkchecker_links', $link);
+        drupal_write_record('linkchecker_link', $link);
       }
-      db_query("INSERT INTO {linkchecker_boxes} (bid, lid) VALUES (%d, %d)", $bid, $link->lid);
+      db_insert('linkchecker_box')
+        ->fields(array(
+          'bid' => $bid,
+          'lid' => $link->lid,
+        ))
+        ->execute();
 
       // Break processing if max links limit per run has been reached.
       $i++;
@@ -678,11 +796,11 @@ function _linkchecker_add_box_links($box, $bid, $skip_missing_links_detection = 
       }
     }
 
-    // The first chunk of links not yet found in the {linkchecker_links} table
+    // The first chunk of links not yet found in the {linkchecker_link} table
     // have now been imported by the above code. If the number of missing links
     // still exceeds the scan limit defined in LINKCHECKER_SCAN_MAX_LINKS_PER_RUN
     // the content need to be re-scanned until all links have been collected and
-    // saved in {linkchecker_links} table.
+    // saved in {linkchecker_link} table.
     //
     // Above code has already scanned a number of LINKCHECKER_SCAN_MAX_LINKS_PER_RUN
     // links and need to be substracted from the number of missing links to
@@ -693,7 +811,7 @@ function _linkchecker_add_box_links($box, $bid, $skip_missing_links_detection = 
     // that it is running a batch job and the number of required re-scan rounds.
     $missing_links_count = count($missing_links) - LINKCHECKER_SCAN_MAX_LINKS_PER_RUN;
     if (!$skip_missing_links_detection && $missing_links_count > 0) {
-      module_load_include('inc', 'linkchecker', '/includes/linkchecker.batch');
+      module_load_include('inc', 'linkchecker', 'linkchecker.batch');
       batch_set(_linkchecker_batch_import_single_box($bid, $missing_links_count));
 
       // If batches were set in the submit handlers, we process them now,
@@ -714,21 +832,27 @@ function _linkchecker_add_box_links($box, $bid, $skip_missing_links_detection = 
  * Remove all node references to links in the linkchecker_nodes table.
  */
 function _linkchecker_delete_node_links($nid) {
-  return db_query("DELETE FROM {linkchecker_nodes} WHERE nid = %d", $nid);
+  db_delete('linkchecker_node')
+    ->condition('nid', $nid)
+    ->execute();
 }
 
 /**
  * Remove all comment references to links in the linkchecker_comments table.
  */
 function _linkchecker_delete_comment_links($cid) {
-  return db_query("DELETE FROM {linkchecker_comments} WHERE cid = %d", $cid);
+  db_delete('linkchecker_comment')
+    ->condition('cid', $cid)
+    ->execute();
 }
 
 /**
  * Remove all box references to links in the linkchecker_boxes table.
  */
 function _linkchecker_delete_box_links($bid) {
-  return db_query("DELETE FROM {linkchecker_boxes} WHERE bid = %d", $bid);
+  db_delete('linkchecker_box')
+    ->condition('bid', $bid)
+    ->execute();
 }
 
 /**
@@ -737,13 +861,22 @@ function _linkchecker_delete_box_links($bid) {
 function _linkchecker_cleanup_node_references($nid = 0, $links = array()) {
   if (empty($links)) {
     // Node do not have links. Delete all references if exists.
-    db_query("DELETE FROM {linkchecker_nodes} WHERE nid = %d", $nid);
+    db_delete('linkchecker_node')
+      ->condition('nid', $nid)
+      ->execute();
   }
   else {
     // The node still have more than one link, but other links may have been
     // removed and links no longer in the content need to be deleted from the
     // linkchecker_nodes reference table.
-    db_query("DELETE FROM {linkchecker_nodes} WHERE nid = %d AND lid NOT IN (SELECT lid FROM {linkchecker_links} WHERE urlhash IN (" . db_placeholders($links, 'varchar') . "))", array_merge(array($nid), array_map('md5', $links)));
+    $subquery = db_select('linkchecker_link')
+      ->fields('linkchecker_link', array('lid'))
+      ->condition('urlhash', array_map('md5', $links), 'IN')
+
+    db_delete('linkchecker_node')
+      ->condition('nid', $nid)
+      ->condition('lid', $subquery, 'NOT IN')
+      ->execute();
   }
 }
 
@@ -753,13 +886,22 @@ function _linkchecker_cleanup_node_references($nid = 0, $links = array()) {
 function _linkchecker_cleanup_comment_references($cid = 0, $links = array()) {
   if (empty($links)) {
     // Comment do not have links. Delete all references if exists.
-    db_query("DELETE FROM {linkchecker_comments} WHERE cid = %d", $cid);
+    db_delete('linkchecker_comment')
+      ->condition('cid', $cid)
+      ->execute();
   }
   else {
     // The comment still have more than one link, but other links may have been
     // removed and links no longer in the content need to be deleted from the
     // linkchecker_comments reference table.
-    db_query("DELETE FROM {linkchecker_comments} WHERE cid = %d AND lid NOT IN (SELECT lid FROM {linkchecker_links} WHERE urlhash IN (" . db_placeholders($links, 'varchar') . "))", array_merge(array($cid), array_map('md5', $links)));
+    $subquery = db_select('linkchecker_link')
+      ->fields('linkchecker_link', array('lid'))
+      ->condition('urlhash', array_map('md5', $links), 'IN')
+
+    db_delete('linkchecker_comment')
+      ->condition('cid', $cid)
+      ->condition('lid', $subquery, 'NOT IN')
+      ->execute();
   }
 }
 
@@ -769,13 +911,22 @@ function _linkchecker_cleanup_comment_references($cid = 0, $links = array()) {
 function _linkchecker_cleanup_box_references($bid = 0, $links = array()) {
   if (empty($links)) {
     // Block do not have links. Delete all references if exists.
-    db_query("DELETE FROM {linkchecker_boxes} WHERE bid = %d", $bid);
+    db_delete('linkchecker_box')
+      ->condition('bid', $bid)
+      ->execute();
   }
   else {
     // The block still have more than one link, but other links may have been
     // removed and links no longer in the content need to be deleted from the
     // linkchecker_boxes reference table.
-    db_query("DELETE FROM {linkchecker_boxes} WHERE bid = %d AND lid NOT IN (SELECT lid FROM {linkchecker_links} WHERE urlhash IN (" . db_placeholders($links, 'varchar') . "))", array_merge(array($bid), array_map('md5', $links)));
+    $subquery = db_select('linkchecker_link')
+      ->fields('linkchecker_link', array('lid'))
+      ->condition('urlhash', array_map('md5', $links), 'IN')
+
+    db_delete('linkchecker_box')
+      ->condition('bid', $bid)
+      ->condition('lid', $subquery, 'NOT IN')
+      ->execute();
   }
 }
 
@@ -783,9 +934,15 @@ function _linkchecker_cleanup_box_references($bid = 0, $links = array()) {
  * Returns an array of node references missing in the linkchecker_nodes table.
  */
 function _linkchecker_node_links_missing($nid, $links) {
-  $res = db_query("SELECT url FROM {linkchecker_links} ll INNER JOIN {linkchecker_nodes} ln ON ll.lid = ln.lid WHERE ln.nid = %d AND urlhash IN (" . db_placeholders($links, 'varchar') . ")", array_merge(array($nid), array_map('md5', $links)));
+  $result = db_select('linkchecker_link', 'll')
+    ->innerJoin('linkchecker_node', 'ln', 'ln.lid = ll.lid')
+    ->fields('ll', array('url'))
+    ->condition('ln.nid', $nid)
+    ->condition('ll.urlhash', array_map('md5', $links), 'IN')
+    ->execute();
+
   $links_in_database = array();
-  while ($row = db_fetch_object($res)) {
+  foreach ($result as $row) {
     $links_in_database[] = $row->url;
   }
   return array_diff($links, $links_in_database);
@@ -795,9 +952,15 @@ function _linkchecker_node_links_missing($nid, $links) {
  * Returns an array of comment references missing in the linkchecker_comments table.
  */
 function _linkchecker_comment_links_missing($cid, $links) {
-  $res = db_query("SELECT url FROM {linkchecker_links} ll INNER JOIN {linkchecker_comments} lc ON ll.lid = lc.lid WHERE lc.cid = %d AND urlhash IN (" . db_placeholders($links, 'varchar') . ")", array_merge(array($cid), array_map('md5', $links)));
+  $result = db_select('linkchecker_link', 'll')
+    ->innerJoin('linkchecker_comment', 'lc', 'lc.lid = ll.lid')
+    ->fields('ll', array('url'))
+    ->condition('lc.cid', $cid)
+    ->condition('ll.urlhash', array_map('md5', $links), 'IN')
+    ->execute();
+
   $links_in_database = array();
-  while ($row = db_fetch_object($res)) {
+  foreach ($result as $row) {
     $links_in_database[] = $row->url;
   }
   return array_diff($links, $links_in_database);
@@ -807,9 +970,15 @@ function _linkchecker_comment_links_missing($cid, $links) {
  * Returns an array of box references missing in the linkchecker_boxes table.
  */
 function _linkchecker_box_links_missing($bid, $links) {
-  $res = db_query("SELECT url FROM {linkchecker_links} ll INNER JOIN {linkchecker_boxes} lb ON ll.lid = lb.lid WHERE lb.bid = %d AND urlhash IN (" . db_placeholders($links, 'varchar') . ")", array_merge(array($bid), array_map('md5', $links)));
+  $result = db_select('linkchecker_link', 'll')
+    ->innerJoin('linkchecker_box', 'lb', 'lb.lid = ll.lid')
+    ->fields('ll', array('url'))
+    ->condition('lb.bid', $bid)
+    ->condition('ll.urlhash', array_map('md5', $links), 'IN')
+    ->execute();
+
   $links_in_database = array();
-  while ($row = db_fetch_object($res)) {
+  foreach ($result as $row) {
     $links_in_database[] = $row->url;
   }
   return array_diff($links, $links_in_database);
@@ -825,27 +994,36 @@ function _linkchecker_cleanup_links() {
   // Remove disabled node types no longer in use.
   $node_types = array_keys(array_filter(variable_get('linkchecker_scan_nodetypes', array())));
   if (!empty($node_types)) {
-    db_query('DELETE FROM {linkchecker_nodes} WHERE nid IN (SELECT nid FROM {node} n WHERE n.type NOT IN (' . db_placeholders($node_types, 'varchar') . '))', $node_types);
+    $subquery = db_select('node', 'n')
+      ->fields('n', array('nid'))
+      ->condition('n.type', $node_types, 'NOT IN')
+
+    db_delete('linkchecker_node')
+      ->condition('nid', $subquery, 'IN')
+      ->execute();
+
     // FIXME: Remove comments
     //db_query('DELETE FROM {linkchecker_comments} WHERE cid IN (SELECT nid FROM {node} n WHERE n.type NOT IN (' . db_placeholders($node_types, 'varchar') . '))', $node_types);
   }
   else {
-    db_query('DELETE FROM {linkchecker_nodes}');
+    // No active node_type. Remove all items from table.
+    db_delete('linkchecker_node')->execute();
     // FIXME: Remove comments
   }
 
   // Remove comment link references if comment scanning is disabled.
   // TODO: Remove comments of unpublished nodes.
   if (variable_get('linkchecker_scan_comments', 0) == 0) {
-    db_query('DELETE FROM {linkchecker_comments}');
+    db_delete('linkchecker_comment')->execute();
   }
 
   // Remove block link references if block scanning is disabled.
   if (variable_get('linkchecker_scan_blocks', 0) == 0) {
-    db_query('DELETE FROM {linkchecker_boxes}');
+    db_delete('linkchecker_box')->execute();
   }
 
   // Remove dead links without references.
+  // FIXME: D7?
   db_query('DELETE FROM {linkchecker_links}
             WHERE lid NOT IN (
               SELECT DISTINCT lid FROM {linkchecker_boxes}
@@ -1144,21 +1322,17 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
 /**
  * Customized clone of core check_markup() function with additional filter blacklist.
  *
- * See http://api.drupal.org/api/function/check_markup for API documentation.
+ * See http://api.drupal.org/api/function/check_markup/7 for API documentation.
  */
-function _linkchecker_check_markup($text, $format = FILTER_FORMAT_DEFAULT, $check = TRUE) {
-  // When $check = TRUE, do an access check on $format.
-  if (isset($text) && (!$check || filter_access($format))) {
+function _linkchecker_check_markup($text, $format = FILTER_FORMAT_DEFAULT, $langcode = '', $cache = TRUE) {
+  if (isset($text)) {
     $format = filter_resolve_format($format);
 
     // Check for a cached version of this piece of text.
-    $cache_id = 'linkchecker:' . $format . ':' . md5($text);
-    if ($cached = cache_get($cache_id, 'cache_filter')) {
+    $cache_id = 'linkchecker:' . $format . ':' . $langcode . ':' . md5($text);
+    if ($cache && $cached = cache_get($cache_id, 'cache_filter')) {
       return $cached->data;
     }
-
-    // See if caching is allowed for this format.
-    $cache = filter_format_allowcache($format);
 
     // Convert all Windows and Mac newlines to a single newline,
     // so filters only need to deal with one possibility.
@@ -1177,21 +1351,28 @@ function _linkchecker_check_markup($text, $format = FILTER_FORMAT_DEFAULT, $chec
 
     // Give filters the chance to escape HTML-like data such as code or formulas.
     foreach ($filters as $filter) {
+      // TODO: check out if filter_info can provide the same info.
       if (!in_array($filter->module . '/' . $filter->delta, $filters_blacklist)) {
-        $text = module_invoke($filter->module, 'filter', 'prepare', $filter->delta, $format, $text, $cache_id);
+        $filter_info = module_invoke($filter->module, 'filter_info');
+        if (isset($filter_info[$filter->name]['prepare callback']) && drupal_function_exists($filter_info[$filter->name]['prepare callback'])) {
+          $text = call_user_func($filter_info[$filter->name]['prepare callback'], $text, $format, $langcode, $cache_id);
+        }
       }
     }
 
     // Perform filtering.
     foreach ($filters as $filter) {
       if (!in_array($filter->module . '/' . $filter->delta, $filters_blacklist)) {
-        $text = module_invoke($filter->module, 'filter', 'process', $filter->delta, $format, $text, $cache_id);
+        $filter_info = module_invoke($filter->module, 'filter_info');
+        if (isset($filter_info[$filter->name]['process callback']) && drupal_function_exists($filter_info[$filter->name]['process callback'])) {
+          $text = call_user_func($filter_info[$filter->name]['process callback'], $text, $format, $langcode, $cache_id);
+        }
       }
     }
 
     // Store in cache with a minimum expiration time of 1 day.
-    if ($cache) {
-      cache_set($cache_id, $text, 'cache_filter', time() + (60 * 60 * 24));
+    if ($cache && filter_format_allowcache($format)) {
+      cache_set($cache_id, $text, 'cache_filter', REQUEST_TIME + (60 * 60 * 24));
     }
   }
   else {
@@ -1341,8 +1522,8 @@ function _linkchecker_scan_nodetype($node_type = NULL) {
  *   A link ID that have reached a defined failcount.
  */
 function _linkchecker_unpublish_nodes($lid) {
-  $res = db_query("SELECT * FROM {linkchecker_nodes} WHERE lid = %d", $lid);
-  while ($row = db_fetch_object($res)) {
+  $result = db_query('SELECT * FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $lid));
+  foreach ($result as $row) {
     $node = node_load(array('nid' => $row->nid));
     $node->status = 0;
     node_save($node);
@@ -1351,15 +1532,8 @@ function _linkchecker_unpublish_nodes($lid) {
 }
 
 /**
- * Load comment as array.
- */
-function _linkchecker_comment_load($cid) {
-  return db_fetch_array(db_query('SELECT * FROM {comments} WHERE cid = %d', $cid));
-}
-
-/**
- * Load link as array.
+ * Load link as object.
  */
 function linkchecker_link_load($lid) {
-  return db_fetch_array(db_query("SELECT * FROM {linkchecker_links} WHERE lid = %d", $lid));
+  return db_query('SELECT * FROM {linkchecker_link} WHERE lid = :lid', array(':lid' => $lid));
 }

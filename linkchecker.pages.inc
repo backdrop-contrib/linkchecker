@@ -188,16 +188,16 @@ function linkchecker_link_edit_form(&$form_state, $link) {
     '#type' => 'fieldset',
     '#title' => t('Settings'),
     '#collapsible' => FALSE,
-    '#description' => t('The link <a href="@url">@url</a> has been checked lastly at @last_checked and failed @fail_count times.', array('@url' => $link['url'], '@fail_count' => $link['fail_count'], '@last_checked' => format_date($link['last_checked'])))
+    '#description' => t('The link <a href="@url">@url</a> has been checked lastly at @last_checked and failed @fail_count times.', array('@url' => $link->url, '@fail_count' => $link->fail_count, '@last_checked' => format_date($link->last_checked)))
   );
 
-  $form['settings']['lid'] = array('#type' => 'hidden', '#value' => $link['lid']);
-  $form['settings']['url'] = array('#type' => 'hidden', '#value' => $link['url']);
+  $form['settings']['lid'] = array('#type' => 'value', '#value' => $link->lid);
+  $form['settings']['url'] = array('#type' => 'value', '#value' => $link->url);
 
   $form['settings']['method'] = array(
     '#type' => 'select',
     '#title' => t('Select request method'),
-    '#default_value' => $link['method'],
+    '#default_value' => $link->method,
     '#options' => array(
       'HEAD' => t('HEAD'),
       'GET' => t('GET'),
@@ -206,7 +206,7 @@ function linkchecker_link_edit_form(&$form_state, $link) {
   );
 
   $form['settings']['status'] = array(
-    '#default_value' => $link['status'],
+    '#default_value' => $link->status,
     '#type' => 'checkbox',
     '#title' => t('Check link status'),
     '#description' => t("Disable this checkbox if you don't like to get informed any longer about this broken link. Use this setting only as the very last option if there is no other way to solve a failed link check."),

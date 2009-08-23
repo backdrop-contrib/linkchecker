@@ -6,7 +6,7 @@
  * Administrative page callbacks for the linkchecker module.
  */
 
-function linkchecker_admin_settings_form(&$form_state) {
+function linkchecker_admin_settings_form($form_state) {
 
   $form['settings'] = array(
     '#type' => 'fieldset',
@@ -250,7 +250,7 @@ function linkchecker_admin_settings_form_submit($form, &$form_state) {
 
     // If one or more node types have been selected.
     if (!empty($node_types)) {
-      module_load_include('inc', 'linkchecker', '/includes/linkchecker.batch');
+      module_load_include('inc', 'linkchecker', 'linkchecker.batch');
       batch_set(_linkchecker_batch_import_nodes($node_types));
 
       // If comment scanning of node types has been selected.
@@ -262,7 +262,7 @@ function linkchecker_admin_settings_form_submit($form, &$form_state) {
 
   // If block scanning has been selected.
   if ($form_state['values']['linkchecker_scan_blocks'] > $form['settings']['linkchecker_scan_blocks']['#default_value']) {
-    module_load_include('inc', 'linkchecker', '/includes/linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
     batch_set(_linkchecker_batch_import_boxes());
   }
 }
@@ -280,7 +280,7 @@ function linkchecker_analyze_links_submit($form, &$form_state) {
   // Start batch and analyze all nodes.
   $node_types = array_keys(array_filter(variable_get('linkchecker_scan_nodetypes', array())));
   if (!empty($node_types)) {
-    module_load_include('inc', 'linkchecker', '/includes/linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
     batch_set(_linkchecker_batch_import_nodes($node_types));
     if (variable_get('linkchecker_scan_comments', 0)) {
       batch_set(_linkchecker_batch_import_comments($node_types));
@@ -288,7 +288,7 @@ function linkchecker_analyze_links_submit($form, &$form_state) {
   }
 
   if (variable_get('linkchecker_scan_blocks', 0)) {
-    module_load_include('inc', 'linkchecker', '/includes/linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
     batch_set(_linkchecker_batch_import_boxes());
   }
 }
@@ -303,15 +303,15 @@ function linkchecker_clear_analyze_links_submit($form, &$form_state) {
   // Save form settings.
   system_settings_form_submit($form, $form_state);
 
-  db_query("TRUNCATE TABLE {linkchecker_nodes}");
-  db_query("TRUNCATE TABLE {linkchecker_comments}");
-  db_query("TRUNCATE TABLE {linkchecker_boxes}");
-  db_query("TRUNCATE TABLE {linkchecker_links}");
+  db_truncate('linkchecker_box');
+  db_truncate('linkchecker_comment');
+  db_truncate('linkchecker_node');
+  db_truncate('linkchecker_link');
 
   // Start batch and analyze all nodes.
   $node_types = array_keys(array_filter(variable_get('linkchecker_scan_nodetypes', array())));
   if (!empty($node_types)) {
-    module_load_include('inc', 'linkchecker', '/includes/linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
     batch_set(_linkchecker_batch_import_nodes($node_types));
     if (variable_get('linkchecker_scan_comments', 0)) {
       batch_set(_linkchecker_batch_import_comments($node_types));
@@ -319,7 +319,7 @@ function linkchecker_clear_analyze_links_submit($form, &$form_state) {
   }
 
   if (variable_get('linkchecker_scan_blocks', 0)) {
-    module_load_include('inc', 'linkchecker', '/includes/linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
     batch_set(_linkchecker_batch_import_boxes());
   }
 }
