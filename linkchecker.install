@@ -43,6 +43,7 @@ function linkchecker_uninstall() {
   variable_del('linkchecker_extract_from_object');
   variable_del('linkchecker_extract_from_source');
   variable_del('linkchecker_extract_from_video');
+  variable_del('linkchecker_filter_blacklist');
   variable_del('linkchecker_fqdn_only');
   variable_del('linkchecker_ignore_response_codes');
   variable_del('linkchecker_scan_blocks');
@@ -63,7 +64,7 @@ function linkchecker_schema() {
         'not null' => TRUE,
         'description' => 'Primary Key: Unique link ID.',
       ),
-      'token' => array(
+      'urlhash' => array(
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
@@ -112,7 +113,7 @@ function linkchecker_schema() {
       ),
     ),
     'primary key' => array('lid'),
-    'unique keys' => array('token' => array('token')),
+    'unique keys' => array('urlhash' => array('urlhash')),
   );
 
   $schema['linkchecker_boxes'] = array(
@@ -498,8 +499,9 @@ function linkchecker_update_6209() {
     $perms[$p->rid] = $perm;
   }
 
-  foreach ($perms as $rid => $permission) {
-    $ret[] = update_sql("UPDATE {permission} SET perm = '$permission' WHERE rid = $rid");
+  foreach ($perms as $rid => $renamed_permission) {
+    db_query("UPDATE {permission} SET perm = '%s' WHERE rid = %d", $renamed_permission, $rid);
+    $ret[] = array('success' => TRUE, 'query' => 'UPDATE {permission} SET perm = ' . check_plain($renamed_permission) . ' WHERE rid = '. $rid);
   }
 
   return $ret;
@@ -532,6 +534,19 @@ function linkchecker_update_6211() {
   $ret = array();
 
   variable_del('linkchecker_pathfilter_support');
+
+  return $ret;
+}
+
+/**
+ * Change unique key and column name 'token' into 'urlhash'.
+ */
+function linkchecker_update_6212() {
+  $ret = array();
+
+  db_drop_unique_key($ret, 'linkchecker_links', 'token');
+  db_change_field($ret, 'linkchecker_links', 'token', 'urlhash', array('type' => 'varchar', 'length' => 32, 'not null' => TRUE));
+  db_add_unique_key($ret, 'linkchecker_links', 'urlhash', array('urlhash'));
 
   return $ret;
 }

@@ -90,9 +90,9 @@ function linkchecker_user_report_page($account) {
 
 function _linkchecker_report_page($links_report_sql, $links_report_parameters = NULL, $account = NULL) {
 
-  $links_unchecked = db_result(db_query('SELECT count(lid) FROM {linkchecker_links} WHERE last_checked = %d', 0));
+  $links_unchecked = db_result(db_query('SELECT count(1) FROM {linkchecker_links} WHERE last_checked = %d', 0));
   if ($links_unchecked > 0) {
-    $links_all = db_result(db_query('SELECT count(lid) FROM {linkchecker_links}'));
+    $links_all = db_result(db_query('SELECT count(1) FROM {linkchecker_links}'));
     drupal_set_message(format_plural($links_unchecked,
       'There is 1 unchecked link of about @links_all links in the database. Please be patient until all links have been checked via cron.',
       'There are @count unchecked links of about @links_all links in the database. Please be patient until all links have been checked via cron.',
@@ -168,7 +168,7 @@ function _linkchecker_report_page($links_report_sql, $links_report_parameters = 
     $rows[] = array(
       l(_filter_url_trim($link->url, 40), $link->url),
       $link->code,
-      $link->error,
+      check_plain($link->error),
       '<ul style="margin:0"><li style="white-space:nowrap">' . implode('</li><li>', $links) . '</li></ul>',
     );
   }
