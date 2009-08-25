@@ -13,12 +13,7 @@
  */
 function _linkchecker_batch_import_nodes($node_types = array()) {
   // Get all active {node}.nid's.
-  $result = db_select('node', 'n')
-    ->fields('n', array('nid'))
-    ->condition('n.status', 1)
-    ->condition('n.type', $node_types, 'IN')
-    ->orderBy('n.nid')
-    ->execute();
+  $result = db_query('SELECT n.nid FROM {node} n WHERE n.status = :status AND n.type IN (:types) ORDER BY n.nid', array(':status' => 1, ':types' => $node_types));
 
   $operations = array();
   foreach ($result as $row) {
@@ -61,15 +56,8 @@ function _linkchecker_batch_node_import_finished($success, $results, $operations
  * Batch: Scan comments for links.
  */
 function _linkchecker_batch_import_comments($node_types = array()) {
-  // Get all active {comments}.cid's.
-  $result = db_select('comment', 'c')
-    ->innerJoin('node', 'n', 'n.nid = c.nid')
-    ->fields('c', array('cid'))
-    ->condition('c.status', COMMENT_PUBLISHED)
-    ->condition('n.status', 1)
-    ->condition('n.type', $node_types, 'IN')
-    ->orderBy('c.cid')
-    ->execute();
+  // Get all active {comment}.cid's.
+  $result = db_query('SELECT c.cid FROM {comment} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.status = :cstatus AND n.status = :nstatus AND n.type IN (:types) ORDER BY c.cid', array(':cstatus' => COMMENT_PUBLISHED, ':nstatus' => 1, ':types' => $node_types));
 
   $operations = array();
   foreach ($result as $row) {
@@ -112,11 +100,8 @@ function _linkchecker_batch_comments_import_finished($success, $results, $operat
  * Batch: Scan blocks for links.
  */
 function _linkchecker_batch_import_boxes() {
-  // Get all active {boxes}.bid's.
-  $result = db_select('box', 'b')
-    ->fields('b', array('bid'))
-    ->orderBy('b.cid')
-    ->execute();
+  // Get all active {box}.bid's.
+  $result = db_query('SELECT b.bid FROM {box} b ORDER BY b.bid');
 
   $operations = array();
   foreach ($result as $row) {

@@ -13,11 +13,13 @@ function linkchecker_admin_settings_form($form_state) {
     '#title' => t('General settings'),
     '#collapsible' => FALSE,
   );
+  //FIXME: node_type_get_names() can return an empty array!?
+  $names = node_type_get_names();
   $form['settings']['linkchecker_scan_nodetypes'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Scan node types for links'),
     '#default_value' => variable_get('linkchecker_scan_nodetypes', array()),
-    '#options' => array_map('check_plain', node_get_types('names')),
+    '#options' => array_map('check_plain', $names),
     '#description' => t('Enable link checking for the selected node type(s).'),
   );
 
@@ -102,8 +104,8 @@ function linkchecker_admin_settings_form($form_state) {
   // Get all filters available on the system.
   $filters = filter_list_all();
   $filter_options = array();
-  foreach ($filters as $filter) {
-    $filter_options[$filter->module . '/' . $filter->delta] = $filter->name;
+  foreach ($filters as $id => $filter) {
+    $filter_options[$id] = $filter->title;
   }
   $form['tag']['linkchecker_filter_blacklist'] = array(
     '#type' => 'checkboxes',

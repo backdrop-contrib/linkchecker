@@ -218,3 +218,17 @@ function linkchecker_update_7000() {
 
   return $ret;
 }
+
+/**
+ * Upgrade blacklist filter names.
+ *
+ * - Line break converter, http://drupal.org/project/drupal
+ *     name: filter/filter_autop (D6: filter/1)
+ */
+/*
+function linkchecker_update_7001() {
+  $ret = array();
+
+  return $ret;
+}
+*/
