@@ -110,10 +110,10 @@ function linkchecker_user_report_page($account) {
 
 function _linkchecker_report_page($links_report_sql, $links_report_parameters = NULL, $account = NULL) {
 
-  $links_unchecked = db_result(db_query('SELECT count(1) FROM {linkchecker_link} WHERE last_checked = :last_checked', array(':last_checked' => 0)));
+  $links_unchecked = db_result(db_query('SELECT COUNT(1) FROM {linkchecker_link} WHERE last_checked = :last_checked', array(':last_checked' => 0)));
   if ($links_unchecked > 0) {
     // D7 count query?
-    $links_all = db_result(db_query('SELECT count(1) FROM {linkchecker_link}'));
+    $links_all = db_result(db_query('SELECT COUNT(1) FROM {linkchecker_link}'));
     drupal_set_message(format_plural($links_unchecked,
       'There is 1 unchecked link of about @links_all links in the database. Please be patient until all links have been checked via cron.',
       'There are @count unchecked links of about @links_all links in the database. Please be patient until all links have been checked via cron.',
