@@ -85,34 +85,38 @@ function linkchecker_help($path, $arg) {
 function linkchecker_menu() {
 
   $items['admin/settings/linkchecker'] = array(
-    'title' => 'Link checker',
+    'access arguments' => array('administer linkchecker'),
     'description' => 'Link checker configuration.',
+    'file' => 'linkchecker.admin.inc',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('linkchecker_admin_settings_form'),
-    'access arguments' => array('administer linkchecker'),
+    'title' => 'Link checker',
   );
   $items['admin/reports/linkchecker'] = array(
-    'title' => 'Broken links',
-    'description' => 'Shows a list of broken links in content.',
-    'page callback' => 'linkchecker_admin_report_page',
-    'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('access broken links report'),
+    'description' => 'Shows a list of broken links in content.',
+    'file' => 'linkchecker.pages.inc',
+    'page callback' => 'linkchecker_admin_report_page',
+    'title' => 'Broken links',
+    'type' => MENU_NORMAL_ITEM,
   );
   // Add the user menu item after node/edit tab.
   $items['user/%user/linkchecker'] = array(
-    'title' => 'Broken links',
+    'access arguments' => array('access own broken links report'),
     'description' => 'Shows a list of broken links in content.',
+    'file' => 'linkchecker.pages.inc',
     'page callback' => 'linkchecker_user_report_page',
     'page arguments' => array(1),
+    'title' => 'Broken links',
     'type' => MENU_LOCAL_TASK,
-    'access arguments' => array('access own broken links report'),
     'weight' => 3,
   );
   $items['linkchecker/%linkchecker_link/edit'] = array(
-    'title' => 'Edit link settings',
+    'access arguments' => array('edit link settings'),
+    'file' => 'linkchecker.pages.inc',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('linkchecker_link_edit_form', 1),
-    'access arguments' => array('edit link settings'),
+    'title' => 'Edit link settings',
     'type' => MENU_CALLBACK,
   );
 
