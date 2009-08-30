@@ -229,6 +229,9 @@ function linkchecker_update_7000() {
 function linkchecker_update_7001() {
   $ret = array();
 
+  // See filter_update_7003();
+  // Add drupal message that settings are not upgradable for 'unknown' contrib filters.
+
   return $ret;
 }
 */
