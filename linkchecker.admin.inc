@@ -305,10 +305,10 @@ function linkchecker_clear_analyze_links_submit($form, &$form_state) {
   // Save form settings.
   system_settings_form_submit($form, $form_state);
 
-  db_truncate('linkchecker_box');
-  db_truncate('linkchecker_comment');
-  db_truncate('linkchecker_node');
-  db_truncate('linkchecker_link');
+  db_truncate('linkchecker_box')->execute();
+  db_truncate('linkchecker_comment')->execute();
+  db_truncate('linkchecker_node')->execute();
+  db_truncate('linkchecker_link')->execute();
 
   // Start batch and analyze all nodes.
   $node_types = array_keys(array_filter(variable_get('linkchecker_scan_nodetypes', array())));
