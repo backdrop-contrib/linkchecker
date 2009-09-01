@@ -1526,5 +1526,5 @@ function _linkchecker_unpublish_nodes($lid) {
  * Load link as object.
  */
 function linkchecker_link_load($lid) {
-  return db_query('SELECT * FROM {linkchecker_link} WHERE lid = :lid', array(':lid' => $lid));
+  return db_query('SELECT * FROM {linkchecker_link} WHERE lid = :lid', array(':lid' => $lid))->fetchObject();
 }
