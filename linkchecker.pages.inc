@@ -129,7 +129,7 @@ function _linkchecker_report_page($query, $account = NULL) {
 
     // Show links to link settings.
     if ($access_edit_link_settings) {
-      $links[] = l(t('Edit link settings'), 'linkchecker/' . $link->lid . '/edit', array('query' => 'destination=admin/reports/linkchecker'));
+      $links[] = l(t('Edit link settings'), 'linkchecker/' . $link->lid . '/edit', array('query' => 'destination=' . drupal_get_destination()));
     }
 
     // Show link to nodes having this broken link.
@@ -144,7 +144,7 @@ function _linkchecker_report_page($query, $account = NULL) {
       $nodes = db_query('SELECT nid FROM {linkchecker_nodes} WHERE lid = :lid', array(':lid' => $link->lid));
     }
     foreach ($nodes as $node) {
-      $links[] = l(t('Edit node @node', array('@node' => $node->nid)), 'node/' . $node->nid . '/edit', array('query' => 'destination=admin/reports/linkchecker'));
+      $links[] = l(t('Edit node @node', array('@node' => $node->nid)), 'node/' . $node->nid . '/edit', array('query' => 'destination=' . drupal_get_destination()));
     }
 
     // Show link to comments having this broken link.
@@ -158,14 +158,14 @@ function _linkchecker_report_page($query, $account = NULL) {
       $comments = db_query('SELECT cid FROM {linkchecker_comment} WHERE lid = :lid', array(':lid' => $link->lid));
     }
     foreach ($comments as $comment) {
-      $links[] = l(t('Edit comment @comment', array('@comment' => $comment->cid)), 'comment/edit/' . $comment->cid, array('query' => 'destination=admin/reports/linkchecker'));
+      $links[] = l(t('Edit comment @comment', array('@comment' => $comment->cid)), 'comment/edit/' . $comment->cid, array('query' => 'destination=' . drupal_get_destination()));
     }
 
     // Show link to blocks having this broken link.
     if ($access_administer_blocks) {
       $boxes = db_query('SELECT bid FROM {linkchecker_box} WHERE lid = :lid', array(':lid' => $link->lid));
       foreach ($boxes as $box) {
-        $links[] = l(t('Edit block @block', array('@block' => $box->bid)), 'admin/build/block/configure/block/' . $box->bid, array('query' => 'destination=admin/reports/linkchecker'));
+        $links[] = l(t('Edit block @block', array('@block' => $box->bid)), 'admin/build/block/configure/block/' . $box->bid, array('query' => 'destination=' . drupal_get_destination()));
       }
     }
 
