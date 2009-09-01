@@ -180,16 +180,19 @@ function _linkchecker_report_page($query, $account = NULL) {
         l(_filter_url_trim($link->url, 40), $link->url),
         $link->code,
         check_plain($link->error),
-        '<ul style="margin:0"><li style="white-space:nowrap">' . implode('</li><li>', $links) . '</li></ul>',
+        theme('item_list', $links),
       ),
     );
   }
 
+  if (empty($rows)) {
+    $rows[] = array(array('data' => t('No broken links have been found.'), 'colspan' => count($header)));
+  }
+
   $build['linkchecker_table'] = array(
-    '#theme' => 'tableselect',
+    '#theme' => 'table',
     '#header' => $header,
     '#rows' => $rows,
-    '#empty' => t('No broken links have been found.'),
   );
   $build['linkchecker_pager'] = array('#theme' => 'pager');
 
