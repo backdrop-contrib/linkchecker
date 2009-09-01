@@ -14,28 +14,31 @@ function linkchecker_admin_report_page() {
   $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"));
 
   // Search for broken links in nodes and comments and blocks of all users.
-  // TODO: Try to make subselect result smaller.
-  $links_report_sql = 'SELECT ll.*
-    FROM {linkchecker_link} ll
-    INNER JOIN (
-      SELECT lid FROM (
-        SELECT DISTINCT lid FROM {linkchecker_box}
-        UNION
-        SELECT DISTINCT lid FROM {linkchecker_comment}
-        UNION
-        SELECT DISTINCT lid FROM {linkchecker_node}
-      ) q1
-    ) q2 ON q2 = ll.lid
-    WHERE ll.last_checked <> :last_checked AND ll.status = :status AND ll.code NOT IN (:codes)';
+  // TODO: Try to make UNION'ed subselect resultset smaller.
+  $subquery4 = db_select('linkchecker_node', 'ln')
+    ->distinct()
+    ->fields('ln' , array('lid'));
 
-  // Build the array variable with all parameters for the pager_query.
-  $links_report_parameters = array(
-    ':codes' => $ignore_response_codes,
-    ':last_checked' => 0,
-    ':status' => 1,
-  );
+  $subquery3 = db_select('linkchecker_comment', 'lc')
+    ->distinct()
+    ->fields('lc' , array('lid'));
 
-  return _linkchecker_report_page($links_report_sql, $links_report_parameters);
+  $subquery2 = db_select('linkchecker_box', 'lb')
+    ->distinct()
+    ->fields('lb' , array('lid'));
+
+  // UNION all linkchecker type tables.
+  $subquery1 = db_select($subquery2->union($subquery3)->union($subquery4), 'q1')->fields('q1', array('lid'));
+
+  // Build pager query.
+  $query = db_select('linkchecker_link', 'll')->extend('PagerDefault')->extend('TableSort');
+  $query->innerJoin($subquery1, 'q2', 'q2.lid = ll.lid');
+  $query->fields('ll');
+  $query->condition('ll.last_checked', 0, '<>');
+  $query->condition('ll.status', 1);
+  $query->condition('ll.code', $ignore_response_codes, 'NOT IN');
+
+  return _linkchecker_report_page($query);
 }
 
 /**
@@ -46,74 +49,57 @@ function linkchecker_user_report_page($account) {
 
   $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"));
 
-  // Search for broken links in nodes and comments of the current user.
-  if (module_exists('comment') && variable_get('linkchecker_scan_comments', 0)) {
-    $links_report_sql = 'SELECT ll.*
-      FROM {linkchecker_link} ll
-      INNER JOIN (
-        SELECT lid FROM (
-          SELECT DISTINCT ll.lid
-          FROM {node} n
-          INNER JOIN {node_revision} r ON r.vid = n.vid
-          INNER JOIN {linkchecker_node} ln ON ln.nid = n.nid
-          INNER JOIN {linkchecker_link} ll ON ll.lid = ln.lid AND ll.last_checked <> :last_checked1 AND ll.status = :status1 AND ll.code NOT IN (:codes1)
-          WHERE n.uid = :uid1 OR r.uid = :uid2
-          UNION
-          SELECT DISTINCT ll.lid
-          FROM {comment} c
-          INNER JOIN {linkchecker_comment} lc ON lc.cid = c.nid
-          INNER JOIN {linkchecker_link} ll ON ll.lid = lc.lid AND ll.last_checked <> :last_checked2 AND ll.status = :status2 AND ll.code NOT IN (:codes2)
-          WHERE c.uid = :uid3
-        ) q1
-      ) q2 ON q2.lid = ll.lid';
+  // Build query for broken links in nodes of the current user.
+  $subquery2 = db_select('node', 'n');
+  $subquery2->innerJoin('node_revision', 'r', 'r.vid = n.vid');
+  $subquery2->innerJoin('linkchecker_node', 'ln', 'ln.nid = n.nid');
+  $subquery2->innerJoin('linkchecker_link', 'll', 'll.lid = ln.lid');
+  $subquery2->condition('ll.last_checked', 0, '<>');
+  $subquery2->condition('ll.status', 1);
+  $subquery2->condition('ll.code', $ignore_response_codes, 'NOT IN');
+  $subquery2->condition(db_or()
+    ->condition('n.uid', $account->uid)
+    ->condition('r.uid', $account->uid)
+  );
+  $subquery2->distinct();
+  $subquery2->fields('ll' , array('lid'));
 
-    // Build the array variable with all parameters for the pager_query with comment module enabled.
-    $links_report_parameters = array(
-      ':codes1' => $ignore_response_codes,
-      ':codes2' => $ignore_response_codes,
-      ':last_checked1' => 0,
-      ':last_checked2' => 0,
-      ':status1' => 1,
-      ':status2' => 1,
-      ':uid1' => $account->uid,
-      ':uid2' => $account->uid,
-      ':uid3' => $account->uid,
-    );
+  if (module_exists('comment') && variable_get('linkchecker_scan_comments', 0)) {
+    // Build query for broken links in nodes and comments of the current user.
+    $subquery3 = db_select('comment', 'c');
+    $subquery3->innerJoin('linkchecker_comment', 'lc', 'lc.cid = c.cid');
+    $subquery3->innerJoin('linkchecker_link', 'll', 'll.lid = lc.lid');
+    $subquery3->condition('ll.last_checked', 0, '<>');
+    $subquery3->condition('ll.status', 1);
+    $subquery3->condition('ll.code', $ignore_response_codes, 'NOT IN');
+    $subquery3->condition('c.uid', $account->uid);
+    $subquery3->distinct();
+    $subquery3->fields('ll' , array('lid'));
+
+    // UNION the linkchecker_node and linkchecker_comment tables.
+    $subquery1 = db_select($subquery2->union($subquery3), 'q1')->fields('q1', array('lid'));
   }
   else {
-    // Search for broken links in nodes of the current user.
-    $links_report_sql = 'SELECT ll.*
-      FROM {linkchecker_link} ll
-      INNER JOIN (
-        SELECT lid FROM (
-          SELECT DISTINCT ll.lid
-          FROM {node} n
-          INNER JOIN {node_revision} r ON r.vid = n.vid
-          INNER JOIN {linkchecker_node} ln ON ln.nid = n.nid
-          INNER JOIN {linkchecker_link} ll ON ll.lid = ln.lid AND ll.last_checked <> :last_checked1 AND ll.status = :status1 AND ll.code NOT IN (:codes1)
-          WHERE n.uid = :uid1 OR r.uid = :uid2
-        ) q1
-      ) q2 ON q2.lid = ll.lid';
-
-    // Build the array variable with all parameters for the pager_query with comment module disabled.
-    $links_report_parameters = array(
-      ':codes1' => $ignore_response_codes,
-      ':last_checked1' => 0,
-      ':status1' => 1,
-      ':uid1' => $account->uid,
-      ':uid2' => $account->uid,
-    );
+    // Build query for broken links in nodes of the current user.
+    $subquery1 = db_select($subquery2, 'q1')->fields('q1', array('lid'));
   }
 
-  return _linkchecker_report_page($links_report_sql, $links_report_parameters, $account);
+  // Build pager query.
+  $query = db_select('linkchecker_link', 'll')->extend('PagerDefault')->extend('TableSort');
+  $query->innerJoin($subquery1, 'q2', 'q2.lid = ll.lid');
+  $query->fields('ll');
+  $query->condition('ll.last_checked', 0, '<>');
+  $query->condition('ll.status', 1);
+  $query->condition('ll.code', $ignore_response_codes, 'NOT IN');
+
+  return _linkchecker_report_page($query, $account);
 }
 
-function _linkchecker_report_page($links_report_sql, $links_report_parameters = NULL, $account = NULL) {
+function _linkchecker_report_page($query, $account = NULL) {
 
-  $links_unchecked = db_result(db_query('SELECT COUNT(1) FROM {linkchecker_link} WHERE last_checked = :last_checked', array(':last_checked' => 0)));
+  $links_unchecked = db_query('SELECT COUNT(1) FROM {linkchecker_link} WHERE last_checked = :last_checked', array(':last_checked' => 0))->fetchField();
   if ($links_unchecked > 0) {
-    // D7 count query?
-    $links_all = db_result(db_query('SELECT COUNT(1) FROM {linkchecker_link}'));
+    $links_all = db_query('SELECT COUNT(1) FROM {linkchecker_link}')->fetchField();
     drupal_set_message(format_plural($links_unchecked,
       'There is 1 unchecked link of about @links_all links in the database. Please be patient until all links have been checked via cron.',
       'There are @count unchecked links of about @links_all links in the database. Please be patient until all links have been checked via cron.',
@@ -127,9 +113,10 @@ function _linkchecker_report_page($links_report_sql, $links_report_parameters = 
     array('data' => t('Operations')),
   );
 
-  // D7?
-  //$result = pager_query($links_report_sql . tablesort_sql($header), 50, 0, NULL, $links_report_parameters);
-  $result = pager_query($links_report_sql . tablesort_sql($header), 50, 0, NULL, array_values($links_report_parameters));
+  $result = $query
+    ->limit(50)
+    ->orderByHeader($header)
+    ->execute();
 
   // Evaluate permission once for performance reasons.
   $access_edit_link_settings = user_access('edit link settings');
@@ -188,21 +175,25 @@ function _linkchecker_report_page($links_report_sql, $links_report_parameters = 
     }
 
     // Create table data for output. Use inline styles to prevent extra CSS file.
-    $rows[] = array(
-      l(_filter_url_trim($link->url, 40), $link->url),
-      $link->code,
-      check_plain($link->error),
-      '<ul style="margin:0"><li style="white-space:nowrap">' . implode('</li><li>', $links) . '</li></ul>',
+    $rows[] = array('data' =>
+      array(
+        l(_filter_url_trim($link->url, 40), $link->url),
+        $link->code,
+        check_plain($link->error),
+        '<ul style="margin:0"><li style="white-space:nowrap">' . implode('</li><li>', $links) . '</li></ul>',
+      ),
     );
   }
 
-  if (empty($rows)) {
-    $rows[] = array(array('data' => t('No broken links have been found.'), 'colspan' => '4'));
-  }
+  $build['linkchecker_table'] = array(
+    '#theme' => 'tableselect',
+    '#header' => $header,
+    '#rows' => $rows,
+    '#empty' => t('No broken links have been found.'),
+  );
+  $build['linkchecker_pager'] = array('#theme' => 'pager');
 
-  $output  = theme('table', $header, $rows);
-  $output .= theme('pager', NULL, 3000, 0);
-  return $output;
+  return $build;
 }
 
 function linkchecker_link_edit_form(&$form_state, $link) {

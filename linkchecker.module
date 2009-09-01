@@ -903,10 +903,11 @@ function _linkchecker_cleanup_comment_references($cid = 0, $links = array()) {
     // The comment still have more than one link, but other links may have been
     // removed and links no longer in the content need to be deleted from the
     // linkchecker_comments reference table.
-    $subquery = db_select('linkchecker_link')
-      ->fields('linkchecker_link', array('lid'))
-      ->condition('urlhash', array_map('md5', $links), 'IN');
+    $subquery = db_select('linkchecker_link', 'll')
+      ->fields('ll', array('lid'))
+      ->condition('ll.urlhash', array_map('md5', $links), 'IN');
 
+    // FIXME: http://drupal.org/node/564852
     db_delete('linkchecker_comment')
       ->condition('cid', $cid)
       ->condition('lid', $subquery, 'NOT IN')
@@ -1040,6 +1041,7 @@ function _linkchecker_cleanup_links() {
  *    Array of full qualified and unique URLs found in content.
  */
 function _linkchecker_extract_links($text = '', $content_path = NULL) {
+  global $base_root;
 
   // Finds all hyperlinks in the content.
   $matches_a = array();
@@ -1162,7 +1164,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
       // Absolute local URLs need to start with [/].
       if (preg_match('!^/!', $ret[$i])) {
         // Add to Array and change HTML encoded links into plain text links.
-        $links[] = decode_entities('http://'. $_SERVER['HTTP_HOST'] . $ret[$i]);
+        $links[] = decode_entities($base_root . '://'. $_SERVER['HTTP_HOST'] . $ret[$i]);
       }
       // Anchors and URL parameters like "#foo" and "?foo=bar".
       elseif (!empty($content_path) && preg_match('!^[?#]!', $ret[$i])) {
