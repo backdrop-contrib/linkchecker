@@ -26,7 +26,7 @@ define('LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS', "example.com\nexample.net\n
  * to other nodes.
  *
  * - Line break converter, http://drupal.org/project/drupal
- *     name: filter/filter_autop
+ *     name: filter_autop
  * - Insert node, http://drupal.org/project/InsertNode
  *     name: insert_node/0
  *     tags: [node:<name of node> <parameters>]
@@ -43,7 +43,7 @@ define('LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS', "example.com\nexample.net\n
  *     name: weblinks_filter/0
  *     tags: [link: title]
  */
-define('LINKCHECKER_DEFAULT_FILTER_BLACKLIST', 'filter/filter_autop|insert_node/0|insert_view/0|links_weblink/0|weblinks_embed/0|weblinks_filter/0');
+define('LINKCHECKER_DEFAULT_FILTER_BLACKLIST', 'filter_autop|insert_node/0|insert_view/0|links_weblink/0|weblinks_embed/0|weblinks_filter/0');
 
 /**
  * Implementation of hook_perm().
@@ -520,7 +520,7 @@ function linkchecker_form_alter(&$form, &$form_state, $form_id) {
  * Custom submit handler for block add page.
  */
 function linkchecker_block_add_form_submit($form, &$form_state) {
-  $bid = db_query('SELECT MAX(bid) FROM {box}')->fetchField();
+  $bid = db_query('SELECT MAX(bid) FROM {block_custom}')->fetchField();
   _linkchecker_add_box_links($form_state['values'], $bid);
 }
 
@@ -549,21 +549,25 @@ function linkchecker_block_box_delete_form_submit($form, &$form_state) {
  *   the need for content re-scans is detected by the number of missing links.
  */
 function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALSE) {
+
+  $filter = new stdClass;
+  $filter->settings['filter_url_length'] = 72;
+
   // Create array of node fields to scan.
   $text_items = array();
-  $text_items[] = _filter_url($node->title, $node->format);
+  $text_items[] = _filter_url($node->title, $filter);
   //$text_items[] = _linkchecker_check_markup($node->summary, $node->format, $node->language);
   $text_items[] = _linkchecker_check_markup($node->body, $node->format, $node->language);
   $text_items[] = _linkchecker_check_markup($node->teaser, $node->format, $node->language);
 
   // Search for links in 'weblink' nodes from 'links' module package.
   if (module_exists('links_weblink') && $node->type == 'weblink' && isset($node->links_weblink_url)) {
-    $text_items[] = _filter_url($node->links_weblink_url, $node->format);
+    $text_items[] = _filter_url($node->links_weblink_url, $filter);
   }
 
   // Search for links in 'weblinks' nodes from 'weblinks' module.
   if (module_exists('weblinks') && $node->type == 'weblinks' && isset($node->url)) {
-    $text_items[] = _filter_url($node->url, $node->format);
+    $text_items[] = _filter_url($node->url, $filter);
   }
 
   // Search for CCK-fields of types 'link' and 'text'.
@@ -575,12 +579,12 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
         if (module_exists('link') && $field['type'] == 'link') {
           foreach ($node->$field['field_name'] as $delta => $item) {
             // FIXME D7: needs language parameter for check_markup.
-            $text_items[] = _filter_url($item['url'], $node->format);
+            $text_items[] = _filter_url($item['url'], $filter);
           }
         }
         elseif (module_exists('text') && $field['type'] == 'text') {
           foreach ($node->$field['field_name'] as $delta => $item) {
-            $text_items[] = _filter_url($item['value'], $node->format);
+            $text_items[] = _filter_url($item['value'], $filter);
           }
         }
       }
@@ -670,9 +674,13 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
  *   the need for content re-scans is detected by the number of missing links.
  */
 function _linkchecker_add_comment_links($comment, $skip_missing_links_detection = FALSE) {
+
+  $filter = new stdClass;
+  $filter->settings['filter_url_length'] = 72;
+
   // Create array of comment fields to scan.
   $text_items = array();
-  $text_items[] = _filter_url($comment->subject, $comment->comment_format);
+  $text_items[] = _filter_url($comment->subject, $filter);
   $text_items[] = _linkchecker_check_markup($comment->comment, $comment->comment_format);
   // TODO Found in user_comment_view();
   // $text_items[] = _linkchecker_check_markup($comment->signature, $comment->comment_format);
@@ -765,10 +773,13 @@ function _linkchecker_add_box_links($box, $bid, $skip_missing_links_detection = 
   // Convert box array to object.
   $box = (object) $box;
 
+  $filter = new stdClass;
+  $filter->settings['filter_url_length'] = 72;
+
   // Create array of box fields to scan.
   $text_items = array();
-  $text_items[] = _filter_url($box->info, $box->body_format);
-  $text_items[] = _filter_url($box->title, $box->body_format);
+  $text_items[] = _filter_url($box->info, $filter);
+  $text_items[] = _filter_url($box->title, $filter);
   $text_items[] = _linkchecker_check_markup($box->body, $box->body_format);
 
   // Extract all links in a box.
@@ -1343,9 +1354,10 @@ function _linkchecker_check_markup($text, $format = FILTER_FORMAT_DEFAULT, $lang
 
     // Give filters the chance to escape HTML-like data such as code or formulas.
     foreach ($filters as $filter) {
-      if (!in_array($filter->module . '/' . $filter->name, $filters_blacklist)) {
+      if (!in_array($filter->name, $filters_blacklist)) {
         $filter_info = module_invoke($filter->module, 'filter_info');
-        if (isset($filter_info[$filter->name]['prepare callback']) && drupal_function_exists($filter_info[$filter->name]['prepare callback'])) {
+        // TODO: http://drupal.org/node/562694
+        if (isset($filter_info[$filter->name]['prepare callback']) && function_exists($filter_info[$filter->name]['prepare callback'])) {
           $text = call_user_func($filter_info[$filter->name]['prepare callback'], $text, $format, $langcode, $cache_id);
         }
       }
@@ -1353,9 +1365,10 @@ function _linkchecker_check_markup($text, $format = FILTER_FORMAT_DEFAULT, $lang
 
     // Perform filtering.
     foreach ($filters as $filter) {
-      if (!in_array($filter->module . '/' . $filter->name, $filters_blacklist)) {
+      if (!in_array($filter->name, $filters_blacklist)) {
         $filter_info = module_invoke($filter->module, 'filter_info');
-        if (isset($filter_info[$filter->name]['process callback']) && drupal_function_exists($filter_info[$filter->name]['process callback'])) {
+        // TODO: http://drupal.org/node/562694
+        if (isset($filter_info[$filter->name]['process callback']) && function_exists($filter_info[$filter->name]['process callback'])) {
           $text = call_user_func($filter_info[$filter->name]['process callback'], $text, $format, $langcode, $cache_id);
         }
       }

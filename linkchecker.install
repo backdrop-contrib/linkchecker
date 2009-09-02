@@ -53,7 +53,7 @@ function linkchecker_schema() {
       'bid'  => array(
         'type' => 'int',
         'not null' => TRUE,
-        'description' => 'Primary Key: Unique {box}.bid.',
+        'description' => 'Primary Key: Unique {block_custom}.bid.',
       ),
       'lid' => array(
         'type' => 'int',
@@ -63,7 +63,7 @@ function linkchecker_schema() {
     ),
     'primary key' => array('bid', 'lid'),
     'foreign keys' => array(
-      'bid' => array('box' => 'bid'),
+      'bid' => array('block_custom' => 'bid'),
       'lid' => array('linkchecker_link' => 'lid'),
     ),
   );
@@ -223,7 +223,7 @@ function linkchecker_update_7000() {
  * Upgrade blacklist filter names.
  *
  * - Line break converter, http://drupal.org/project/drupal
- *     name: filter/filter_autop (D6: filter/1)
+ *     name: filter_autop (D6: filter/1)
  */
 /*
 function linkchecker_update_7001() {

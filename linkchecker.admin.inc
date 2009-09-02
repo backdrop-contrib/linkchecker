@@ -102,10 +102,10 @@ function linkchecker_admin_settings_form($form_state) {
   );
 
   // Get all filters available on the system.
-  $filters = filter_list_all();
+  $filter_info = filter_get_filters();
   $filter_options = array();
-  foreach ($filters as $id => $filter) {
-    $filter_options[$id] = $filter->title;
+  foreach ($filter_info as $name => $filter) {
+    $filter_options[$name] = $filter['title'];
   }
   $form['tag']['linkchecker_filter_blacklist'] = array(
     '#type' => 'checkboxes',

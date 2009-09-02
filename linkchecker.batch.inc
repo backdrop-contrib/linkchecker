@@ -100,8 +100,8 @@ function _linkchecker_batch_comments_import_finished($success, $results, $operat
  * Batch: Scan blocks for links.
  */
 function _linkchecker_batch_import_boxes() {
-  // Get all active {box}.bid's.
-  $result = db_query('SELECT b.bid FROM {box} b ORDER BY b.bid');
+  // Get all active {block_custom}.bid's.
+  $result = db_query('SELECT bid FROM {block_custom} ORDER BY bid');
 
   $operations = array();
   foreach ($result as $row) {
