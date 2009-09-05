@@ -84,9 +84,9 @@ function linkchecker_help($path, $arg) {
  */
 function linkchecker_menu() {
 
-  $items['admin/settings/linkchecker'] = array(
+  $items['admin/config/content/linkchecker'] = array(
     'access arguments' => array('administer linkchecker'),
-    'description' => 'Link checker configuration.',
+    'description' => 'Configure the link checker settings.',
     'file' => 'linkchecker.admin.inc',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('linkchecker_admin_settings_form'),
