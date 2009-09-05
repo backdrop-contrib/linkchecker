@@ -23,7 +23,7 @@ function linkchecker_admin_report_page() {
     ->distinct()
     ->fields('lc' , array('lid'));
 
-  $subquery2 = db_select('linkchecker_box', 'lb')
+  $subquery2 = db_select('linkchecker_block_custom', 'lb')
     ->distinct()
     ->fields('lb' , array('lid'));
 
@@ -64,7 +64,7 @@ function linkchecker_user_report_page($account) {
   $subquery2->distinct();
   $subquery2->fields('ll' , array('lid'));
 
-  if (module_exists('comment') && variable_get('linkchecker_scan_comments', 0)) {
+  if (variable_get('linkchecker_scan_comments', 0)) {
     // Build query for broken links in nodes and comments of the current user.
     $subquery3 = db_select('comment', 'c');
     $subquery3->innerJoin('linkchecker_comment', 'lc', 'lc.cid = c.cid');
@@ -141,14 +141,14 @@ function _linkchecker_report_page($query, $account = NULL) {
         WHERE ln.lid = :lid AND (n.uid = :uid1 OR r.uid = :uid2)', array(':lid' => $link->lid, ':uid1' => $account->uid, ':uid2' => $account->uid));
     }
     else {
-      $nodes = db_query('SELECT nid FROM {linkchecker_nodes} WHERE lid = :lid', array(':lid' => $link->lid));
+      $nodes = db_query('SELECT nid FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid));
     }
     foreach ($nodes as $node) {
       $links[] = l(t('Edit node @node', array('@node' => $node->nid)), 'node/' . $node->nid . '/edit', array('query' => drupal_get_destination()));
     }
 
     // Show link to comments having this broken link.
-    if (!empty($account) && module_exists('comment') && variable_get('linkchecker_scan_comments', 0)) {
+    if (!empty($account) && variable_get('linkchecker_scan_comments', 0)) {
       $comments = db_query('SELECT lc.cid
         FROM {linkchecker_comment} lc
         INNER JOIN {comment} c ON c.cid = lc.cid
@@ -163,7 +163,7 @@ function _linkchecker_report_page($query, $account = NULL) {
 
     // Show link to blocks having this broken link.
     if ($access_administer_blocks) {
-      $boxes = db_query('SELECT bid FROM {linkchecker_box} WHERE lid = :lid', array(':lid' => $link->lid));
+      $boxes = db_query('SELECT bid FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
       foreach ($boxes as $box) {
         $links[] = l(t('Edit block @block', array('@block' => $box->bid)), 'admin/build/block/configure/block/' . $box->bid, array('query' => drupal_get_destination()));
       }

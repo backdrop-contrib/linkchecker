@@ -34,11 +34,17 @@ function linkchecker_admin_settings_form($form_state) {
     '#description' => t('Enable this checkbox if links in comments of the above selected node type(s) should be checked.') . $comment_dependencies,
     '#disabled' => module_exists('comment') ? FALSE : TRUE,
   );
+
+  $block_custom_dependencies = '<div class="admin-dependencies">';
+  $block_custom_dependencies .= t('Depends on: !dependencies', array('!dependencies' => (module_exists('block') ? t('@module (<span class="admin-enabled">enabled</span>)', array('@module' => 'Block')) : t('@module (<span class="admin-disabled">disabled</span>)', array('@module' => 'Block')))));
+  $block_custom_dependencies .= '</div>';
+
   $form['settings']['linkchecker_scan_blocks'] = array(
     '#default_value' => variable_get('linkchecker_scan_blocks', 0),
     '#type' => 'checkbox',
     '#title' => t('Scan blocks for links'),
     '#description' => t('Enable this checkbox if links in blocks should be checked.'),
+    '#disabled' => module_exists('block') ? FALSE : TRUE,
   );
   $form['settings']['linkchecker_fqdn_only'] = array(
     '#default_value' => variable_get('linkchecker_fqdn_only', 1),
@@ -265,7 +271,7 @@ function linkchecker_admin_settings_form_submit($form, &$form_state) {
   // If block scanning has been selected.
   if ($form_state['values']['linkchecker_scan_blocks'] > $form['settings']['linkchecker_scan_blocks']['#default_value']) {
     module_load_include('inc', 'linkchecker', 'linkchecker.batch');
-    batch_set(_linkchecker_batch_import_boxes());
+    batch_set(_linkchecker_batch_import_block_custom());
   }
 }
 
@@ -291,7 +297,7 @@ function linkchecker_analyze_links_submit($form, &$form_state) {
 
   if (variable_get('linkchecker_scan_blocks', 0)) {
     module_load_include('inc', 'linkchecker', 'linkchecker.batch');
-    batch_set(_linkchecker_batch_import_boxes());
+    batch_set(_linkchecker_batch_import_block_custom());
   }
 }
 
@@ -305,7 +311,7 @@ function linkchecker_clear_analyze_links_submit($form, &$form_state) {
   // Save form settings.
   system_settings_form_submit($form, $form_state);
 
-  db_truncate('linkchecker_box')->execute();
+  db_truncate('linkchecker_block_custom')->execute();
   db_truncate('linkchecker_comment')->execute();
   db_truncate('linkchecker_node')->execute();
   db_truncate('linkchecker_link')->execute();
@@ -322,6 +328,6 @@ function linkchecker_clear_analyze_links_submit($form, &$form_state) {
 
   if (variable_get('linkchecker_scan_blocks', 0)) {
     module_load_include('inc', 'linkchecker', 'linkchecker.batch');
-    batch_set(_linkchecker_batch_import_boxes());
+    batch_set(_linkchecker_batch_import_block_custom());
   }
 }

@@ -47,7 +47,7 @@ function linkchecker_uninstall() {
  */
 function linkchecker_schema() {
 
-  $schema['linkchecker_box'] = array(
+  $schema['linkchecker_block_custom'] = array(
     'description' => 'Stores all link references for boxes.',
     'fields' => array(
       'bid'  => array(
@@ -206,12 +206,29 @@ function linkchecker_requirements($phase) {
 }
 
 /**
+ * If the core modules are disabled the integration need to be disabled.
+ */
+function linkchecker_modules_disabled($modules) {
+  // Disable link checks for custom blocks.
+  if (in_array('block', $modules)) {
+    variable_set('linkchecker_scan_blocks', 0);
+    drupal_set_message('Link checks for blocks have been disabled.');
+  }
+
+  // Disable link checks for comments.
+  if (in_array('comment', $modules)) {
+    variable_set('linkchecker_scan_comments', 0);
+    drupal_set_message('Link checks for comments have been disabled.');
+  }
+}
+
+/**
  * Rename tables to singular.
  */
 function linkchecker_update_7000() {
   $ret = array();
 
-  db_rename_table($ret, 'linkchecker_boxes', 'linkchecker_box');
+  db_rename_table($ret, 'linkchecker_boxes', 'linkchecker_block_custom');
   db_rename_table($ret, 'linkchecker_comments', 'linkchecker_comment');
   db_rename_table($ret, 'linkchecker_nodes', 'linkchecker_node');
   db_rename_table($ret, 'linkchecker_links', 'linkchecker_link');
