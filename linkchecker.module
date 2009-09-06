@@ -1121,7 +1121,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
         }
 
         $srcs = array('movie');
-        if ($param->hasAttribute('name') && in_array($param->getAttribute('src'), $srcs)) {
+        if ($param->hasAttribute('src') && in_array($param->getAttribute('src'), $srcs)) {
           $urls[] = $param->getAttribute('value');
         }
       }
