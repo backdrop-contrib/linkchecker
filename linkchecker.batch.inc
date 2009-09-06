@@ -121,13 +121,13 @@ function _linkchecker_batch_import_block_custom() {
  * Batch operation: Scan ony by one block for links.
  */
 function _linkchecker_batch_import_block_custom_op($bid, &$context) {
-  // Load the box and scan for links.
-  $box = block_box_get($bid);
-  _linkchecker_add_block_custom_links($box, $box['bid']);
+  // Load the custom block and scan for links.
+  $block_custom = block_box_get($bid);
+  _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
 
   // Store some result for post-processing in the finished callback.
-  $context['results'][] = $box['bid'];
-  $context['message'] = t('Block: @title', array('@title' => $box['info']));
+  $context['results'][] = $block_custom['bid'];
+  $context['message'] = t('Block: @title', array('@title' => $block_custom['info']));
 }
 
 function _linkchecker_batch_block_custom_import_finished($success, $results, $operations) {
@@ -267,13 +267,13 @@ function _linkchecker_batch_import_single_block_custom($bid, $missing_links_coun
 }
 
 function _linkchecker_batch_single_block_custom_import_op($bid, &$context) {
-  // Load the box and scan for links.
-  $box = block_box_get($bid);
-  _linkchecker_add_block_custom_links($box, $box['bid'], TRUE);
+  // Load the custom block and scan for links.
+  $block_custom = block_box_get($bid);
+  _linkchecker_add_block_custom_links($block_custom, $block_custom['bid'], TRUE);
 
   // Store some result for post-processing in the finished callback.
-  $context['results'][] = $box['bid'];
-  $context['message'] = t('Block: @title', array('@title' => $box['info']));
+  $context['results'][] = $block_custom['bid'];
+  $context['message'] = t('Block: @title', array('@title' => $block_custom['info']));
 }
 
 function _linkchecker_batch_single_block_custom_import_finished($success, $results, $operations) {

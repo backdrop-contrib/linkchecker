@@ -303,24 +303,24 @@ function _linkchecker_status_handling($link, $response) {
         // CUSTOM BLOCKS: Autorepair all custom blocks having this outdated link.
         $result = db_query('SELECT * FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
         foreach ($result as $row) {
-          $box = block_box_get($row->bid);
+          $block_custom = block_box_get($row->bid);
 
-          // Create array of box fields to scan.
+          // Create array of custom block fields to scan.
           $text_items = array();
           $text_items[] = 'info';
           $text_items[] = 'title';
           $text_items[] = 'body';
 
-          // Now replace the outdated link with the permanently moved one in all box fields.
+          // Now replace the outdated link with the permanently moved one in all custom block fields.
           foreach ($text_items as $text_item) {
-            _linkchecker_link_replace($box[$text_item], $link->url, $response->redirect_url);
+            _linkchecker_link_replace($block_custom[$text_item], $link->url, $response->redirect_url);
           }
 
           // Save changed node and update the node link list.
-          block_box_save($box, $box['bid']);
+          block_box_save($block_custom, $block_custom['bid']);
           // There is no hook that fires on block_box_save(), therefore do it programmatically.
-          _linkchecker_add_block_custom_links($box, $box['bid']);
-          watchdog('linkchecker', 'Changed permanently moved link in box %bid from %src to %dst.', array('%bid' => $box['bid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+          _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
+          watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom['bid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
         }
 
       }
@@ -478,16 +478,16 @@ function linkchecker_comment_unpublish($comment) {
  */
 function linkchecker_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
-    // Catch the block add/configure form and add custom submit handler.
+    // Catch the custom block add/configure form and add custom submit handler.
     case 'block_add_block_form':
-      // Add custom submit handler to block add form.
+      // Add custom submit handler to custom block add form.
       $form['#submit'][] = 'linkchecker_block_custom_add_form_submit';
       break;
 
     case 'block_admin_configure':
       // When displaying the form, show the broken links warning.
       if (empty($form_state['input']) && is_numeric(arg(5))) {
-        // Show a message on block edit page if a link check failed once or more.
+        // Show a message on custom block edit page if a link check failed once or more.
         $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"));
         $links = db_query('SELECT url, code, fail_count FROM {linkchecker_block_custom} lb INNER JOIN {linkchecker_link} ll ON lb.lid = ll.lid WHERE lb.bid = :bid AND ll.fail_count > :fail_count AND ll.status = :status AND ll.code NOT IN (:codes)', array(':bid' => arg(5), ':fail_count' => 0, ':status' => 1, ':codes' => $ignore_response_codes));
         foreach ($links as $link) {
@@ -495,12 +495,12 @@ function linkchecker_form_alter(&$form, &$form_state, $form_id) {
         }
       }
 
-      // Add custom submit handler to block configuration form.
+      // Add custom submit handler to custom block configuration form.
       $form['#submit'][] = 'linkchecker_block_custom_configure_form_submit';
       break;
 
     case 'block_box_delete':
-      // Add custom submit handler to block delete form.
+      // Add custom submit handler to custom block delete form.
       $form['#submit'][] = 'linkchecker_block_custom_delete_form_submit';
       break;
 
@@ -764,27 +764,27 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
 /**
  * Add block links to database.
  *
- * @param $box
- *   The fully populated block object.
+ * @param $block_custom
+ *   The fully populated custom block object.
  *
  * @param $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
  *   the need for content re-scans is detected by the number of missing links.
  */
-function _linkchecker_add_block_custom_links($box, $bid, $skip_missing_links_detection = FALSE) {
-  // Convert box array to object.
-  $box = (object) $box;
+function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_links_detection = FALSE) {
+  // Convert custom block array to object.
+  $block_custom = (object) $block_custom;
 
   $filter = new stdClass;
   $filter->settings['filter_url_length'] = 72;
 
-  // Create array of box fields to scan.
+  // Create array of custom block fields to scan.
   $text_items = array();
-  $text_items[] = _filter_url($box->info, $filter);
-  $text_items[] = _filter_url($box->title, $filter);
-  $text_items[] = _linkchecker_check_markup($box->body, $box->body_format);
+  $text_items[] = _filter_url($block_custom->info, $filter);
+  $text_items[] = _filter_url($block_custom->title, $filter);
+  $text_items[] = _linkchecker_check_markup($block_custom->body, $block_custom->body_format);
 
-  // Extract all links in a box.
+  // Extract all links in a custom block.
   $links = _linkchecker_extract_links(implode(' ', $text_items));
 
   // Box have links.
@@ -869,7 +869,7 @@ function _linkchecker_delete_comment_links($cid) {
 }
 
 /**
- * Remove all box references to links in the linkchecker_block_custom table.
+ * Remove all custom block references to links in the linkchecker_block_custom table.
  */
 function _linkchecker_delete_block_custom_links($bid) {
   db_delete('linkchecker_block_custom')
@@ -929,7 +929,7 @@ function _linkchecker_cleanup_comment_references($cid = 0, $links = array()) {
 }
 
 /**
- * Cleanup no longer used box references to links in the linkchecker_block_custom table.
+ * Cleanup no longer used custom block references to links in the linkchecker_block_custom table.
  */
 function _linkchecker_cleanup_block_custom_references($bid = 0, $links = array()) {
   if (empty($links)) {
@@ -978,7 +978,7 @@ function _linkchecker_comment_links_missing($cid, $links) {
 }
 
 /**
- * Returns an array of box references missing in the linkchecker_block_custom table.
+ * Returns an array of custom block references missing in the linkchecker_block_custom table.
  */
 function _linkchecker_block_custom_links_missing($bid, $links) {
   $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_block_custom} lb ON lb.lid = ll.lid WHERE lb.bid = :bid AND ll.urlhash IN (:urlhashes)', array(':bid' => $bid, ':urlhashes' => array_map('md5', $links)));
