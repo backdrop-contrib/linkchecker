@@ -1054,137 +1054,130 @@ function _linkchecker_cleanup_links() {
 function _linkchecker_extract_links($text = '', $content_path = NULL) {
   global $base_root;
 
+  $html_dom = filter_dom_load($text);
+  $urls = array();
+
   // Finds all hyperlinks in the content.
-  $matches_a = array();
   if (variable_get('linkchecker_extract_from_a', 1) == 1) {
-    // Extract all chars in the href value, except double and single quotes.
-    $pattern_a = '/<(a|area)\s[^>]*href=["\']([^"\']*)["\'][^>]*>/i';
-    preg_match_all($pattern_a, $text, $matches_a);
+    $links = $html_dom->getElementsByTagName('a');
+    foreach ($links as $link) {
+      $urls[] = $link->getAttribute('href');
+    }
+
+    $links = $html_dom->getElementsByTagName('area');
+    foreach ($links as $link) {
+      $urls[] = $link->getAttribute('href');
+    }
   }
 
   // Finds all audio links in the content.
-  $matches_audio = array();
   if (variable_get('linkchecker_extract_from_audio', 1) == 1) {
-    $pattern_audio = '/<audio\s[^>]*src=["\']([^"\']*)["\'][^>]*>/i';
-    preg_match_all($pattern_audio, $text, $matches_audio);
+    $audios = $html_dom->getElementsByTagName('audio');
+    foreach ($audios as $audio) {
+      $urls[] = $audio->getAttribute('src');
+    }
   }
 
   // Finds embed tags with links in the content.
-  $matches_embed = array();
   if (variable_get('linkchecker_extract_from_embed', 0) == 1) {
-    $pattern_embed_src = '/<embed\s[^>]*src=["\']([^"\']*)["\'][^>]*>/i';
-    $pattern_embed_pluginurl = '/<embed\s[^>]*pluginurl=["\']([^"\']*)["\'][^>]*>/i';
-    $pattern_embed_pluginspage = '/<embed\s[^>]*pluginspage=["\']([^"\']*)["\'][^>]*>/i';
-
-    preg_match_all($pattern_embed_src, $text, $matches_embed_src);
-    preg_match_all($pattern_embed_pluginurl, $text, $matches_embed_pluginurl);
-    preg_match_all($pattern_embed_pluginspage, $text, $matches_embed_pluginspage);
-
-    $matches_embed = array_merge(
-      (array)$matches_embed_src[1],
-      (array)$matches_embed_pluginurl[1],
-      (array)$matches_embed_pluginspage[1]
-    );
+    $embeds = $html_dom->getElementsByTagName('embed');
+    foreach ($embeds as $embed) {
+      $urls[] = $embed->getAttribute('src');
+      $urls[] = $embed->getAttribute('pluginurl');
+      $urls[] = $embed->getAttribute('pluginspage');
+    }
   }
 
   // Finds iframe tags with links in the content.
-  $matches_iframe = array();
   if (variable_get('linkchecker_extract_from_iframe', 0) == 1) {
-    $pattern_iframe = '/<iframe\s[^>]*src=["\']([^"\']*)["\'][^>]*>/i';
-    preg_match_all($pattern_iframe, $text, $matches_iframe);
+    $iframes = $html_dom->getElementsByTagName('iframe');
+    foreach ($iframes as $iframe) {
+      $urls[] = $iframe->getAttribute('src');
+    }
   }
 
   // Finds img tags with links in the content.
-  $matches_img = array();
   if (variable_get('linkchecker_extract_from_img', 0) == 1) {
-    $pattern_img = '/<img\s[^>]*src=["\']([^"\']*)["\'][^>]*>/i';
-    preg_match_all($pattern_img, $text, $matches_img);
+    $imgs = $html_dom->getElementsByTagName('img');
+    foreach ($imgs as $img) {
+      $urls[] = $img->getAttribute('src');
+    }
   }
 
   // Finds object/param tags with links in the content.
-  $matches_object = array();
   if (variable_get('linkchecker_extract_from_object', 0) == 1) {
-    // TODO's:
-    //  * Allow flipped order of attributes in "param".
-    //  * Try to extract links in unkown "flashvars" values (for e.g. file=http://, data=http://).
-    $pattern_object_data = '/<object\s[^>]*data=["\']([^"\']*)["\'][^>]*>/i';
-    $pattern_object_codebase = '/<object\s[^>]*codebase=["\']([^"\']*)["\'][^>]*>/i';
-    $pattern_param = '/<param\s[^>]*((name|src)=["\'](archive|filename|href|movie|src|url)["\']\s[^>]*)+value=["\']([^"\']*)["\'][^>]*>/i';
+    $objects = $html_dom->getElementsByTagName('object');
+    foreach ($objects as $object) {
+      $urls[] = $object->getAttribute('data');
+      $urls[] = $object->getAttribute('codebase');
 
-    preg_match_all($pattern_object_data, $text, $matches_object_data);
-    preg_match_all($pattern_object_codebase, $text, $matches_object_codebase);
-    preg_match_all($pattern_param, $text, $matches_param);
+      $params = $object->getElementsByTagName('param');
+      foreach ($params as $param) {
+        // TODO's:
+        //  * Try to extract links in unkown "flashvars" values (for e.g. file=http://, data=http://).
+        $names = array('archive', 'filename', 'href', 'movie', 'src', 'url');
+        if ($param->hasAttribute('name') && in_array($param->getAttribute('name'), $names)) {
+          $urls[] = $param->getAttribute('value');
+        }
 
-    $matches_object = array_merge(
-      (array)$matches_object_data[1],
-      (array)$matches_object_codebase[1],
-      (array)$matches_param[4]
-    );
+        $srcs = array('movie');
+        if ($param->hasAttribute('name') && in_array($param->getAttribute('src'), $srcs)) {
+          $urls[] = $param->getAttribute('value');
+        }
+      }
+    }
   }
 
   // Finds source tags with links in the content.
-  $matches_source = array();
   if (variable_get('linkchecker_extract_from_source', 0) == 1) {
-    $pattern_source = '/<source\s[^>]*src=["\']([^"\']*)["\'][^>]*>/i';
-    preg_match_all($pattern_source, $text, $matches_source);
+    $sources = $html_dom->getElementsByTagName('source');
+    foreach ($sources as $source) {
+      $urls[] = $source->getAttribute('src');
+    }
   }
 
   // Finds video tags with links in the content.
-  $matches_video = array();
   if (variable_get('linkchecker_extract_from_video', 0) == 1) {
-    $pattern_video_poster = '/<video\s[^>]*poster=["\']([^"\']*)["\'][^>]*>/i';
-    $pattern_video_src = '/<video\s[^>]*src=["\']([^"\']*)["\'][^>]*>/i';
-
-    preg_match_all($pattern_video_poster, $text, $matches_video_poster);
-    preg_match_all($pattern_video_src, $text, $matches_video_src);
-
-    $matches_video = array_merge(
-      (array)$matches_video_poster[1],
-      (array)$matches_video_src[1]
-    );
+    $videos = $html_dom->getElementsByTagName('video');
+    foreach ($videos as $video) {
+      $urls[] = $video->getAttribute('poster');
+      $urls[] = $video->getAttribute('src');
+    }
   }
 
-  // Merge all extracted links into one array.
-  $ret = array_merge(
-    (array)$matches_a[2],
-    (array)$matches_audio[1],
-    (array)$matches_embed,
-    (array)$matches_iframe[1],
-    (array)$matches_img[1],
-    (array)$matches_object,
-    (array)$matches_source[1],
-    (array)$matches_video
-  );
+  // Remove empty values.
+  $urls = array_filter($urls);
+  // Decode HTML links into plain text links.
+  $urls = array_map('decode_entities', $urls);
+  // Remove duplicate urls.
+  $urls = array_unique($urls);
 
   $links = array();
-  for ($i=0; isset($ret[$i]); $i++) {
+  foreach ($urls as $url) {
     // Full qualified URLs.
-    if (valid_url($ret[$i], TRUE)) {
-      // Add to Array and change HTML links into plain text links.
-      $links[] = decode_entities($ret[$i]);
+    if (valid_url($url, TRUE)) {
+      $links[] = $url;
     }
     // Skip mailto:, javascript:, etc.
-    elseif (preg_match('/^\w[\w.+]*:/', $ret[$i])) {
+    elseif (preg_match('/^\w[\w.+]*:/', $url)) {
       continue;
     }
     // Local URLs.
-    elseif (valid_url($ret[$i], FALSE) && variable_get('linkchecker_fqdn_only', 1) == 0) {
+    elseif (valid_url($url, FALSE) && variable_get('linkchecker_fqdn_only', 1) == 0) {
       // Get full qualified url with base path of content.
       $absolute_content_path = _linkchecker_absolute_content_path($content_path);
 
       // Absolute local URLs need to start with [/].
-      if (preg_match('!^/!', $ret[$i])) {
-        // Add to Array and change HTML encoded links into plain text links.
-        $links[] = decode_entities($base_root . '://'. $_SERVER['HTTP_HOST'] . $ret[$i]);
+      if (preg_match('!^/!', $url)) {
+        $links[] = $base_root . '://'. $_SERVER['HTTP_HOST'] . $url;
       }
       // Anchors and URL parameters like "#foo" and "?foo=bar".
-      elseif (!empty($content_path) && preg_match('!^[?#]!', $ret[$i])) {
-        // Add to Array and change HTML encoded links into plain text links.
-        $links[] = $content_path . decode_entities($ret[$i]);
+      elseif (!empty($content_path) && preg_match('!^[?#]!', $url)) {
+        $links[] = $content_path . $url;
       }
       // Relative URLs like "./foo/bar" and "../foo/bar".
-      elseif (!empty($absolute_content_path) && preg_match('!^\.{1,2}/!', $ret[$i])) {
-        $path = $absolute_content_path . decode_entities($ret[$i]);
+      elseif (!empty($absolute_content_path) && preg_match('!^\.{1,2}/!', $url)) {
+        $path = $absolute_content_path . $url;
 
         // Remove './' segments where possible.
         $path = str_replace('/./', '/', $path);
@@ -1197,12 +1190,11 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
           $path = preg_replace('`(^|/)(?!\.\./)([^/]+)/\.\./`', '$1', $path);
         }
 
-        // Add URLs to array.
         $links[] = $path;
       }
       // Relative URLs like "test.png".
-      elseif (!empty($absolute_content_path) && preg_match('!^[^/]!', $ret[$i])) {
-        $links[] = $absolute_content_path . decode_entities($ret[$i]);
+      elseif (!empty($absolute_content_path) && preg_match('!^[^/]!', $url)) {
+        $links[] = $absolute_content_path . $url;
       }
       else {
         // TODO: Are there more special cases the module need to handle?
