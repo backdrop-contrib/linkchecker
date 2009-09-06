@@ -163,9 +163,9 @@ function _linkchecker_report_page($query, $account = NULL) {
 
     // Show link to blocks having this broken link.
     if ($access_administer_blocks) {
-      $boxes = db_query('SELECT bid FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
-      foreach ($boxes as $box) {
-        $links[] = l(t('Edit block @block', array('@block' => $box->bid)), 'admin/build/block/configure/block/' . $box->bid, array('query' => drupal_get_destination()));
+      $blocks_custom = db_query('SELECT bid FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
+      foreach ($blocks_custom as $block_custom) {
+        $links[] = l(t('Edit block @block', array('@block' => $block_custom->bid)), 'admin/build/block/configure/block/' . $block_custom->bid, array('query' => drupal_get_destination()));
       }
     }
 

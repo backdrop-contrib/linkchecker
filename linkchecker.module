@@ -300,7 +300,7 @@ function _linkchecker_status_handling($link, $response) {
           }
         }
 
-        // BOXES: Autorepair all boxes having this outdated link.
+        // CUSTOM BLOCKS: Autorepair all custom blocks having this outdated link.
         $result = db_query('SELECT * FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
         foreach ($result as $row) {
           $box = block_box_get($row->bid);

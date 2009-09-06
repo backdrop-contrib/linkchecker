@@ -48,7 +48,7 @@ function linkchecker_uninstall() {
 function linkchecker_schema() {
 
   $schema['linkchecker_block_custom'] = array(
-    'description' => 'Stores all link references for boxes.',
+    'description' => 'Stores all link references for custom blocks.',
     'fields' => array(
       'bid'  => array(
         'type' => 'int',

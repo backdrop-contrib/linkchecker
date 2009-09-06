@@ -8,6 +8,53 @@
 
 function linkchecker_admin_settings_form($form_state) {
 
+  $node = node_load('2');
+  krumo($node->body['zxx'][0]['safe']);
+  $html_dom = filter_dom_load($node->body['zxx'][0]['safe']);
+  //krumo($node->body['zxx'][0]['safe']);
+
+  $urls = array();
+  $urls[] = '/foo?foo1=bar1&amp;foo2=bar2';
+/*
+  $links = $html_dom->getElementsByTagName('a');
+  foreach($links as $link) {
+    $urls[] = $link->getAttribute('href');
+    $urls[] = $link->getAttribute('title');
+  }
+
+  $images = $html_dom->getElementsByTagName('img');
+  foreach($images as $image) {
+    $urls[] = $image->getAttribute('src');
+    $urls[] = $image->getAttribute('alt');
+  }
+*/
+    $objects = $html_dom->getElementsByTagName('object');
+    foreach ($objects as $object) {
+      $urls[] = $object->getAttribute('data');
+      $urls[] = $object->getAttribute('codebase');
+
+      $params = $object->getElementsByTagName('param');
+      foreach ($params as $param) {
+        // TODO's:
+        //  * Try to extract links in unkown "flashvars" values (for e.g. file=http://, data=http://).
+        $names = array('archive', 'filename', 'href', 'movie', 'src', 'url');
+        if ($param->hasAttribute('name') && in_array($param->getAttribute('name'), $names)) {
+          $urls[] = $param->getAttribute('value');
+        }
+
+        $srcs = array('movie');
+        if ($param->hasAttribute('name') && in_array($param->getAttribute('src'), $srcs)) {
+          $urls[] = $param->getAttribute('value');
+        }
+      }
+    }
+
+  krumo($urls);
+  $urls = array_filter($urls);
+  $urls = array_map('decode_entities', $urls);
+  krumo($urls);
+
+
   $form['settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('General settings'),
@@ -276,7 +323,8 @@ function linkchecker_admin_settings_form_submit($form, &$form_state) {
 }
 
 /**
- * Submit callback; Analyze all node types, boxes and cck fields.
+ * Submit callback; Analyze all node types, comments, custom blocks and
+ * cck fields.
  */
 function linkchecker_analyze_links_submit($form, &$form_state) {
   // Exclude unnecessary elements.
@@ -302,7 +350,8 @@ function linkchecker_analyze_links_submit($form, &$form_state) {
 }
 
 /**
- * Submit callback; Clear link data and analyze all node types, boxes and cck fields.
+ * Submit callback; Clear link data and analyze all node types, comments,
+ * custom blocks and cck fields.
  */
 function linkchecker_clear_analyze_links_submit($form, &$form_state) {
   // Exclude unnecessary elements.
