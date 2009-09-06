@@ -27,6 +27,8 @@ define('LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS', "example.com\nexample.net\n
  *
  * - Line break converter, http://drupal.org/project/drupal
  *     name: filter_autop
+ *
+ * FIXME:
  * - Insert node, http://drupal.org/project/InsertNode
  *     name: insert_node/0
  *     tags: [node:<name of node> <parameters>]
