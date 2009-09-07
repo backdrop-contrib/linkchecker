@@ -1392,7 +1392,7 @@ function _linkchecker_check_markup($text, $format = FILTER_FORMAT_DEFAULT, $lang
 function _linkchecker_absolute_content_path($url) {
 
   // Parse the URL and make sure we can handle the schema.
-  $uri = parse_url($url);
+  $uri = @parse_url($url);
 
   if ($uri == FALSE) {
     return NULL;
