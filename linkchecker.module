@@ -1077,6 +1077,12 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
     $audios = $html_dom->getElementsByTagName('audio');
     foreach ($audios as $audio) {
       $urls[] = $audio->getAttribute('src');
+
+      // Finds source tags with links in the audio tag.
+      $sources = $video->getElementsByTagName('source');
+      foreach ($sources as $source) {
+        $urls[] = $source->getAttribute('src');
+      }
     }
   }
 
@@ -1113,6 +1119,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
       $urls[] = $object->getAttribute('data');
       $urls[] = $object->getAttribute('codebase');
 
+      // Finds param tags with links in the object tag.
       $params = $object->getElementsByTagName('param');
       foreach ($params as $param) {
         // TODO's:
@@ -1130,20 +1137,18 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
     }
   }
 
-  // Finds source tags with links in the content.
-  if (variable_get('linkchecker_extract_from_source', 0) == 1) {
-    $sources = $html_dom->getElementsByTagName('source');
-    foreach ($sources as $source) {
-      $urls[] = $source->getAttribute('src');
-    }
-  }
-
   // Finds video tags with links in the content.
   if (variable_get('linkchecker_extract_from_video', 0) == 1) {
     $videos = $html_dom->getElementsByTagName('video');
     foreach ($videos as $video) {
       $urls[] = $video->getAttribute('poster');
       $urls[] = $video->getAttribute('src');
+
+      // Finds source tags with links in the video tag.
+      $sources = $video->getElementsByTagName('source');
+      foreach ($sources as $source) {
+        $urls[] = $source->getAttribute('src');
+      }
     }
   }
 

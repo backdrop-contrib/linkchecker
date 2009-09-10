@@ -32,7 +32,6 @@ function linkchecker_uninstall() {
   variable_del('linkchecker_extract_from_iframe');
   variable_del('linkchecker_extract_from_img');
   variable_del('linkchecker_extract_from_object');
-  variable_del('linkchecker_extract_from_source');
   variable_del('linkchecker_extract_from_video');
   variable_del('linkchecker_filter_blacklist');
   variable_del('linkchecker_fqdn_only');
@@ -248,6 +247,20 @@ function linkchecker_update_7001() {
 
   // See filter_update_7003();
   // Add drupal message that settings are not upgradable for 'unknown' contrib filters.
+
+  return $ret;
+}
+*/
+
+/**
+ * Remove obsolete variable.
+ */
+/*
+function linkchecker_update_7002() {
+  $ret = array();
+
+  // Remove obsolete variable.
+  variable_del('linkchecker_extract_from_source');
 
   return $ret;
 }

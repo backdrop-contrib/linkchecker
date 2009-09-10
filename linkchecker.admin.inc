@@ -8,53 +8,6 @@
 
 function linkchecker_admin_settings_form($form_state) {
 
-  $node = node_load('2');
-  krumo($node->body['zxx'][0]['safe']);
-  $html_dom = filter_dom_load($node->body['zxx'][0]['safe']);
-  //krumo($node->body['zxx'][0]['safe']);
-
-  $urls = array();
-  $urls[] = '/foo?foo1=bar1&amp;foo2=bar2';
-/*
-  $links = $html_dom->getElementsByTagName('a');
-  foreach($links as $link) {
-    $urls[] = $link->getAttribute('href');
-    $urls[] = $link->getAttribute('title');
-  }
-
-  $images = $html_dom->getElementsByTagName('img');
-  foreach($images as $image) {
-    $urls[] = $image->getAttribute('src');
-    $urls[] = $image->getAttribute('alt');
-  }
-*/
-    $objects = $html_dom->getElementsByTagName('object');
-    foreach ($objects as $object) {
-      $urls[] = $object->getAttribute('data');
-      $urls[] = $object->getAttribute('codebase');
-
-      $params = $object->getElementsByTagName('param');
-      foreach ($params as $param) {
-        // TODO's:
-        //  * Try to extract links in unkown "flashvars" values (for e.g. file=http://, data=http://).
-        $names = array('archive', 'filename', 'href', 'movie', 'src', 'url');
-        if ($param->hasAttribute('name') && in_array($param->getAttribute('name'), $names)) {
-          $urls[] = $param->getAttribute('value');
-        }
-
-        $srcs = array('movie');
-        if ($param->hasAttribute('name') && in_array($param->getAttribute('src'), $srcs)) {
-          $urls[] = $param->getAttribute('value');
-        }
-      }
-    }
-
-  krumo($urls);
-  $urls = array_filter($urls);
-  $urls = array_map('decode_entities', $urls);
-  krumo($urls);
-
-
   $form['settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('General settings'),
@@ -140,12 +93,6 @@ function linkchecker_admin_settings_form($form_state) {
     '#type' => 'checkbox',
     '#title' => t('Extract links in <code>&lt;object&gt;</code> and <code>&lt;param&gt;</code> tags'),
     '#description' => t('Enable this checkbox if multimedia and other links in object and their param tags should be extracted. The object tag is used for flash, java, quicktime and other applets.'),
-  );
-  $form['tag']['linkchecker_extract_from_source'] = array(
-    '#default_value' => variable_get('linkchecker_extract_from_source', 0),
-    '#type' => 'checkbox',
-    '#title' => t('Extract links in <code>&lt;source&gt;</code> tags'),
-    '#description' => t('Enable this checkbox if links in source tags should be extracted. The source element is used to specify multiple media resources for audio and video elements.'),
   );
   $form['tag']['linkchecker_extract_from_video'] = array(
     '#default_value' => variable_get('linkchecker_extract_from_video', 0),
