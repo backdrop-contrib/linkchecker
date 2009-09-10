@@ -20,7 +20,7 @@ installation. The Link checker module also logs somewhat useful info about it's
 activity under Administer -> Reports -> Recent log entries.
 
 
-Required:
+Recommended:
 
 1. For internal URL extraction you need to make sure that Cron always get called
    with your real public site URL (for e.g. http://example.com/cron.php). Make sure
