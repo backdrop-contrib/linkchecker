@@ -13,12 +13,23 @@ Installation:
 6. Save configuration
 7. Wait for cron to check all your links... this may take some time! :-)
 
-If links are broken they should appear after a while under this url:
-http://example.com/admin/reports/linkchecker
+If links are broken they appear under Administer -> Reports -> Broken links.
 
 If not, make sure the cron is configured and running properly on your Drupal
 installation. The Link checker module also logs somewhat useful info about it's
 activity under Administer -> Reports -> Recent log entries.
+
+
+Required:
+
+1. For internal URL extraction you need to make sure that Cron always get called
+   with your real public site URL (for e.g. http://example.com/cron.php). Make sure
+   it's never executed with http://localhost/cron.php or any other hostnames or ports
+   not available from public. Otherwise all links may be reported as broken and
+   cannot verified as they should be.
+
+   To make sure it always works - it's recommended to configure the $base_url
+   in the sites settings.php with your sites URL. Better save than sorry!
 
 
 Known issues:
@@ -27,4 +38,4 @@ Known issues:
    Until this issue is fixed in core the permanently moved links are not
    automatically updated by the "Update permanently moved links" feature
    to the newly provided URL.
-   -> Solution: Manually fix these links or apply the patch.
+   -> Workaround Manually fix these links or try the patch.
