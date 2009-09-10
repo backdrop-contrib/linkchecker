@@ -1171,7 +1171,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
 
       // Absolute local URLs need to start with [/].
       if (preg_match('!^/!', $url)) {
-        $links[] = $base_root . '://'. $_SERVER['HTTP_HOST'] . $url;
+        $links[] = $base_root . $url;
       }
       // Anchors and URL parameters like "#foo" and "?foo=bar".
       elseif (!empty($content_path) && preg_match('!^[?#]!', $url)) {
