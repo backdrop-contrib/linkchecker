@@ -218,7 +218,7 @@ function _linkchecker_batch_import_single_comment($cid, $missing_links_count) {
   return $batch;
 }
 
-function _linkchecker_batch_single_comment_import_op($nid, &$context) {
+function _linkchecker_batch_single_comment_import_op($cid, &$context) {
   $comment = comment_load($cid);
   _linkchecker_add_comment_links($comment, TRUE);
 
