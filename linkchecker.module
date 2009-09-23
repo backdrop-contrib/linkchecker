@@ -144,12 +144,9 @@ function linkchecker_cron() {
 
   // TODO: Remove some confusion about the max links that can be checked per
   // cron run and guess that 2 link can be checked per second what is
-  // nevertheless uncommon. But we can use the max_execution_time to calculate
-  // a value that is higher, but not totally out of scope to keep the query
-  // resultset small. For cURL we need to add this setting back or a thread
+  // nevertheless uncommon. For cURL we need to add this setting back or a thread
   // limit per remote server for not overloading them.
-  $check_links_max_per_cron_run = ini_get('max_execution_time');
-  //$check_links_max_per_cron_run = variable_get('linkchecker_check_links_max', 10);
+  $check_links_max_per_cron_run = variable_get('linkchecker_check_links_max', 100);
 
   $check_links_interval = variable_get('linkchecker_check_links_interval', 2419200);
   $useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
@@ -157,13 +154,12 @@ function linkchecker_cron() {
   // Get URLs for checking.
   $result = db_query_range('SELECT * FROM {linkchecker_link} WHERE last_checked < :last_checked AND status = :status ORDER BY last_checked, lid ASC', array(':last_checked' => REQUEST_TIME - $check_links_interval, ':status' => 1), 0, $check_links_max_per_cron_run);
   foreach ($result as $link) {
+    // Make sure we have enough time to validate the link.
+    drupal_set_time_limit(240);
+
     // Fetch URL.
     $response = drupal_http_request($link->url, array('headers' => array('User-Agent' => 'User-Agent: ' . $useragent), 'method' => $link->method, 'max_redirects' => 1));
     _linkchecker_status_handling($link, $response);
-
-    if ((timer_read('page') / 1000) > (ini_get('max_execution_time') / 2)) {
-      break; // Stop once we have used over half of the maximum execution time.
-    }
   }
 }
 

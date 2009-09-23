@@ -39,7 +39,7 @@ Advanced configuration
    run. You can lower or higher the limit for your needs if the machine
    can or cannot handle the default number of link checks.
 
-   $conf['linkchecker_check_links_max'] = array(200);
+   $conf['linkchecker_check_links_max'] = 200;
 
 
 Known issues:
