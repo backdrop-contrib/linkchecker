@@ -152,7 +152,7 @@ function linkchecker_cron() {
   $useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
 
   // Get URLs for checking.
-  $result = db_query_range('SELECT * FROM {linkchecker_link} WHERE last_checked < :last_checked AND status = :status ORDER BY last_checked, lid ASC', array(':last_checked' => REQUEST_TIME - $check_links_interval, ':status' => 1), 0, $check_links_max_per_cron_run);
+  $result = db_query_range('SELECT * FROM {linkchecker_link} WHERE last_checked < :last_checked AND status = :status ORDER BY last_checked, lid ASC', 0, $check_links_max_per_cron_run, array(':last_checked' => REQUEST_TIME - $check_links_interval, ':status' => 1));
   foreach ($result as $link) {
     // Make sure we have enough time to validate the link.
     drupal_set_time_limit(240);
