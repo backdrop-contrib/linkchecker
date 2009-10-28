@@ -112,7 +112,7 @@ function linkchecker_admin_settings_form($form_state) {
     '#title' => t('Disabled filters for link extraction'),
     '#default_value' => variable_get('linkchecker_filter_blacklist', explode('|', LINKCHECKER_DEFAULT_FILTER_BLACKLIST)),
     '#options' => $filter_options,
-    '#description' => t('If a filter is enabled for any content it runs first and than the link extraction. This helps the link checker module to find all links normally created by custom filters. You should disable all filters used in content as an inline reference to other content (e.g. <code>[link: id]</code>) and other filters only wasting processing time (e.g. <em>Line break converter</em>). This setting does not have any effect on how content is shown on a page. This feature optimize the internal link extraction process for link checker and prevent false alarms about broken links on nodes not having the real data of a link.'),
+    '#description' => t('If a filter is enabled for any content it runs first and than the link extraction. This helps the link checker module to find all links normally created by custom filters. You should disable all filters used in content as an inline reference to other content (e.g. <code>[link: id]</code>) and other filters only wasting processing time (e.g. <em>Line break converter</em>). This setting does not have any effect on how content is shown on a page. This feature optimize the internal link extraction process for link checker and prevent false alarms about broken links in content not having the real data of a link.'),
   );
 
   $form['check'] = array(
