@@ -242,8 +242,8 @@ function linkchecker_link_edit_form(&$form_state, $link) {
     '#description' => t('Enable this checkbox if you need an immediate re-check of the link and cannot wait until the next scheduled check at @date.', array('@date' => format_date($link['last_checked'] + variable_get('linkchecker_check_links_interval', 2419200)))),
   );
 
-  $form['buttons']['submit'] = array('#type' => 'submit', '#value' => t('Save configuration') );
-  $form['buttons']['reset'] = array('#type' => 'submit', '#value' => t('Reset to defaults') );
+  $form['buttons']['submit'] = array('#type' => 'submit', '#value' => t('Save configuration'));
+  $form['buttons']['reset'] = array('#type' => 'submit', '#value' => t('Reset to defaults'));
 
   return $form;
 }
