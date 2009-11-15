@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: German translation of Linkchecker\n"
 "POT-Creation-Date: 2009-11-15 18:34+0100\n"
-"PO-Revision-Date: 2009-11-15 19:05+0100\n"
+"PO-Revision-Date: 2009-11-15 19:23+0100\n"
 "Last-Translator: Alexander Haß\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -259,7 +259,7 @@ msgstr "Für die Link-Extrahierung deaktivierte Filter"
 
 #: includes/linkchecker.admin.inc:113
 msgid "If a filter has been enabled for an input format it runs first and afterwards the link extraction. This helps the link checker module to find all links normally created by custom filters (e.g. Markdown filter, Bbcode). All filters used as an inline references (e.g. Weblink filter <code>[link: id]</code>) to other content and filters only wasting processing time (e.g. Line break converter) should be disabled. This setting does not have any effect on how content is shown on a page. This feature optimizes the internal link extraction process for link checker and prevents false alarms about broken links in content not having the real data of a link."
-msgstr "Sollte ein Filter für ein Eingabe-Format aktiviert worden sein, wird dieser zuerst ausgeführt und danach die Link-Extrahierung. Dies ermöglicht dem Link-Checker-Modul alle Links zu finden, die normalerweise von benutzerdefinierten Filtern (z.b. Markdown-Filter, Bbcode) erstellt werden. Alle als eingebettete Referenzen zu anderem Inhalt (z.b. Weblink-Filter <code>[link: id]</code>) verwendete Filter und Filter die nur die Verarbeitungszeit (e.g. Line break converter) verschwenden sollten deaktiviert werden. Diese Einstellung hat keinen Effekt auf die Art und Weise wie Inhalt auf einer Seite angezeigt wird. Diese Funktion optimiert den internen Link-Extrahierungsprozess für den Link-Checker und verhindert Falschalarme über beschädigte Links in Inhalten, die nicht die wirklichen Daten von einem Link enthalten."
+msgstr "Sollte ein Filter für ein Eingabe-Format aktiviert worden sein, wird dieser zuerst ausgeführt und danach die Link-Extrahierung. Dies ermöglicht dem Link-Checker-Modul alle Links zu finden, die normalerweise von benutzerdefinierten Filtern (z.b. Markdown-Filter, Bbcode) erstellt werden. Alle als eingebettete Referenzen zu anderem Inhalt (z.b. Weblink-Filter <code>[link: id]</code>) verwendete Filter und Filter die nur Verarbeitungszeit (z.b. Zeilenumbruchkonverter) verschwenden sollten deaktiviert werden. Diese Einstellung hat keinen Effekt auf die Art und Weise wie Inhalt auf einer Seite angezeigt wird. Diese Funktion optimiert den internen Link-Extrahierungsprozess für den Link-Checker und verhindert Falschalarme über beschädigte Links in Inhalten, die nicht die wirklichen Daten von einem Link enthalten."
 
 #: includes/linkchecker.admin.inc:118
 msgid "Check settings"
