@@ -229,6 +229,19 @@ function linkchecker_link_edit_form(&$form_state, $link) {
     '#description' => t("Disable this checkbox if you don't like to get informed any longer about this broken link. Use this setting only as the very last option if there is no other way to solve a failed link check."),
   );
 
+  $form['maintenance'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Maintenance'),
+    '#collapsible' => FALSE,
+  );
+
+  $form['maintenance']['recheck'] = array(
+    '#default_value' => 0,
+    '#type' => 'checkbox',
+    '#title' => t('Re-check link status on next cron run'),
+    '#description' => t('Enable this checkbox if you need an immediate re-check of the link and cannot wait until the next scheduled check at @date.', array('@date' => format_date($link['last_checked'] + variable_get('linkchecker_check_links_interval', 2419200)))),
+  );
+
   $form['buttons']['submit'] = array('#type' => 'submit', '#value' => t('Save configuration') );
   $form['buttons']['reset'] = array('#type' => 'submit', '#value' => t('Reset to defaults') );
 
@@ -236,6 +249,15 @@ function linkchecker_link_edit_form(&$form_state, $link) {
 }
 
 function linkchecker_link_edit_form_submit($form, &$form_state) {
+  // Force asap link re-check.
+  if ($form_state['values']['recheck']) {
+    db_update('linkchecker_link')
+      ->condition('lid', $form_state['values']['lid'])
+      ->fields(array('last_checked' => 0))
+      ->execute();
+    drupal_set_message(t('The link %url will be checked again on the next cron run.', array('%url' => $form_state['values']['url'])));
+  }
+
   if ($form_state['values']['method'] != $form['settings']['method']['#default_value']) {
     // Update settings and reset statistics for a quick re-check.
     db_update('linkchecker_link')
