@@ -11,8 +11,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: German translation of Linkchecker\n"
-"POT-Creation-Date: 2009-08-01 14:04+0200\n"
-"PO-Revision-Date: 2009-08-01 14:17+0100\n"
+"POT-Creation-Date: 2009-11-15 18:34+0100\n"
+"PO-Revision-Date: 2009-11-15 19:05+0100\n"
 "Last-Translator: Alexander Haß\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -22,107 +22,111 @@ msgstr ""
 "X-Poedit-Language: German\n"
 "X-Poedit-Country: GERMANY\n"
 
-#: linkchecker.module:36
+#: linkchecker.module:64
 msgid "This module provides an aid to finding broken links on your site. It periodically checks contents of all public nodes, tries to find any html links and check for their validity. It reports broken links through the admin interface. For more information about status codes see <a href=\"@rfc\">Status Code Definitions</a>."
 msgstr "Dieses Modul bietet die Mithilfe an, beschädigte Links in einer Website zu finden. Es überprüft regelmäßig die Inhalte alle veröffentlichten Beiträge und versucht alle HTML-Links zu finden und deren Gültigkeit zu überprüfen. Es berichtet über beschädigte Links in der Verwaltungsoberfläche. Nähere Informationen über Status-Codes befinden sich unter <a href=\"@rfc\">Status-Code Definitionen</a>."
 
-#: linkchecker.module:261;267;285;54;63
-msgid "Broken links"
-msgstr "Beschädigte Links"
-
-#: linkchecker.module:377
-msgid "Preview"
-msgstr "Vorschau"
-
-#: linkchecker.module:211;232;256;261;267;285;1253;0
-msgid "linkchecker"
-msgstr "linkchecker"
-
-#: linkchecker.module:211
+#: linkchecker.module:246;250
 msgid "Changed permanently moved link in %node from %src to %dst."
 msgstr "Dauerhaft verschobener Link in Beitrag %node wurde von %src auf %dst geändert."
 
-#: linkchecker.module:232
+#: linkchecker.module:300;306;324;82;91
+msgid "Broken links"
+msgstr "Beschädigte Links"
+
+#: linkchecker.module:416
+msgid "Preview"
+msgstr "Vorschau"
+
+#: linkchecker.module:1215
+msgid "n/a"
+msgstr "n/v"
+
+#: linkchecker.module:250;271;295;300;306;324;1366
+msgid "linkchecker"
+msgstr "linkchecker"
+
+#: linkchecker.module:271
 msgid "Changed permanently moved link in comment %comment from %src to %dst."
 msgstr "Dauerhaft verschobener Link in Kommentar %comment wurde von %src auf %dst geändert."
 
-#: linkchecker.module:256
+#: linkchecker.module:295
 msgid "Changed permanently moved link in box %bid from %src to %dst."
 msgstr "Dauerhaft verschobener Link in Box %bid wurde von %src auf %dst geändert."
 
-#: linkchecker.module:261
+#: linkchecker.module:300
 msgid "Link %link has changed and needs to be updated."
 msgstr "Link %link wurde geändert und muss aktualisiert werden."
 
-#: linkchecker.module:267
+#: linkchecker.module:306
 msgid "Broken link %link has been found."
 msgstr "Ein beschädigter Link %link wurde gefunden."
 
-#: linkchecker.module:285
+#: linkchecker.module:324
 msgid "Method HEAD is not allowed for link %link. Method has been changed to GET."
 msgstr "Die Methode HEAD ist für den Link %link nicht zulässig. Die Methode wurde auf GET geändert."
 
-#: linkchecker.module:1253
+#: linkchecker.module:1366
 msgid "Set @type %title to unpublished."
 msgstr "Die Veröffentlichung von @type %title wurde zurückgezogen."
 
-#: linkchecker.module:322;363;382
+#: linkchecker.module:361;402;421
 msgid "Link check of <a href=\"@url\">@url</a> failed once (status code: @code)."
 msgid_plural "Link check of <a href=\"@url\">@url</a> failed @count times (status code: @code)."
 msgstr[0] "Die Linküberprüfung von <a href=\"@url\">@url</a> ist einmal fehlgeschlagen (Status-Code: @code)."
 msgstr[1] "Die Linküberprüfung von <a href=\"@url\">@url</a> ist @count mal fehlgeschlagen (Status-Code: @code)."
 
-#: linkchecker.module:27
+#: linkchecker.module:55
 msgid "access broken links report"
 msgstr "Zugriff auf Bericht mit beschädigten Links"
 
-#: linkchecker.module:27
+#: linkchecker.module:55
 msgid "access own broken links report"
 msgstr "Zugriff auf eigenen Bericht mit beschädigten Links"
 
-#: linkchecker.module:27
+#: linkchecker.module:55
 msgid "administer linkchecker"
-msgstr "Linkchecker verwalten"
+msgstr "Link-Checker verwalten"
 
-#: linkchecker.module:27
+#: linkchecker.module:55
 msgid "edit link settings"
-msgstr "Linkeinstellungen bearbeiten"
+msgstr "Link-Einstellungen bearbeiten"
 
-#: linkchecker.module:46
+#: linkchecker.module:74
 #: linkchecker.info:0
 msgid "Link checker"
 msgstr "Link-Checker"
 
-#: linkchecker.module:47
-msgid "Link checker configuration."
-msgstr "Konfiguration von Link checker."
+#: linkchecker.module:75
+msgid "Configure the link checker settings."
+msgstr "Die Einstellungen für Link-Checker konfigurieren."
 
-#: linkchecker.module:55;64
+#: linkchecker.module:83;92
 msgid "Shows a list of broken links in content."
 msgstr "Zeigt im Inhalt eine Liste von beschädigten Links an."
 
-#: linkchecker.module:73
+#: linkchecker.module:101
 #: includes/linkchecker.pages.inc:122
 msgid "Edit link settings"
-msgstr "Linkeinstellungen bearbeiten"
+msgstr "Link-Einstellungen bearbeiten"
 
-#: (duplicate) linkchecker.install:184
+#: (duplicate) linkchecker.install:185
 msgid "HTTP request status"
 msgstr "HTTP-Anfragestatus"
 
-#: (duplicate) linkchecker.install:185
+#: (duplicate) linkchecker.install:186
 msgid "Fails"
 msgstr "Fehlgeschlagen"
 
-#: (duplicate) linkchecker.install:187
+#: (duplicate) linkchecker.install:188
 msgid "Your system or network configuration does not allow Drupal to access web pages, resulting in reduced functionality. This could be due to your webserver configuration or PHP settings, and should be resolved in order to download information about available updates, fetch aggregator feeds, sign in via OpenID, or use other network-dependent services."
 msgstr "Die Funktionalität der Website ist eingeschränkt, da Drupal nicht auf externe Internetseiten zugreifen kann. Grund dafür sind die aktuellen System- oder Netzwerkeinstellungen wie etwa die Konfiguration des Webservers oder die PHP-Einstellungen. Der Zugriff wird benötigt, um netzbasierte Dienste nutzen zu können. Beispiele hierfür sind der Abruf verfügbarer Aktualisierungen, der Abruf von Aggregator-Feeds oder die Anmeldung via OpenID."
 
-#: (duplicate) linkchecker.install:195
+#: (duplicate) linkchecker.install:196
 msgid "MySQL database"
 msgstr "MySQL-Datenbank"
 
-#: (duplicate) linkchecker.install:198
+#: (duplicate) linkchecker.install:199
 msgid "Your MySQL Server is too old. Link Checker requires at least MySQL %version."
 msgstr "Der MySQL-Server ist zu alt. Link-Checker benötigt mindestens MySQL %version."
 
@@ -249,143 +253,151 @@ msgstr "Links in <code>&lt;video&gt;</code>-Tags extrahieren"
 msgid "Enable this checkbox if links in video tags should be extracted. The video element is used in to embed video content."
 msgstr "Dieses Kontrollkästchen aktivieren, um Video-Tags zu extrahieren. Das Video-Element wird verwendet, um Videos in den Seiteninhalt einzubetten."
 
-#: includes/linkchecker.admin.inc:104
+#: includes/linkchecker.admin.inc:110
+msgid "Filters disabled for link extraction"
+msgstr "Für die Link-Extrahierung deaktivierte Filter"
+
+#: includes/linkchecker.admin.inc:113
+msgid "If a filter has been enabled for an input format it runs first and afterwards the link extraction. This helps the link checker module to find all links normally created by custom filters (e.g. Markdown filter, Bbcode). All filters used as an inline references (e.g. Weblink filter <code>[link: id]</code>) to other content and filters only wasting processing time (e.g. Line break converter) should be disabled. This setting does not have any effect on how content is shown on a page. This feature optimizes the internal link extraction process for link checker and prevents false alarms about broken links in content not having the real data of a link."
+msgstr "Sollte ein Filter für ein Eingabe-Format aktiviert worden sein, wird dieser zuerst ausgeführt und danach die Link-Extrahierung. Dies ermöglicht dem Link-Checker-Modul alle Links zu finden, die normalerweise von benutzerdefinierten Filtern (z.b. Markdown-Filter, Bbcode) erstellt werden. Alle als eingebettete Referenzen zu anderem Inhalt (z.b. Weblink-Filter <code>[link: id]</code>) verwendete Filter und Filter die nur die Verarbeitungszeit (e.g. Line break converter) verschwenden sollten deaktiviert werden. Diese Einstellung hat keinen Effekt auf die Art und Weise wie Inhalt auf einer Seite angezeigt wird. Diese Funktion optimiert den internen Link-Extrahierungsprozess für den Link-Checker und verhindert Falschalarme über beschädigte Links in Inhalten, die nicht die wirklichen Daten von einem Link enthalten."
+
+#: includes/linkchecker.admin.inc:118
 msgid "Check settings"
 msgstr "Überprüfungseinstellungen"
 
-#: includes/linkchecker.admin.inc:110
+#: includes/linkchecker.admin.inc:124
 msgid "User-Agent"
 msgstr "User-Agent"
 
-#: includes/linkchecker.admin.inc:111
+#: includes/linkchecker.admin.inc:125
 msgid "Defines the user agent that will be used for checking links on remote sites. If someone blocks the standard Drupal user agent you can try with a more common browser."
 msgstr "Bestimmt den zur Überprüfung von entfernten Websites zu verwendenden User-Agent. Sollte jemand den standardmäßigen Drupal User-Agent blockieren, kann ein normaler Browser verwendet werden."
 
-#: includes/linkchecker.admin.inc:131
+#: includes/linkchecker.admin.inc:145
 msgid "Check interval for links"
 msgstr "Überprüfungsinterval für Links"
 
-#: includes/linkchecker.admin.inc:132
+#: includes/linkchecker.admin.inc:146
 msgid "This interval setting defines how often cron will re-check the status of links."
 msgstr "Diese Intervalleinstellung legt fest, wie oft Cron den Status von Links überprüft."
 
-#: includes/linkchecker.admin.inc:139
+#: includes/linkchecker.admin.inc:153
 msgid "Do not check the link status of links containing these URLs"
 msgstr "Den Link-Status von Links nicht überprüften, die diese URLs enthalten"
 
-#: includes/linkchecker.admin.inc:140
+#: includes/linkchecker.admin.inc:154
 msgid "By default this list contains the domain names reserved for use in documentation and not available for registration. See <a href=\"@rfc-2606\">RFC 2606</a>, Section 3 for more information. URLs on this list are still extracted, but the link setting <em>Check link status</em> becomes automatically disabled to prevent false alarms. If you change this list you need to clear all link data and re-analyze your content. Otherwise this setting will only affect new links added after the configuration change."
 msgstr "Standardmäßig enthält diese Liste die Domainnamen, die für die Verwendung von Dokumentation reserviert und für die Registrierung nicht verfügbar sind. Weitere Information befindet sich im Abschnitt 3 der <a href=\"@rfc-2606\">RFC 2606</a>. URLs in dieser Liste werden immernoch extrahiert, aber die Link-Einstellung <em>Linkstatus überprüfen</em> wird automatisch deaktiviert, um Fehlalarme zu verhindern. Sollte diese Liste geändert werden, müssen die Linkdaten gelöscht und die Inhalte neu analysiert werden. Ansonsten wird diese Einstellung nur neue Links betreffen, die nach der Konfigurationsänderung hinzugefügt werden."
 
-#: includes/linkchecker.admin.inc:146
+#: includes/linkchecker.admin.inc:160
 msgid "Error handling"
 msgstr "Fehlerbehandlung"
 
-#: includes/linkchecker.admin.inc:147
+#: includes/linkchecker.admin.inc:161
 msgid "Defines error handling and custom actions to be executed if specific HTTP requests are failing."
 msgstr "Legt die Fehlerbehandlung und benutzerdefinierten Aktionen fest, die beim Fehlschlag bestimmter HTTP-Anfragen ausgeführt werden."
 
-#: includes/linkchecker.admin.inc:151
+#: includes/linkchecker.admin.inc:165
 msgid "Update permanently moved links"
 msgstr "Dauerhaft verschobene Links aktualisieren"
 
-#: includes/linkchecker.admin.inc:152
+#: includes/linkchecker.admin.inc:166
 #, fuzzy
 msgid "If enabled, outdated links in content providing a status <em>Moved Permanently</em> (status code 301) are automatically updated to the most recent URL. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily change. This feature trust sites to provide a valid permanent redirect. A new node revision is automatically created on link updates if <em>create new revision</em> is enabled in the <a href=\"@node_types\">node type</a> workflow settings. It is recommended to create new revisions for all link checker enabled node types. Link updates are nevertheless always logged in <a href=\"@dblog\">recent log entries</a>."
 msgstr "Sobald aktiviert, werden veraltete Links im Inhalt, die einen Status <em>Moved Permanently</em> (Status-Code 301) bereitstellen, automatisch auf die neueste URL aktualisiert. Es wird empfohlen einen Wert von <em>drei</em> zu verwenden, um sicherzustellen das es sich nicht nur um einen temporären Fehler handelt. Diese Funktion vertraut den Websites, dass diese eine gültige dauerhafte Umleitung zu Verfügung stellen. Sobald in den Einstellungen für den Arbeitsablauf des <a href=\"@node_types\">Beitragtyps</a> die Option <em>Neue Version erstellen</em> aktiviert ist, wird bei Link-Aktualisierungen automatisch eine neue Beitragsversion erstellt. Es wird empfohlen für alle Link-Checker aktivierten Beitragstypen neue Versionen zu erstellen. Die Änderungen werden immer unter <a href=\"@dblog\">Neue Log-Einträge</a> protokolliert."
 
-#: includes/linkchecker.admin.inc:156;170
+#: includes/linkchecker.admin.inc:170;184
 msgid "Disabled"
 msgstr "Deaktiviert"
 
-#: includes/linkchecker.admin.inc:157
+#: includes/linkchecker.admin.inc:171
 msgid "After one failed check"
 msgstr "Nach einer fehlgeschlagenen Überprüfung"
 
-#: includes/linkchecker.admin.inc:158
+#: includes/linkchecker.admin.inc:172
 msgid "After two failed checks"
 msgstr "Nach zwei fehlgeschlagenen Überprüfungen"
 
-#: includes/linkchecker.admin.inc:159
+#: includes/linkchecker.admin.inc:173
 msgid "After three failed checks"
 msgstr "Nach drei fehlgeschlagenen Überprüfungen"
 
-#: includes/linkchecker.admin.inc:160
+#: includes/linkchecker.admin.inc:174
 msgid "After five failed checks"
 msgstr "Nach fünf fehlgeschlagenen Überprüfungen"
 
-#: includes/linkchecker.admin.inc:161
+#: includes/linkchecker.admin.inc:175
 msgid "After ten failed checks"
 msgstr "Nach zehn fehlgeschlagenen Überprüfungen"
 
-#: includes/linkchecker.admin.inc:165
+#: includes/linkchecker.admin.inc:179
 msgid "Unpublish node on file not found error"
 msgstr "Beitragsveröffentlichung bei „Datei wurde nicht gefunden“-Fehler zurückziehen"
 
-#: includes/linkchecker.admin.inc:166
+#: includes/linkchecker.admin.inc:180
 msgid "If enabled, a node with one or more broken links (status code 404) will be unpublished and moved to moderation queue for review after the number of specified fails. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily error."
 msgstr "Sobald aktiviert, wird die Veröffentlichung eines Beitrags mit einem oder mehreren beschädigten Links (Status-Code 404) nach der Anzahl der festgelegten Fehlschläge zurückgezogen und zur Überprüfung in die Moderationswarteschlange verschoben. Es wird empfohlen einen Wert von <em>drei</em> zu verwenden, um sicherzustellen das es sich nicht nur um einen temporären Fehler handelt."
 
-#: includes/linkchecker.admin.inc:171
+#: includes/linkchecker.admin.inc:185
 msgid "After one file not found error"
 msgstr "Nach einem „Datei wurde nicht gefunden“-Fehler"
 
-#: includes/linkchecker.admin.inc:172
+#: includes/linkchecker.admin.inc:186
 msgid "After two file not found errors"
 msgstr "Nach zwei „Datei wurde nicht gefunden“-Fehlern"
 
-#: includes/linkchecker.admin.inc:173
+#: includes/linkchecker.admin.inc:187
 msgid "After three file not found errors"
 msgstr "Nach drei „Datei wurde nicht gefunden“-Fehlern"
 
-#: includes/linkchecker.admin.inc:174
+#: includes/linkchecker.admin.inc:188
 msgid "After five file not found errors"
 msgstr "Nach fünf „Datei wurde nicht gefunden“-Fehlern"
 
-#: includes/linkchecker.admin.inc:175
+#: includes/linkchecker.admin.inc:189
 msgid "After ten file not found errors"
 msgstr "Nach zehn „Datei wurde nicht gefunden“-Fehlern"
 
-#: includes/linkchecker.admin.inc:181
+#: includes/linkchecker.admin.inc:195
 msgid "Don't treat these response codes as errors"
 msgstr "Diese Antwort-Codes nicht als Fehler behandeln"
 
-#: includes/linkchecker.admin.inc:182
+#: includes/linkchecker.admin.inc:196
 msgid "One HTTP status code per line, e.g. 403."
 msgstr "Ein HTTP-Status-Code pro Zeile, z.b. 403."
 
-#: includes/linkchecker.admin.inc:187
+#: includes/linkchecker.admin.inc:201
 #, fuzzy
 msgid "These actions will either clear all link checker tables in the database and/or analyze all selected node types, blocks and cck fields (see settings above) for new/updated/removed links. Normally there is no need to press one of these buttons. Use this only for immediate cleanup tasks and to force a full re-build of the links to be checked in the linkchecker tables. Keep in mind that all custom link settings will be lost!"
 msgstr "Diese Aktionen werden entweder alle Link-Checker Tabellen in der Datenbank leeren und/oder alle ausgewählten Beitragstypen, Blöcke und CCK-Felder (siehe Einstellungen oberhalb) nach neuen/aktualisierten/entfernten Links durchsuchen. Normalerweise gibt es keine Notwendigkeit einen dieser beiden Schaltknöpfe zu drücken. Diese sollten nur für umgehende Bereinigungsaufgaben und für einen vollständigen Neuaufbau der zu überprüfenden Links in den Link-Checker Tabellen verwendet werden. Bitte beachten, dass dabei alle benutzerdefinierten Link-Einstellungen verloren gehen!"
 
-#: includes/linkchecker.admin.inc:188
+#: includes/linkchecker.admin.inc:202
 msgid "<strong>Note</strong>: These functions ONLY collect the links, they do not evaluate the HTTP response codes, this will be done during normal cron runs."
 msgstr "<strong>Hinweis</strong>: Mit diesen Funktionen werden die Links NUR erfasst. Die HTTP-Antwortcodes werden nicht ausgewertet, da dies während dem normalen Cron-Lauf erfolgt."
 
-#: includes/linkchecker.admin.inc:192
+#: includes/linkchecker.admin.inc:206
 msgid "Clear link data"
 msgstr "Linkdaten leeren"
 
-#: includes/linkchecker.admin.inc:199
+#: includes/linkchecker.admin.inc:213
 msgid "Analyze content for links"
 msgstr "Inhalt nach Links durchsuchen"
 
-#: includes/linkchecker.admin.inc:204
+#: includes/linkchecker.admin.inc:218
 msgid "Clear link data and analyze content for links"
 msgstr "Linkdaten leeren und Inhalt nach Links durchsuchen"
 
-#: includes/linkchecker.admin.inc:208
-#: includes/linkchecker.pages.inc:215
+#: includes/linkchecker.admin.inc:222
+#: includes/linkchecker.pages.inc:228
 msgid "Save configuration"
 msgstr "Konfiguration speichern"
 
-#: includes/linkchecker.admin.inc:209
-#: includes/linkchecker.pages.inc:216
+#: includes/linkchecker.admin.inc:223
+#: includes/linkchecker.pages.inc:229
 msgid "Reset to defaults"
 msgstr "Zurücksetzen"
 
-#: includes/linkchecker.admin.inc:220
+#: includes/linkchecker.admin.inc:234
 msgid "Invalid response code %code found."
 msgstr "Ungültiger Antwort-Code %code wurde gefunden."
 
@@ -538,17 +550,33 @@ msgstr "Linkstatus überprüfen"
 msgid "Disable this checkbox if you don't like to get informed any longer about this broken link. Use this setting only as the very last option if there is no other way to solve a failed link check."
 msgstr "Dieses Kontrollkästchen deaktivieren, wenn nicht weiter über diesen beschädigten Link informiert werden soll. Diese Einstellung sollte nur als die allterletzte Option genutzt werden, wenn es keinen anderen Weg gibt einen fehlgeschlagenen Link-Check zu beheben."
 
+#: includes/linkchecker.pages.inc:217
+msgid "Maintenance"
+msgstr "Wartung"
+
+#: includes/linkchecker.pages.inc:224
+msgid "Re-check link status on next cron run"
+msgstr "Link-Status beim nächsten Cron-Lauf erneut überprüfen"
+
 #: includes/linkchecker.pages.inc:225
+msgid "Enable this checkbox if you need an immediate re-check of the link and cannot wait until the next scheduled check at @date."
+msgstr "Dieses Kontrollkästchen aktivieren, wenn eine erneute Überprüfung des Links umgehend erforderlich ist und nicht bis zur nächsten planmäßigen Überprüfung am @date gewartet werden kann."
+
+#: includes/linkchecker.pages.inc:238
+msgid "The link %url will be checked again on the next cron run."
+msgstr "Der Link %url wird beim nächsten Cron-Lauf noch einmal überprüpft."
+
+#: includes/linkchecker.pages.inc:244
 msgid "The link settings for %url have been saved and the fail counter has been resetted."
 msgstr "Die Linkeinstellungen für %url wurden gespeichert und der Fehlerzähler wurde zurückgesetzt."
 
-#: includes/linkchecker.pages.inc:230
+#: includes/linkchecker.pages.inc:249
 msgid "The link settings for %url have been saved."
 msgstr "Die Linkeinstellungen für %url wurden gespeichert."
 
 #: includes/linkchecker.pages.inc:96
 msgid "There is 1 unchecked link of about @links_all links in the database. Please be patient until all links have been checked via cron."
 msgid_plural "There are @count unchecked links of about @links_all links in the database. Please be patient until all links have been checked via cron."
-msgstr[0] "Es gibt 1 nicht überprüften Link von @links_all Links in der Datenbank. Es erfordert etwas Geduld, bis alle Links mit Hilfe von Cron überprüft wurden."
+msgstr[0] "Es gibt einen nicht überprüften Link von @links_all Links in der Datenbank. Es erfordert etwas Geduld, bis alle Links mit Hilfe von Cron überprüft wurden."
 msgstr[1] "Es gibt @count nicht überprüfte Links von @links_all Links in der Datenbank. Es erfordert etwas Geduld, bis alle Links mit Hilfe von Cron überprüft wurden."
 

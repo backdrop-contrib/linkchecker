@@ -109,7 +109,7 @@ function linkchecker_admin_settings_form($form_state) {
   }
   $form['tag']['linkchecker_filter_blacklist'] = array(
     '#type' => 'checkboxes',
-    '#title' => t('Disabled filters for link extraction'),
+    '#title' => t('Filters disabled for link extraction'),
     '#default_value' => variable_get('linkchecker_filter_blacklist', explode('|', LINKCHECKER_DEFAULT_FILTER_BLACKLIST)),
     '#options' => $filter_options,
     '#description' => t('If a filter has been enabled for an input format it runs first and afterwards the link extraction. This helps the link checker module to find all links normally created by custom filters (e.g. Markdown filter, Bbcode). All filters used as an inline references (e.g. Weblink filter <code>[link: id]</code>) to other content and filters only wasting processing time (e.g. Line break converter) should be disabled. This setting does not have any effect on how content is shown on a page. This feature optimizes the internal link extraction process for link checker and prevents false alarms about broken links in content not having the real data of a link.'),
