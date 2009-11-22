@@ -62,7 +62,7 @@ function linkchecker_admin_settings_form($form_state) {
     '#default_value' => variable_get('linkchecker_extract_from_a', 1),
     '#type' => 'checkbox',
     '#title' => t('Extract links in <code>&lt;a&gt;</code> and <code>&lt;area&gt;</code> tags'),
-    '#description' => t('Enable this checkbox if normal hyperlinks should be extracted. The anchor element defines a hyperlink, the named target destination for a hyperlink, or both. The area elememt defines a hot-spot region on an image, and associates it with a hypertext link.'),
+    '#description' => t('Enable this checkbox if normal hyperlinks should be extracted. The anchor element defines a hyperlink, the named target destination for a hyperlink, or both. The area element defines a hot-spot region on an image, and associates it with a hypertext link.'),
   );
   $form['tag']['linkchecker_extract_from_audio'] = array(
     '#default_value' => variable_get('linkchecker_extract_from_audio', 0),

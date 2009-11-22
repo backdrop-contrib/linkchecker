@@ -269,7 +269,7 @@ function linkchecker_link_edit_form_submit($form, &$form_state) {
         'status' => $form_state['values']['status']
       ))
       ->execute();
-    drupal_set_message(t('The link settings for %url have been saved and the fail counter has been resetted.', array('%url' => $form_state['values']['url'])));
+    drupal_set_message(t('The link settings for %url have been saved and the fail counter has been reset.', array('%url' => $form_state['values']['url'])));
   }
   else {
     // Update setting only.
