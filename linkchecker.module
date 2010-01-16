@@ -580,7 +580,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
     // FIXME: D7???
     $fields = content_fields(NULL, $node->type);
     foreach ($fields as $field) {
-      if (isset($node->{$field['field_name']})) {
+      if (!empty($node->{$field['field_name']})) {
         if (module_exists('link') && $field['type'] == 'link') {
           foreach ($node->$field['field_name'] as $delta => $item) {
             // FIXME D7: needs language parameter for check_markup.
