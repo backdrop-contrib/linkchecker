@@ -53,7 +53,7 @@ define('LINKCHECKER_DEFAULT_FILTER_BLACKLIST', 'filter_autop|insert_node/0|inser
 /**
  * Implementation of hook_perm().
  */
-function linkchecker_perm() {
+function linkchecker_permission() {
   return array(
     'access broken links report' => array(
       'title' => t('Access broken links report'),
