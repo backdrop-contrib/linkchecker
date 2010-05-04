@@ -51,7 +51,7 @@ define('LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS', "example.com\nexample.net\n
 define('LINKCHECKER_DEFAULT_FILTER_BLACKLIST', 'filter_autop|insert_node/0|insert_view/0|smileys/0|links_weblink/0|weblinks_embed/0|weblinks_filter/0');
 
 /**
- * Implementation of hook_perm().
+ * Implementation of hook_permission().
  */
 function linkchecker_permission() {
   return array(
