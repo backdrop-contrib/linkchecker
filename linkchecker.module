@@ -1112,6 +1112,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
     $imgs = $html_dom->getElementsByTagName('img');
     foreach ($imgs as $img) {
       $urls[] = $img->getAttribute('src');
+      $urls[] = $img->getAttribute('longdesc');
     }
   }
 
