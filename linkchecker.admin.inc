@@ -236,6 +236,11 @@ function linkchecker_admin_settings_form_validate($form, &$form_state) {
       form_set_error('linkchecker_ignore_response_codes', t('Invalid response code %code found.', array('%code' => $ignore_response_code)));
     }
   }
+
+  // Prevent the removal of RFC documentation domains. This are the official and
+  // reserved documentation domains and not "example" hostnames!
+  $linkchecker_disable_link_check_for_urls = array_filter(preg_split('/(\r\n?|\n)/', $form_state['values']['linkchecker_disable_link_check_for_urls']));
+  $form_state['values']['linkchecker_disable_link_check_for_urls'] = implode("\n", array_unique(array_merge(explode("\n", LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS), $linkchecker_disable_link_check_for_urls)));
 }
 
 function linkchecker_admin_settings_form_submit($form, &$form_state) {
