@@ -554,6 +554,9 @@ function linkchecker_block_custom_delete_form_submit($form, &$form_state) {
  *   the need for content re-scans is detected by the number of missing links.
  */
 function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALSE) {
+  // Get current node language options for url() functions.
+  $languages = language_list();
+  $url_options = empty($node->language) ? array('absolute' => TRUE) : array('language' => $languages[$node->language], 'absolute' => TRUE);
 
   $filter = new stdClass;
   $filter->settings['filter_url_length'] = 72;
@@ -566,25 +569,28 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
   $text_items[] = _linkchecker_check_markup($node->teaser, $node->format, $node->language);
 
   // Search for links in 'weblink' nodes from 'links' module package.
-  if (module_exists('links_weblink') && $node->type == 'weblink' && isset($node->links_weblink_url)) {
-    $text_items[] = _filter_url($node->links_weblink_url, $filter);
+  if (module_exists('links_weblink') && $node->type == 'weblink' && !empty($node->links_weblink_url)) {
+    $text_items[] = _filter_url(url($node->links_weblink_url, $url_options), $node->format);
   }
 
   // Search for links in 'weblinks' nodes from 'weblinks' module.
-  if (module_exists('weblinks') && $node->type == 'weblinks' && isset($node->url)) {
-    $text_items[] = _filter_url($node->url, $filter);
+  if (module_exists('weblinks') && $node->type == 'weblinks' && !empty($node->url)) {
+    $text_items[] = _filter_url(url($node->url, $url_options), $node->format);
   }
 
   // Search for CCK-fields of types 'link' and 'text'.
   if (module_exists('content')) {
-    // FIXME: D7???
+    // FIXME: How to port to D7???
     $fields = content_fields(NULL, $node->type);
     foreach ($fields as $field) {
       if (!empty($node->{$field['field_name']})) {
         if (module_exists('link') && $field['type'] == 'link') {
           foreach ($node->$field['field_name'] as $delta => $item) {
-            // FIXME D7: needs language parameter for check_markup.
-            $text_items[] = _filter_url($item['url'], $filter);
+            if (!empty($item['url'])) {
+              // Make non-absolute urls absolute or they are not found by _filter_url().
+              // FIXME D7: needs language parameter for check_markup.
+              $text_items[] = _filter_url(url($item['url'], $url_options), $node->format);
+            }
           }
         }
         elseif (module_exists('text') && $field['type'] == 'text') {
@@ -597,10 +603,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
   }
 
   // Get the absolute node path for extraction of relative links.
-  $languages = language_list();
-  // FIXME: 'en' could be wrong!?
-  $node_language = isset($node->language) ? $node->language : 'en';
-  $path = url('node/'. $node->nid, array('language' => $languages[$node_language], 'absolute' => TRUE));
+  $path = url('node/'. $node->nid, $url_options);
 
   // Extract all links in a node.
   $links = _linkchecker_extract_links(implode(' ', $text_items), $path);
