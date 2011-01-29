@@ -4,9 +4,4 @@ description = "Periodically checks for broken links in node types, blocks and cc
 configure = admin/config/content/linkchecker
 core = 7.x
 
-files[] = linkchecker.admin.inc
-files[] = linkchecker.batch.inc
-files[] = linkchecker.install
-files[] = linkchecker.module
-files[] = linkchecker.pages.inc
 files[] = linkchecker.test
