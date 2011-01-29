@@ -202,13 +202,13 @@ function linkchecker_modules_disabled($modules) {
   // Disable link checks for custom blocks.
   if (in_array('block', $modules)) {
     variable_set('linkchecker_scan_blocks', 0);
-    drupal_set_message('Link checks for blocks have been disabled.');
+    drupal_set_message(t('Link checks for blocks have been disabled.'));
   }
 
   // Disable link checks for comments.
   if (in_array('comment', $modules)) {
     variable_set('linkchecker_scan_comments', 0);
-    drupal_set_message('Link checks for comments have been disabled.');
+    drupal_set_message(t('Link checks for comments have been disabled.'));
   }
 }
 
