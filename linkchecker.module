@@ -228,7 +228,7 @@ function _linkchecker_status_handling($link, $response) {
         // NODES: Autorepair all nodes having this outdated link.
         $result = db_query('SELECT * FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid));
         foreach ($result as $row) {
-          $node = node_load(array('nid' => $row->nid));
+          $node = node_load($row->nid);
 
           // Create array of node fields to scan (for e.g. $node->title, $node->links_weblink_url).
           $text_items = array();
@@ -1539,7 +1539,7 @@ function _linkchecker_scan_nodetype($node_type = NULL) {
 function _linkchecker_unpublish_nodes($lid) {
   $result = db_query('SELECT * FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $lid));
   foreach ($result as $row) {
-    $node = node_load(array('nid' => $row->nid));
+    $node = node_load($row->nid);
     $node->status = 0;
     node_save($node);
     watchdog('linkchecker', 'Set @type %title to unpublished.', array('@type' => $node->type, '%title' => $node->title));
