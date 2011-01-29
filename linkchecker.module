@@ -27,17 +27,19 @@ define('LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS', "example.com\nexample.net\n
  *
  * - Line break converter, http://drupal.org/project/drupal
  *     name: filter_autop
+ * - Insert view filter, http://drupal.org/project/insert_view
+ *     name: insert_view
+ *     tags: [view:my_view]
+ *
+ * TODO:
+ * - Smileys Filter, http://drupal.org/project/smileys
+ *     name: smileys
+ *     tags: Depends on icon set, for e.g: ":) :-) :smile:"
  *
  * FIXME:
  * - Insert node, http://drupal.org/project/InsertNode
  *     name: insert_node/0
  *     tags: [node:<name of node> <parameters>]
- * - Insert view filter, http://drupal.org/project/insert_view
- *     name: insert_view/0
- *     tags: [view:my_view]
- * - Smileys Filter, http://drupal.org/project/smileys
- *     name: smileys/0
- *     tags: Depends on icon set, for e.g: ":) :-) :smile:"
  * - Weblink filter, http://drupal.org/project/links
  *     name: links_weblink/0
  *     tags: [weblink:node_id|text], [weblink:node_id/link_id], [weblink:http://weblink.example.com/]
@@ -48,7 +50,7 @@ define('LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS', "example.com\nexample.net\n
  *     name: weblinks_filter/0
  *     tags: [link: title]
  */
-define('LINKCHECKER_DEFAULT_FILTER_BLACKLIST', 'filter_autop|insert_node/0|insert_view/0|smileys/0|links_weblink/0|weblinks_embed/0|weblinks_filter/0');
+define('LINKCHECKER_DEFAULT_FILTER_BLACKLIST', 'filter_autop|insert_node/0|insert_view|smileys|links_weblink/0|weblinks_embed/0|weblinks_filter/0');
 
 /**
  * Implementation of hook_permission().

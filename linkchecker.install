@@ -225,32 +225,30 @@ function linkchecker_update_7000() {
 }
 
 /**
- * Upgrade blacklist filter names.
+ * Upgrade blacklisted internal filter names.
  *
  * - Line break converter, http://drupal.org/project/drupal
  *     name: filter_autop (D6: filter/1)
+ * - Insert view filter, http://drupal.org/project/insert_view
+ *     name: insert_view (D6: insert_view/0)
  */
 /*
 function linkchecker_update_7001() {
-  $ret = array();
-
   // See filter_update_7003();
-  // Add drupal message that settings are not upgradable for 'unknown' contrib filters.
+  // Add drupal message that settings cannot updated for 'unknown' contrib filters.
 
-  return $ret;
+  return t('Updated the blacklisted internal filter names from Drupal 6 to Drupal 7. The update has only updated the blacklisted filters linkchecker is aware of. Please verify the linkchecker extraction filter settings, if all filters with <em>references</em> to other content are still disabled.');
 }
 */
 
 /**
- * Remove obsolete variable.
+ * Remove obsolete settings variable.
  */
 /*
 function linkchecker_update_7002() {
-  $ret = array();
-
   // Remove obsolete variable.
   variable_del('linkchecker_extract_from_source');
 
-  return $ret;
+  return t('Removed obsolete settings variable.');
 }
 */
