@@ -7,7 +7,7 @@
  */
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function linkchecker_uninstall() {
   variable_del('linkchecker_action_status_code_301');
@@ -33,7 +33,7 @@ function linkchecker_uninstall() {
 }
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function linkchecker_schema() {
 
@@ -164,7 +164,7 @@ function linkchecker_schema() {
 }
 
 /**
- * Implementation of hook_requirements().
+ * Implements hook_requirements().
  */
 function linkchecker_requirements($phase) {
   $requirements = array();
