@@ -45,7 +45,7 @@ function linkchecker_admin_report_page() {
  * Menu callback for author specific reporting.
  */
 function linkchecker_user_report_page($account) {
-  drupal_set_title(check_plain($account->name));
+  drupal_set_title($account->name);
 
   $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"));
 
