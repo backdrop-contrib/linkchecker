@@ -1238,8 +1238,8 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
   if (!empty($text) && !empty($old_link_fqdn) && !empty($new_link_fqdn)) {
     // Remove protocols and hostname from local URLs.
     $base_roots = array(
-      drupal_strtolower('http://'. $_SERVER['HTTP_HOST']),
-      drupal_strtolower('https://'. $_SERVER['HTTP_HOST'])
+      drupal_strtolower('http://' . $_SERVER['HTTP_HOST']),
+      drupal_strtolower('https://' . $_SERVER['HTTP_HOST'])
     );
     $old_link = str_replace($base_roots, '', $old_link_fqdn);
     $new_link = str_replace($base_roots, '', $new_link_fqdn);
@@ -1279,47 +1279,47 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
         // TODO: If link text between opening an closing a-tag having the same
         // URL, also replace the link text. Create a replace regex for this task.
         $text = str_replace(array('>' . $old_html_link_fqdn . '</a>', '>' . $old_html_link . '</a>', '>' . $old_link . '</a>'), '>' . $new_html_link . '</a>', $text);
-        $replacements['/(<(a|area)\s[^>]*href=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\4';
+        $replacements['/(<(a|area)\s[^>]*href=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '4';
       }
 
       // Add replace rules for audio tags.
       if (variable_get('linkchecker_extract_from_audio', 0) == 1) {
-        $replacements['/(<audio\s[^>]*src=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\3';
+        $replacements['/(<audio\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
       }
 
       // Add replace rules for embed tags.
       if (variable_get('linkchecker_extract_from_embed', 0) == 1) {
-        $replacements['/(<embed\s[^>]*src=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\3';
-        $replacements['/(<embed\s[^>]*pluginurl=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\3';
-        $replacements['/(<embed\s[^>]*pluginspage=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\3';
+        $replacements['/(<embed\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        $replacements['/(<embed\s[^>]*pluginurl=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        $replacements['/(<embed\s[^>]*pluginspage=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
       }
 
       // Add replace rules for iframe tags.
       if (variable_get('linkchecker_extract_from_iframe', 0) == 1) {
-        $replacements['/(<iframe\s[^>]*src=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\3';
+        $replacements['/(<iframe\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
       }
 
       // Add replace rules for img tags.
       if (variable_get('linkchecker_extract_from_img', 0) == 1) {
-        $replacements['/(<img\s[^>]*src=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\3';
+        $replacements['/(<img\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
       }
 
       // Add replace rules for object/param tags.
       if (variable_get('linkchecker_extract_from_object', 0) == 1) {
-        $replacements['/(<object\s[^>]*data=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\3';
-        $replacements['/(<object\s[^>]*codebase=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\3';
-        $replacements['/(<param\s[^>]*((name|src)=["\'](archive|filename|href|movie|src|url)["\']\s[^>]*)+value=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\6';
+        $replacements['/(<object\s[^>]*data=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        $replacements['/(<object\s[^>]*codebase=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        $replacements['/(<param\s[^>]*((name|src)=["\'](archive|filename|href|movie|src|url)["\']\s[^>]*)+value=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\6';
       }
 
       // Add replace rules for source tags.
       if (variable_get('linkchecker_extract_from_source', 0) == 1) {
-        $replacements['/(<source\s[^>]*src=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\3';
+        $replacements['/(<source\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
       }
 
       // Add replace rules for video tags.
       if (variable_get('linkchecker_extract_from_video', 0) == 1) {
-        $replacements['/(<video\s[^>]*poster=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\3';
-        $replacements['/(<video\s[^>]*src=["\'])('. $regex_old_links .')(["\'][^>]*>)/i'] = '\1'. $new_html_link .'\3';
+        $replacements['/(<video\s[^>]*poster=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        $replacements['/(<video\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
       }
 
       // Replace link by applying all replacement rules on text.
@@ -1424,7 +1424,7 @@ function _linkchecker_absolute_content_path($url) {
   $scheme = isset($uri['scheme']) ? $uri['scheme'] . '://' : '';
   $user = isset($uri['user']) ? $uri['user'] . ($uri['pass'] ? ':' . $uri['pass'] : '') . '@' : '';
   $port = isset($uri['port']) ? $uri['port'] : 80;
-  $host = $uri['host'] . ($port != 80 ? ':'. $port : '');
+  $host = $uri['host'] . ($port != 80 ? ':' . $port : '');
   $path = isset($uri['path']) ? $uri['path'] : '/';
 
   // Glue the URL variables.
