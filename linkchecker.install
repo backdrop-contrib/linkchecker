@@ -213,17 +213,15 @@ function linkchecker_modules_disabled($modules) {
 }
 
 /**
- * Rename tables to singular.
+ * Rename database tables.
  */
 function linkchecker_update_7000() {
-  $ret = array();
-
   db_rename_table($ret, 'linkchecker_boxes', 'linkchecker_block_custom');
   db_rename_table($ret, 'linkchecker_comments', 'linkchecker_comment');
   db_rename_table($ret, 'linkchecker_nodes', 'linkchecker_node');
   db_rename_table($ret, 'linkchecker_links', 'linkchecker_link');
 
-  return $ret;
+  return t('Renamed database tables to new schema names.');
 }
 
 /**
