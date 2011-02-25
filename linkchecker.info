@@ -1,4 +1,3 @@
-; $Id$
 name = Link checker
 description = "Periodically checks for broken links in node types, blocks and fields and reports the results."
 configure = admin/config/content/linkchecker
