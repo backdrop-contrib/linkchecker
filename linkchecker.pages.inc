@@ -204,7 +204,7 @@ function linkchecker_link_edit_form(&$form_state, $link) {
     '#type' => 'fieldset',
     '#title' => t('Settings'),
     '#collapsible' => FALSE,
-    '#description' => t('The link <a href="@url">@url</a> has been checked lastly at @last_checked and failed @fail_count times.', array('@url' => $link->url, '@fail_count' => $link->fail_count, '@last_checked' => format_date($link->last_checked)))
+    '#description' => t('The link <a href="@url">@url</a> was last checked on @last_checked and failed @fail_count times.', array('@url' => $link->url, '@fail_count' => $link->fail_count, '@last_checked' => format_date($link->last_checked)))
   );
 
   $form['settings']['lid'] = array('#type' => 'value', '#value' => $link->lid);
@@ -225,7 +225,7 @@ function linkchecker_link_edit_form(&$form_state, $link) {
     '#default_value' => $link->status,
     '#type' => 'checkbox',
     '#title' => t('Check link status'),
-    '#description' => t("Disable this checkbox if you don't like to get informed any longer about this broken link. Use this setting only as the very last option if there is no other way to solve a failed link check."),
+    '#description' => t("Uncheck if you wish to ignore this link. Use this setting only as a last resort if there is no other way to solve a failed link check."),
   );
 
   $form['maintenance'] = array(
@@ -238,7 +238,7 @@ function linkchecker_link_edit_form(&$form_state, $link) {
     '#default_value' => 0,
     '#type' => 'checkbox',
     '#title' => t('Re-check link status on next cron run'),
-    '#description' => t('Enable this checkbox if you need an immediate re-check of the link and cannot wait until the next scheduled check at @date.', array('@date' => format_date($link['last_checked'] + variable_get('linkchecker_check_links_interval', 2419200)))),
+    '#description' => t('Enable this checkbox if you want to re-check the link during the next cron job rather than wait for the next scheduled check on @date.', array('@date' => format_date($link['last_checked'] + variable_get('linkchecker_check_links_interval', 2419200)))),
   );
 
   $form['buttons']['submit'] = array('#type' => 'submit', '#value' => t('Save configuration'));
