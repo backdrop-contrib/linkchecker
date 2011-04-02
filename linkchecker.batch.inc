@@ -121,7 +121,7 @@ function _linkchecker_batch_import_block_custom() {
  */
 function _linkchecker_batch_import_block_custom_op($bid, &$context) {
   // Load the custom block and scan for links.
-  $block_custom = block_box_get($bid);
+  $block_custom = block_custom_block_get($bid);
   _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
 
   // Store some result for post-processing in the finished callback.
@@ -267,7 +267,7 @@ function _linkchecker_batch_import_single_block_custom($bid, $missing_links_coun
 
 function _linkchecker_batch_single_block_custom_import_op($bid, &$context) {
   // Load the custom block and scan for links.
-  $block_custom = block_box_get($bid);
+  $block_custom = block_custom_block_get($bid);
   _linkchecker_add_block_custom_links($block_custom, $block_custom['bid'], TRUE);
 
   // Store some result for post-processing in the finished callback.

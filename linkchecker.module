@@ -310,7 +310,7 @@ function _linkchecker_status_handling($link, $response) {
         // CUSTOM BLOCKS: Autorepair all custom blocks having this outdated link.
         $result = db_query('SELECT * FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
         foreach ($result as $row) {
-          $block_custom = block_box_get($row->bid);
+          $block_custom = block_custom_block_get($row->bid);
 
           // Create array of custom block fields to scan.
           $text_items = array();
