@@ -688,6 +688,7 @@ function linkchecker_parse_fields($entity, $type) {
         case 'link_field':
           foreach ($entity_field as $language) {
             foreach ($language as $item) {
+              // FIXME: Looks like broken code.
               $text_items[] = _linkchecker_check_markup($item['url'], NULL, $entity->language);
               $text_items[] = _linkchecker_check_markup($item['title'], NULL, $entity->language);
             }
