@@ -568,43 +568,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
   // Create array of node fields to scan.
   $text_items = array();
   $text_items[] = _filter_url($node->title, $filter);
-  //$text_items[] = _linkchecker_check_markup($node->summary, $node->format, $node->language);
-  $text_items[] = _linkchecker_check_markup($node->body, $node->format, $node->language);
-  $text_items[] = _linkchecker_check_markup($node->teaser, $node->format, $node->language);
-
-  // Search for links in 'weblink' nodes from 'links' module package.
-  if (module_exists('links_weblink') && $node->type == 'weblink' && !empty($node->links_weblink_url)) {
-    $text_items[] = _filter_url(url($node->links_weblink_url, $url_options), $node->format);
-  }
-
-  // Search for links in 'weblinks' nodes from 'weblinks' module.
-  if (module_exists('weblinks') && $node->type == 'weblinks' && !empty($node->url)) {
-    $text_items[] = _filter_url(url($node->url, $url_options), $node->format);
-  }
-
-  // Search for CCK-fields of types 'link' and 'text'.
-  if (module_exists('content')) {
-    // FIXME: How to port to D7???
-    $fields = content_fields(NULL, $node->type);
-    foreach ($fields as $field) {
-      if (!empty($node->{$field['field_name']})) {
-        if (module_exists('link') && $field['type'] == 'link') {
-          foreach ($node->$field['field_name'] as $delta => $item) {
-            if (!empty($item['url'])) {
-              // Make non-absolute urls absolute or they are not found by _filter_url().
-              // FIXME D7: needs language parameter for check_markup.
-              $text_items[] = _filter_url(url($item['url'], $url_options), $node->format);
-            }
-          }
-        }
-        elseif (module_exists('text') && $field['type'] == 'text') {
-          foreach ($node->$field['field_name'] as $delta => $item) {
-            $text_items[] = _filter_url($item['value'], $filter);
-          }
-        }
-      }
-    }
-  }
+  $text_items = $text_items + linkchecker_parse_fields($node, $node->type);
 
   // Get the absolute node path for extraction of relative links.
   $path = url('node/'. $node->nid, $url_options);
@@ -673,6 +637,67 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
 
   // Remove dead link references for cleanup reasons as very last step.
   _linkchecker_cleanup_node_references($node->nid, $links);
+}
+
+/**
+ * Parse the urls from entity.
+ *
+ * This function parse all fields from the entity and returns an array of
+ * filtered field items.
+ *
+ * @param $entity
+ *   The entity to parse, a node or a comment object.
+ * @param $type
+ *   The type (blunde) to parse. As a example, when the $entity is a node
+ *   object, pass $node->type as value for this parameter.
+ *
+ * @return
+ *    Array of field items with filters applied.
+ */
+function linkchecker_parse_fields($entity, $type) {
+  $text_items = array();
+  $field_list = field_info_fields();
+
+  foreach ($field_list as $name => $field) {
+    if (!empty($field['bundles'][$type]) && in_array($type, $field['bundles'][$type])) {
+      // FIXME: This is because a php parse error.
+      $entity_field = $entity->$name;
+
+      switch ($field['type']) {
+        // Core fields.
+        case 'text_with_summary':
+          foreach ($entity_field as $language) {
+            foreach ($language as $item) {
+              $text_items[] = _linkchecker_check_markup($item['value'], $item['format'], $entity->language);
+              $text_items[] = _linkchecker_check_markup($item['summary'], $item['format'], $entity->language);
+            }
+          }
+          break;
+
+        // Core fields.
+        case 'text_long':
+        case 'text':
+          foreach ($entity_field as $language) {
+            foreach ($language as $item) {
+              $text_items[] = _linkchecker_check_markup($item['value'], $item['format'], $entity->language);
+            }
+          }
+          break;
+
+        // Link module field, http://drupal.org/project/link.
+        case 'link_field':
+          foreach ($entity_field as $language) {
+            foreach ($language as $item) {
+              $text_items[] = _linkchecker_check_markup($item['url'], NULL, $entity->language);
+              $text_items[] = _linkchecker_check_markup($item['title'], NULL, $entity->language);
+            }
+          }
+          break;
+      }
+    }
+  }
+
+  return $text_items;
 }
 
 /**
@@ -1337,60 +1362,69 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
  *
  * See http://api.drupal.org/api/function/check_markup/7 for API documentation.
  */
-function _linkchecker_check_markup($text, $format = FILTER_FORMAT_DEFAULT, $langcode = '', $cache = TRUE) {
-  if (isset($text)) {
-    $format = filter_resolve_format($format);
+function _linkchecker_check_markup($text, $format_id = NULL, $langcode = '', $cache = FALSE) {
+  if (!isset($text)) {
+    return '';
+  }
 
-    // Check for a cached version of this piece of text.
-    $cache_id = 'linkchecker:' . $format . ':' . $langcode . ':' . md5($text);
-    if ($cache && $cached = cache_get($cache_id, 'cache_filter')) {
+  if (!isset($format_id)) {
+    $format_id = filter_fallback_format();
+  }
+  // If the requested text format does not exist, the text cannot be filtered.
+  if (!$format = filter_format_load($format_id)) {
+    watchdog('filter', 'Missing text format: %format.', array('%format' => $format_id), WATCHDOG_ALERT);
+    return '';
+  }
+
+  // Check for a cached version of this piece of text.
+  $cache = $cache && !empty($format->cache);
+  $cache_id = '';
+  if ($cache) {
+    $cache_id = 'linkchecker:' . $format->format . ':' . $langcode . ':' . hash('sha256', $text);
+    if ($cached = cache_get($cache_id, 'cache_filter')) {
       return $cached->data;
     }
+  }
 
-    // Convert all Windows and Mac newlines to a single newline,
-    // so filters only need to deal with one possibility.
-    $text = str_replace(array("\r\n", "\r"), "\n", $text);
+  // Convert all Windows and Mac newlines to a single newline, so filters only
+  // need to deal with one possibility.
+  $text = str_replace(array("\r\n", "\r"), "\n", $text);
 
-    // Get a complete list of filters, ordered properly.
-    $filters = filter_list_format($format);
+  // Get a complete list of filters, ordered properly.
+  $filters = filter_list_format($format->format);
+  $filter_info = filter_get_filters();
 
-    // Do not run placeholder or special tag filters used as references
-    // to nodes like 'weblink' or 'weblinks' node types. If the original
-    // link node is updated, all links are automatically up-to-date and
-    // there is no need to notify about the broken link on all nodes having
-    // a link reference in content. This would only confuse the authors as
-    // they may also not be able to fix the source node of the reference.
-    $filters_blacklist = array_keys(array_filter(variable_get('linkchecker_filter_blacklist', explode('|', LINKCHECKER_DEFAULT_FILTER_BLACKLIST))));
+  // Do not run placeholder or special tag filters used as references
+  // to nodes like 'weblink' or 'weblinks' node types. If the original
+  // link node is updated, all links are automatically up-to-date and
+  // there is no need to notify about the broken link on all nodes having
+  // a link reference in content. This would only confuse the authors as
+  // they may also not be able to fix the source node of the reference.
+  $filters_blacklist = array_keys(array_filter(variable_get('linkchecker_filter_blacklist', explode('|', LINKCHECKER_DEFAULT_FILTER_BLACKLIST))));
 
-    // Give filters the chance to escape HTML-like data such as code or formulas.
-    foreach ($filters as $filter) {
-      if (!in_array($filter->name, $filters_blacklist)) {
-        $filter_info = module_invoke($filter->module, 'filter_info');
-        // TODO: http://drupal.org/node/562694
-        if (isset($filter_info[$filter->name]['prepare callback']) && function_exists($filter_info[$filter->name]['prepare callback'])) {
-          $text = call_user_func($filter_info[$filter->name]['prepare callback'], $text, $format, $langcode, $cache_id);
-        }
+  // Give filters the chance to escape HTML-like data such as code or formulas.
+  foreach ($filters as $name => $filter) {
+    if (!in_array($name, $filters_blacklist)) {
+      if ($filter->status && isset($filter_info[$name]['prepare callback']) && function_exists($filter_info[$name]['prepare callback'])) {
+        $function = $filter_info[$name]['prepare callback'];
+        $text = $function($text, $filter, $format, $langcode, $cache, $cache_id);
       }
-    }
-
-    // Perform filtering.
-    foreach ($filters as $filter) {
-      if (!in_array($filter->name, $filters_blacklist)) {
-        $filter_info = module_invoke($filter->module, 'filter_info');
-        // TODO: http://drupal.org/node/562694
-        if (isset($filter_info[$filter->name]['process callback']) && function_exists($filter_info[$filter->name]['process callback'])) {
-          $text = call_user_func($filter_info[$filter->name]['process callback'], $text, $format, $langcode, $cache_id);
-        }
-      }
-    }
-
-    // Store in cache with a minimum expiration time of 1 day.
-    if ($cache && filter_format_allowcache($format)) {
-      cache_set($cache_id, $text, 'cache_filter', REQUEST_TIME + (60 * 60 * 24));
     }
   }
-  else {
-    $text = t('n/a');
+
+  // Perform filtering.
+  foreach ($filters as $name => $filter) {
+    if (!in_array($name, $filters_blacklist)) {
+        if ($filter->status && isset($filter_info[$name]['process callback']) && function_exists($filter_info[$name]['process callback'])) {
+        $function = $filter_info[$name]['process callback'];
+        $text = $function($text, $filter, $format, $langcode, $cache, $cache_id);
+      }
+    }
+  }
+
+  // Store in cache with a minimum expiration time of 1 day.
+  if ($cache) {
+    cache_set($cache_id, $text, 'cache_filter', REQUEST_TIME + (60 * 60 * 24));
   }
 
   return $text;
