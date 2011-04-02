@@ -248,7 +248,7 @@ function linkchecker_update_7002(&$sandbox) {
   $sandbox['#finished'] = 0;
 
   // How many links are updated per batch run.
-  $count = 1;
+  $count = 1000;
 
   // Count the number of links and chunks if not yet set and save to $sandbox
   // to avoid a query on every batch run.
