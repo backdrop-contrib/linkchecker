@@ -42,7 +42,7 @@ function linkchecker_admin_settings_form($form_state) {
     '#default_value' => variable_get('linkchecker_scan_blocks', 0),
     '#type' => 'checkbox',
     '#title' => t('Scan blocks for links'),
-    '#description' => t('Enable this checkbox if links in blocks should be checked.'),
+    '#description' => t('Enable this checkbox if links in blocks should be checked.') . $block_custom_dependencies,
     '#disabled' => module_exists('block') ? FALSE : TRUE,
   );
   $form['settings']['linkchecker_fqdn_only'] = array(
