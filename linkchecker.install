@@ -242,40 +242,44 @@ function linkchecker_update_7001() {
 }
 
 /**
- * Recalculate the 'urlhash' using drupal_hash_base64() instead of md5().
+ * Recalculate the 'urlhash' using drupal_hash_base64().
  */
 function linkchecker_update_7002(&$sandbox) {
-  // How many links are updated per batch run.
-  $max_number_of_links_per_batch = 1000;
+  $sandbox['#finished'] = 0;
 
-  // Tell batch API that the job is not yet finished.
-  $sandbox['#finished'] = 0.5;
+  // How many links are updated per batch run.
+  $count = 1;
 
   // Count the number of links and chunks if not yet set and save to $sandbox
   // to avoid a query on every batch run.
-  if (empty($sandbox['chunk'])) {
+  if (!isset($sandbox['chunk'])) {
     // Count number of total links.
     $links_total = db_query('SELECT COUNT(lid) FROM {linkchecker_link}')->fetchField();
     // Calculate number of batch chunks.
-    $sandbox['total'] = ceil($links_total / $max_number_of_links_per_batch);
+    $sandbox['total'] = ceil($links_total / $count);
     // The current batch chunk, start at link number 0.
     $sandbox['chunk'] = 0;
   }
+  else {
+    // Recalculate the 'urlhash' using drupal_hash_base64().
+    $has_rows = FALSE;
+    $result = db_query_range('SELECT url, lid FROM {linkchecker_link}', ($sandbox['chunk'] * $count), $count);
+    foreach ($result as $link) {
+      $has_rows = TRUE;
+      db_update('linkchecker_link')
+        ->condition('lid', $link->lid)
+        ->fields(array('urlhash' => drupal_hash_base64($link->url)))
+        ->execute();
+    }
 
-  // Recalculate the 'urlhash' using drupal_hash_base64().
-  $result = db_query_range('SELECT url, lid FROM {linkchecker_link}', ($sandbox['chunk'] * $max_number_of_links_per_batch), $max_number_of_links_per_batch);
-  foreach($result as $link) {
-    db_update('linkchecker_link')
-      ->condition('lid', $link->lid)
-      ->fields(array('urlhash' => drupal_hash_base64($link->url)))
-      ->execute();
-  }
+    // Increase current chunk number until batches are finished.
+    $sandbox['chunk']++;
+    $sandbox['#finished'] = 0.99;
 
-  // Increase current chunk number until batches are finished.
-  $sandbox['chunk']++;
-  if ($sandbox['chunk'] == $sandbox['total']) {
-    $sandbox['#finished'] = 1;
-    return t('Recalculated the link urlhashes.');
+    if (!$has_rows) {
+      $sandbox['#finished'] = 1;
+      return t("Recalculated the 'urlhash' using drupal_hash_base64().");
+    }
   }
 }
 
