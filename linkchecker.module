@@ -585,7 +585,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
     // Only add links to database that do not exists.
     $i = 0;
     foreach ($missing_links as $url) {
-      $urlhash = md5($url);
+      $urlhash = drupal_hash_base64($url);
       $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash))->fetchObject();
       if (!$link) {
         $link->urlhash = $urlhash;
@@ -743,7 +743,7 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
     // Only add unique links to database that do not exist.
     $i = 0;
     foreach ($missing_links as $url) {
-      $urlhash = md5($url);
+      $urlhash = drupal_hash_base64($url);
       $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash))->fetchObject();
       if (!$link) {
         $link->urlhash = $urlhash;
@@ -832,7 +832,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
     // Only add unique links to database that do not exist.
     $i = 0;
     foreach ($missing_links as $url) {
-      $urlhash = md5($url);
+      $urlhash = drupal_hash_base64($url);
       $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash))->fetchObject();
       if (!$link) {
         $link->urlhash = $urlhash;
@@ -929,7 +929,7 @@ function _linkchecker_cleanup_node_references($nid = 0, $links = array()) {
     // linkchecker_node reference table.
     $subquery = db_select('linkchecker_link')
       ->fields('linkchecker_link', array('lid'))
-      ->condition('urlhash', array_map('md5', $links), 'IN');
+      ->condition('urlhash', array_map('drupal_hash_base64', $links), 'IN');
 
     db_delete('linkchecker_node')
       ->condition('nid', $nid)
@@ -954,7 +954,7 @@ function _linkchecker_cleanup_comment_references($cid = 0, $links = array()) {
     // linkchecker_comment reference table.
     $subquery = db_select('linkchecker_link', 'll')
       ->fields('ll', array('lid'))
-      ->condition('ll.urlhash', array_map('md5', $links), 'IN');
+      ->condition('ll.urlhash', array_map('drupal_hash_base64', $links), 'IN');
 
     // FIXME: http://drupal.org/node/564852
     db_delete('linkchecker_comment')
@@ -980,7 +980,7 @@ function _linkchecker_cleanup_block_custom_references($bid = 0, $links = array()
     // linkchecker_block_custom reference table.
     $subquery = db_select('linkchecker_link')
       ->fields('linkchecker_link', array('lid'))
-      ->condition('urlhash', array_map('md5', $links), 'IN');
+      ->condition('urlhash', array_map('drupal_hash_base64', $links), 'IN');
 
     db_delete('linkchecker_block_custom')
       ->condition('bid', $bid)
@@ -993,7 +993,7 @@ function _linkchecker_cleanup_block_custom_references($bid = 0, $links = array()
  * Returns an array of node references missing in the linkchecker_node table.
  */
 function _linkchecker_node_links_missing($nid, $links) {
-  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_node} ln ON ln.lid = ll.lid WHERE ln.nid = :nid AND ll.urlhash IN (:urlhashes)', array(':nid' => $nid, ':urlhashes' => array_map('md5', $links)));
+  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_node} ln ON ln.lid = ll.lid WHERE ln.nid = :nid AND ll.urlhash IN (:urlhashes)', array(':nid' => $nid, ':urlhashes' => array_map('drupal_hash_base64', $links)));
   $links_in_database = array();
   foreach ($result as $row) {
     $links_in_database[] = $row->url;
@@ -1005,7 +1005,7 @@ function _linkchecker_node_links_missing($nid, $links) {
  * Returns an array of comment references missing in the linkchecker_comment table.
  */
 function _linkchecker_comment_links_missing($cid, $links) {
-  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_comment} lc ON lc.lid = ll.lid WHERE lc.cid = :cid AND ll.urlhash IN (:urlhashes)', array(':cid' => $cid, ':urlhashes' => array_map('md5', $links)));
+  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_comment} lc ON lc.lid = ll.lid WHERE lc.cid = :cid AND ll.urlhash IN (:urlhashes)', array(':cid' => $cid, ':urlhashes' => array_map('drupal_hash_base64', $links)));
   $links_in_database = array();
   foreach ($result as $row) {
     $links_in_database[] = $row->url;
@@ -1017,7 +1017,7 @@ function _linkchecker_comment_links_missing($cid, $links) {
  * Returns an array of custom block references missing in the linkchecker_block_custom table.
  */
 function _linkchecker_block_custom_links_missing($bid, $links) {
-  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_block_custom} lb ON lb.lid = ll.lid WHERE lb.bid = :bid AND ll.urlhash IN (:urlhashes)', array(':bid' => $bid, ':urlhashes' => array_map('md5', $links)));
+  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_block_custom} lb ON lb.lid = ll.lid WHERE lb.bid = :bid AND ll.urlhash IN (:urlhashes)', array(':bid' => $bid, ':urlhashes' => array_map('drupal_hash_base64', $links)));
   $links_in_database = array();
   foreach ($result as $row) {
     $links_in_database[] = $row->url;

@@ -109,9 +109,9 @@ function linkchecker_schema() {
       ),
       'urlhash' => array(
         'type' => 'varchar',
-        'length' => 32,
+        'length' => 64,
         'not null' => TRUE,
-        'description' => 'The indexable md5 hash of the {linkchecker_link}.url.',
+        'description' => 'The indexable hash of the {linkchecker_link}.url.',
       ),
       'url' => array(
         'type' => 'text',
@@ -224,6 +224,62 @@ function linkchecker_update_7000() {
 }
 
 /**
+ * Increase the size of 'urlhash' field for drupal_hash_base64() hashes.
+ */
+function linkchecker_update_7001() {
+  db_drop_unique_key('linkchecker_link', 'urlhash');
+
+  $spec = array(
+    'type' => 'varchar',
+    'length' => 64,
+    'not null' => TRUE,
+    'description' => 'The indexable hash of the {linkchecker_link}.url.',
+  );
+
+  db_change_field('linkchecker_link', 'urlhash', 'urlhash', $spec, array('unique keys' => array('urlhash' => array('urlhash'))));
+
+  return t('Extended data length of {linkchecker_link}.urlhash field.');
+}
+
+/**
+ * Recalculate the 'urlhash' using drupal_hash_base64() instead of md5().
+ */
+function linkchecker_update_7002(&$sandbox) {
+  // How many links are updated per batch run.
+  $max_number_of_links_per_batch = 1000;
+
+  // Tell batch API that the job is not yet finished.
+  $sandbox['#finished'] = 0.5;
+
+  // Count the number of links and chunks if not yet set and save to $sandbox
+  // to avoid a query on every batch run.
+  if (empty($sandbox['chunk'])) {
+    // Count number of total links.
+    $links_total = db_query('SELECT COUNT(lid) FROM {linkchecker_link}')->fetchField();
+    // Calculate number of batch chunks.
+    $sandbox['total'] = ceil($links_total / $max_number_of_links_per_batch);
+    // The current batch chunk, start at link number 0.
+    $sandbox['chunk'] = 0;
+  }
+
+  // Recalculate the 'urlhash' using drupal_hash_base64().
+  $result = db_query_range('SELECT url, lid FROM {linkchecker_link}', ($sandbox['chunk'] * $max_number_of_links_per_batch), $max_number_of_links_per_batch);
+  foreach($result as $link) {
+    db_update('linkchecker_link')
+      ->condition('lid', $link->lid)
+      ->fields(array('urlhash' => drupal_hash_base64($link->url)))
+      ->execute();
+  }
+
+  // Increase current chunk number until batches are finished.
+  $sandbox['chunk']++;
+  if ($sandbox['chunk'] == $sandbox['total']) {
+    $sandbox['#finished'] = 1;
+    return t('Recalculated the link urlhashes.');
+  }
+}
+
+/**
  * Upgrade blacklisted internal filter names.
  *
  * - Line break converter, http://drupal.org/project/drupal
@@ -232,7 +288,7 @@ function linkchecker_update_7000() {
  *     name: insert_view (D6: insert_view/0)
  */
 /*
-function linkchecker_update_7001() {
+function linkchecker_update_7003() {
   // See filter_update_7003();
   // Add drupal message that settings cannot updated for 'unknown' contrib filters.
 
@@ -244,7 +300,7 @@ function linkchecker_update_7001() {
  * Remove obsolete settings variable.
  */
 /*
-function linkchecker_update_7002() {
+function linkchecker_update_7004() {
   // Remove obsolete variable.
   variable_del('linkchecker_extract_from_source');
 
