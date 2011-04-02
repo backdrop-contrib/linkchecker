@@ -648,7 +648,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
  * @param $entity
  *   The entity to parse, a node or a comment object.
  * @param $type
- *   The type (blunde) to parse. As a example, when the $entity is a node
+ *   The type (bundle) to parse. As a example, when the $entity is a node
  *   object, pass $node->type as value for this parameter.
  *
  * @return
