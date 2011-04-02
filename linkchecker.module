@@ -274,7 +274,7 @@ function _linkchecker_status_handling($link, $response) {
           }
 
           // Always use the default revision setting. See node_object_prepare().
-          $node_options = variable_get('node_options_'. $node->type, array('status', 'promote'));
+          $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
           $node->revision = in_array('revision', $node_options);
 
           // Generate a log message for the node_revisions table, visible on the node's revisions tab.
@@ -571,7 +571,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
   $text_items = $text_items + linkchecker_parse_fields($node, $node->type);
 
   // Get the absolute node path for extraction of relative links.
-  $path = url('node/'. $node->nid, $url_options);
+  $path = url('node/' . $node->nid, $url_options);
 
   // Extract all links in a node.
   $links = _linkchecker_extract_links(implode(' ', $text_items), $path);
@@ -729,7 +729,7 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
   // FIXME: $node_language could be empty. Backport to D6.
   // FIXME: 'en' could be wrong!?
   $node_language = !empty($node_language) ? $node_language : 'en';
-  $path = url('node/'. $comment->nid, array('language' => $languages[$node_language], 'absolute' => TRUE));
+  $path = url('node/' . $comment->nid, array('language' => $languages[$node_language], 'absolute' => TRUE));
 
   // Extract all links in a comment.
   $links = _linkchecker_extract_links(implode(' ', $text_items), $path);
