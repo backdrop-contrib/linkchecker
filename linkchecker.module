@@ -418,13 +418,6 @@ function _linkchecker_status_handling($link, $response) {
 }
 
 /**
- * Implement hook_node_delete().
- */
-function linkchecker_node_delete($node) {
-  _linkchecker_delete_node_links($node->nid);
-}
-
-/**
  * Implement hook_node_prepare().
  */
 function linkchecker_node_prepare($node) {
@@ -440,9 +433,12 @@ function linkchecker_node_prepare($node) {
 }
 
 /**
- * Implement hook_node_publish().
+ * Implement hook_node_insert().
+ *
+ * @param $node
+ *   The node that is being inserted.
  */
-function linkchecker_node_publish($node) {
+function linkchecker_node_insert($node) {
   // The node is going to be published.
   if ($node->status && _linkchecker_scan_nodetype($node->type)) {
     _linkchecker_add_node_links($node);
@@ -450,10 +446,30 @@ function linkchecker_node_publish($node) {
 }
 
 /**
- * Implement hook_node_unpublish().
+ * Implement hook_node_update().
+ *
+ * @param $node
+ *   The node that is being updated.
  */
-function linkchecker_node_unpublish($node) {
-  linkchecker_node_delete($node);
+function linkchecker_node_update($node) {
+  // The node is going to be published.
+  if ($node->status && _linkchecker_scan_nodetype($node->type)) {
+    _linkchecker_add_node_links($node);
+  }
+  else {
+    // The node is going to be unpublished.
+    linkchecker_node_delete($node);
+  }
+}
+
+/**
+ * Implement hook_node_delete().
+ *
+ * @param $node
+ *   The node that is being deleted.
+ */
+function linkchecker_node_delete($node) {
+  _linkchecker_delete_node_links($node->nid);
 }
 
 /**
