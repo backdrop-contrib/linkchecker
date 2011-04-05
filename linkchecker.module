@@ -825,67 +825,6 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
 }
 
 /**
- * Parse the urls from entity.
- *
- * This function parse all fields from the entity and returns an array of
- * filtered field items.
- *
- * @param $type
- *   The bundle type to parse. Examples types are 'node', 'comment'.
- * @param $entity
- *   The entity to parse, a node or a comment object.
- *
- * @return
- *    Array of field items with filters applied.
- */
-function linkchecker_parse_fields($type, $entity) {
-  $text_items = array();
-  $field_list = field_info_fields();
-
-  foreach ($field_list as $name => $field) {
-    if (!empty($field['bundles'][$type]) && in_array($entity->type, $field['bundles'][$type])) {
-      // FIXME: This is because a php parse error.
-      $entity_field = $entity->$name;
-
-      switch ($field['type']) {
-        // Core fields.
-        case 'text_with_summary':
-          foreach ($entity_field as $language) {
-            foreach ($language as $item) {
-              $text_items[] = _linkchecker_check_markup($item['value'], $item['format'], $entity->language, TRUE);
-              $text_items[] = _linkchecker_check_markup($item['summary'], $item['format'], $entity->language, TRUE);
-            }
-          }
-          break;
-
-        // Core fields.
-        case 'text_long':
-        case 'text':
-          foreach ($entity_field as $language) {
-            foreach ($language as $item) {
-              $text_items[] = _linkchecker_check_markup($item['value'], $item['format'], $entity->language, TRUE);
-            }
-          }
-          break;
-
-        // Link module field, http://drupal.org/project/link.
-        case 'link_field':
-          foreach ($entity_field as $language) {
-            foreach ($language as $item) {
-              // FIXME: Looks like broken code. May need to be _filter_url() to be save.
-              $text_items[] = _linkchecker_check_markup($item['url'], NULL, $entity->language, TRUE);
-              $text_items[] = _linkchecker_check_markup($item['title'], NULL, $entity->language, TRUE);
-            }
-          }
-          break;
-      }
-    }
-  }
-
-  return $text_items;
-}
-
-/**
  * Remove all node references to links in the linkchecker_node table.
  */
 function _linkchecker_delete_node_links($nid) {
@@ -1022,6 +961,67 @@ function _linkchecker_block_custom_links_missing($bid, $links) {
     $links_in_database[] = $row->url;
   }
   return array_diff($links, $links_in_database);
+}
+
+/**
+ * Parse the urls from entity.
+ *
+ * This function parse all fields from the entity and returns an array of
+ * filtered field items.
+ *
+ * @param $type
+ *   The bundle type to parse. Examples types are 'node', 'comment'.
+ * @param $entity
+ *   The entity to parse, a node or a comment object.
+ *
+ * @return
+ *    Array of field items with filters applied.
+ */
+function linkchecker_parse_fields($type, $entity) {
+  $text_items = array();
+  $field_list = field_info_fields();
+
+  foreach ($field_list as $name => $field) {
+    if (!empty($field['bundles'][$type]) && in_array($entity->type, $field['bundles'][$type])) {
+      // FIXME: This is because a php parse error.
+      $entity_field = $entity->$name;
+
+      switch ($field['type']) {
+        // Core fields.
+        case 'text_with_summary':
+          foreach ($entity_field as $language) {
+            foreach ($language as $item) {
+              $text_items[] = _linkchecker_check_markup($item['value'], $item['format'], $entity->language, TRUE);
+              $text_items[] = _linkchecker_check_markup($item['summary'], $item['format'], $entity->language, TRUE);
+            }
+          }
+          break;
+
+        // Core fields.
+        case 'text_long':
+        case 'text':
+          foreach ($entity_field as $language) {
+            foreach ($language as $item) {
+              $text_items[] = _linkchecker_check_markup($item['value'], $item['format'], $entity->language, TRUE);
+            }
+          }
+          break;
+
+        // Link module field, http://drupal.org/project/link.
+        case 'link_field':
+          foreach ($entity_field as $language) {
+            foreach ($language as $item) {
+              // FIXME: Looks like broken code. May need to be _filter_url() to be save.
+              $text_items[] = _linkchecker_check_markup($item['url'], NULL, $entity->language, TRUE);
+              $text_items[] = _linkchecker_check_markup($item['title'], NULL, $entity->language, TRUE);
+            }
+          }
+          break;
+      }
+    }
+  }
+
+  return $text_items;
 }
 
 /**
