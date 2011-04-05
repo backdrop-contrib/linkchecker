@@ -254,7 +254,7 @@ function linkchecker_update_7002(&$sandbox) {
   // to avoid a query on every batch run.
   if (!isset($sandbox['chunk'])) {
     // Count number of total links.
-    $links_total = db_query('SELECT COUNT(lid) FROM {linkchecker_link}')->fetchField();
+    $links_total = db_query('SELECT COUNT(1) FROM {linkchecker_link}')->fetchField();
     // Calculate number of batch chunks.
     $sandbox['total'] = ceil($links_total / $count);
     // The current batch chunk, start at link number 0.
