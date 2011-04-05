@@ -568,7 +568,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
   // Create array of node fields to scan.
   $text_items = array();
   $text_items[] = _filter_url($node->title, $filter);
-  $text_items = $text_items + linkchecker_parse_fields($node, $node->type);
+  $text_items = array_merge($text_items, linkchecker_parse_fields('node', $node));
 
   // Get the absolute node path for extraction of relative links.
   $path = url('node/' . $node->nid, $url_options);
@@ -645,21 +645,20 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
  * This function parse all fields from the entity and returns an array of
  * filtered field items.
  *
+ * @param $type
+ *   The bundle type to parse. Examples types are 'node', 'comment'.
  * @param $entity
  *   The entity to parse, a node or a comment object.
- * @param $type
- *   The type (bundle) to parse. As a example, when the $entity is a node
- *   object, pass $node->type as value for this parameter.
  *
  * @return
  *    Array of field items with filters applied.
  */
-function linkchecker_parse_fields($entity, $type) {
+function linkchecker_parse_fields($type, $entity) {
   $text_items = array();
   $field_list = field_info_fields();
 
   foreach ($field_list as $name => $field) {
-    if (!empty($field['bundles'][$type]) && in_array($type, $field['bundles'][$type])) {
+    if (!empty($field['bundles'][$type]) && in_array($entity->type, $field['bundles'][$type])) {
       // FIXME: This is because a php parse error.
       $entity_field = $entity->$name;
 
@@ -668,8 +667,8 @@ function linkchecker_parse_fields($entity, $type) {
         case 'text_with_summary':
           foreach ($entity_field as $language) {
             foreach ($language as $item) {
-              $text_items[] = _linkchecker_check_markup($item['value'], $item['format'], $entity->language);
-              $text_items[] = _linkchecker_check_markup($item['summary'], $item['format'], $entity->language);
+              $text_items[] = _linkchecker_check_markup($item['value'], $item['format'], $entity->language, TRUE);
+              $text_items[] = _linkchecker_check_markup($item['summary'], $item['format'], $entity->language, TRUE);
             }
           }
           break;
@@ -679,7 +678,7 @@ function linkchecker_parse_fields($entity, $type) {
         case 'text':
           foreach ($entity_field as $language) {
             foreach ($language as $item) {
-              $text_items[] = _linkchecker_check_markup($item['value'], $item['format'], $entity->language);
+              $text_items[] = _linkchecker_check_markup($item['value'], $item['format'], $entity->language, TRUE);
             }
           }
           break;
@@ -688,9 +687,9 @@ function linkchecker_parse_fields($entity, $type) {
         case 'link_field':
           foreach ($entity_field as $language) {
             foreach ($language as $item) {
-              // FIXME: Looks like broken code.
-              $text_items[] = _linkchecker_check_markup($item['url'], NULL, $entity->language);
-              $text_items[] = _linkchecker_check_markup($item['title'], NULL, $entity->language);
+              // FIXME: Looks like broken code. May need to be _filter_url() to be save.
+              $text_items[] = _linkchecker_check_markup($item['url'], NULL, $entity->language, TRUE);
+              $text_items[] = _linkchecker_check_markup($item['title'], NULL, $entity->language, TRUE);
             }
           }
           break;
