@@ -1188,10 +1188,10 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
     }
   }
 
-  // Remove empty values.
-  $urls = array_filter($urls);
   // Decode HTML links into plain text links.
   $urls = array_map('decode_entities', $urls);
+  // Remove empty values.
+  $urls = array_filter($urls);
   // Remove duplicate urls.
   $urls = array_unique($urls);
 
