@@ -179,7 +179,7 @@ function _linkchecker_report_page($query, $account = NULL) {
         l(_filter_url_trim($link->url, 40), $link->url),
         $link->code,
         check_plain($link->error),
-        theme('item_list', $links),
+        theme('item_list', array('items' => $links)),
       ),
     );
   }
