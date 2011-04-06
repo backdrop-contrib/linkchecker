@@ -602,7 +602,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
   // Create array of node fields to scan.
   $text_items = array();
   $text_items[] = _filter_url($node->title, $filter);
-  $text_items = array_merge($text_items, linkchecker_parse_fields('node', $node));
+  $text_items = array_merge($text_items, linkchecker_parse_fields('node', $node, $node->type));
 
   // Get the absolute node path for extraction of relative links.
   $path = url('node/' . $node->nid, $url_options);
@@ -691,17 +691,12 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
   // Create array of comment fields to scan.
   $text_items = array();
   $text_items[] = _filter_url($comment->subject, $filter);
-  $text_items[] = _linkchecker_check_markup($comment->comment, $comment->comment_format);
-  // TODO Found in user_comment_view();
-  // $text_items[] = _linkchecker_check_markup($comment->signature, $comment->comment_format);
+  $text_items = array_merge($text_items, linkchecker_parse_fields('comment', $comment, $comment->node_type));
 
   // Get the absolute node path for extraction of relative links.
   $languages = language_list();
-  $node_language = db_query('SELECT language FROM {node} WHERE nid = :nid', array(':nid' => $comment->nid))->fetchField();
-  // FIXME: $node_language could be empty. Backport to D6.
-  // FIXME: 'en' could be wrong!?
-  $node_language = !empty($node_language) ? $node_language : 'en';
-  $path = url('node/' . $comment->nid, array('language' => $languages[$node_language], 'absolute' => TRUE));
+  $node = node_load($comment->nid);
+  $path = url('node/' . $comment->nid, array('language' => $languages[$node->language], 'absolute' => TRUE));
 
   // Extract all links in a comment.
   $links = _linkchecker_extract_links(implode(' ', $text_items), $path);
@@ -1003,20 +998,22 @@ function _linkchecker_block_custom_links_missing($bid, $links) {
  * This function parse all fields from the entity and returns an array of
  * filtered field items.
  *
- * @param $type
+ * @param $bundle
  *   The bundle type to parse. Examples types are 'node', 'comment'.
  * @param $entity
  *   The entity to parse, a node or a comment object.
+ * @param $type
+ *   Content type name e.g. $node->type or $comment->node_type.
  *
  * @return
  *    Array of field items with filters applied.
  */
-function linkchecker_parse_fields($type, $entity) {
+function linkchecker_parse_fields($bundle, $entity, $type) {
   $text_items = array();
   $field_list = field_info_fields();
 
   foreach ($field_list as $name => $field) {
-    if (!empty($field['bundles'][$type]) && in_array($entity->type, $field['bundles'][$type])) {
+    if (!empty($field['bundles'][$bundle]) && in_array($type, $field['bundles'][$bundle])) {
       // FIXME: This is because a php parse error.
       $entity_field = $entity->$name;
 
