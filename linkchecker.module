@@ -433,10 +433,20 @@ function linkchecker_node_prepare($node) {
 }
 
 /**
+ * Implements hook_node_delete().
+ *
+ * @param $node
+ *   The node object that is being deleted.
+ */
+function linkchecker_node_delete($node) {
+  _linkchecker_delete_node_links($node->nid);
+}
+
+/**
  * Implements hook_node_insert().
  *
  * @param $node
- *   The node that is being inserted.
+ *   The node object that is being inserted.
  */
 function linkchecker_node_insert($node) {
   // The node is going to be published.
@@ -449,7 +459,7 @@ function linkchecker_node_insert($node) {
  * Implements hook_node_update().
  *
  * @param $node
- *   The node that is being updated.
+ *   The node object that is being updated.
  */
 function linkchecker_node_update($node) {
   // The node is going to be published.
@@ -463,37 +473,45 @@ function linkchecker_node_update($node) {
 }
 
 /**
- * Implements hook_node_delete().
- *
- * @param $node
- *   The node that is being deleted.
- */
-function linkchecker_node_delete($node) {
-  _linkchecker_delete_node_links($node->nid);
-}
-
-/**
  * Implements hook_comment_delete().
+ *
+ * @param $comment
+ *   The comment object that is being deleted.
  */
 function linkchecker_comment_delete($comment) {
   _linkchecker_delete_comment_links($comment->nid);
 }
 
 /**
- * Implements hook_comment_publish().
+ * Implements hook_comment_insert().
+ *
+ * @param $comment
+ *   The comment object that is being inserted.
  */
-function linkchecker_comment_publish($comment) {
+function linkchecker_comment_insert($comment) {
+  // The comment is going to be published.
   $node_type = db_query('SELECT type FROM {node} WHERE nid = :nid', array(':nid' => $comment->nid))->fetchField();
-  if (_linkchecker_scan_nodetype($node_type)) {
+  if ($comment->status && _linkchecker_scan_nodetype($node_type)) {
     _linkchecker_add_comment_links($comment);
   }
 }
 
 /**
- * Implements hook_comment_unpublish().
+ * Implements hook_comment_update().
+ *
+ * @param $comment
+ *   The comment object that is being updated.
  */
-function linkchecker_comment_unpublish($comment) {
-  linkchecker_comment_delete($comment);
+function linkchecker_comment_update($comment) {
+  // The node is going to be published.
+  $node_type = db_query('SELECT type FROM {node} WHERE nid = :nid', array(':nid' => $comment->nid))->fetchField();
+  if ($comment->status && _linkchecker_scan_nodetype($node_type)) {
+    _linkchecker_add_comment_links($comment);
+  }
+  else {
+    // The node is going to be unpublished.
+    linkchecker_comment_delete($comment);
+  }
 }
 
 /**
