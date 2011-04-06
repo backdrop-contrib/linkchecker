@@ -29,7 +29,7 @@ function _linkchecker_batch_import_nodes($node_types = array()) {
 }
 
 /**
- * Batch operation: Scan ony by one node for links.
+ * Batch operation: Scan one by one node for links.
  */
 function _linkchecker_batch_node_import_op($nid, &$context) {
   // Load the node and scan for links.
@@ -73,7 +73,7 @@ function _linkchecker_batch_import_comments($node_types = array()) {
 }
 
 /**
- * Batch operation: Scan ony by one comment for links.
+ * Batch operation: Scan one by one comment for links.
  */
 function _linkchecker_batch_comments_import_op($cid, &$context) {
   // Load the comment and scan for links.
@@ -117,7 +117,7 @@ function _linkchecker_batch_import_block_custom() {
 }
 
 /**
- * Batch operation: Scan ony by one block for links.
+ * Batch operation: Scan one by one block for links.
  */
 function _linkchecker_batch_import_block_custom_op($bid, &$context) {
   // Load the custom block and scan for links.
