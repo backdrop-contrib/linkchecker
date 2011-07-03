@@ -172,7 +172,6 @@ function linkchecker_cron() {
  *
  * @param $link
  *   An object containing the url, lid and fail_count.
- *
  * @param $response
  *   An object containing the HTTP request headers, response code, headers,
  *   data and redirect status.
@@ -600,7 +599,6 @@ function linkchecker_block_custom_delete_form_submit($form, &$form_state) {
  *
  * @param $node
  *   The fully populated node object.
- *
  * @param $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
  *   the need for content re-scans is detected by the number of missing links.
@@ -693,7 +691,6 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
  *
  * @param $comment
  *   The fully populated comment object.
- *
  * @param $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
  *   the need for content re-scans is detected by the number of missing links.
@@ -785,7 +782,6 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
  *
  * @param $block_custom
  *   The fully populated custom block object.
- *
  * @param $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
  *   the need for content re-scans is detected by the number of missing links.
@@ -1130,7 +1126,6 @@ function _linkchecker_cleanup_links() {
  *
  * @param $text
  *    The text to be scanned for links.
- *
  * @param $content_path
  *    Path to the content that is currently scanned for links. This value is
  *    required to build full qualified links from relative links. Relative links
@@ -1304,10 +1299,8 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
  *
  * @param $text
  *   The text a link is inside. Passed in as a reference.
- *
  * @param $old_link_fqdn
  *   The old link to search for in strings.
- *
  * @param $new_link_fqdn
  *   The old link should be overwritten with this new link.
  */

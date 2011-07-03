@@ -144,7 +144,6 @@ function _linkchecker_batch_block_custom_import_finished($success, $results, $op
  *
  * @param $nid
  *   The unique node id to scan for links.
- *
  * @param $missing_links_count
  *   The number of links not yet added to linkchecker_links table. By this
  *   number the re-scan rounds are calulated.
@@ -193,7 +192,6 @@ function _linkchecker_batch_single_node_import_finished($success, $results, $ope
  *
  * @param $cid
  *   The unique comment id to scan for links.
- *
  * @param $missing_links_count
  *   The number of links not yet added to linkchecker_links table. By this
  *   number the re-scan rounds are calulated.
@@ -241,7 +239,6 @@ function _linkchecker_batch_single_comment_import_finished($success, $results, $
  *
  * @param $bid
  *   The unique block id to scan for links.
- *
  * @param $missing_links_count
  *   The number of links not yet added to linkchecker_links table. By this
  *   number the re-scan rounds are calulated.
