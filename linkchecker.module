@@ -401,15 +401,15 @@ function _linkchecker_status_handling($link, $response) {
  */
 function _linkchecker_replace_fields($entity, $entityType, $bundle, $oldURL, $newURL) {
   $field_list = field_info_fields();
-  foreach($field_list as $name => $field) {
+  foreach ($field_list as $name => $field) {
     if (@in_array($entityType, $field['bundles'][$bundle])) {
       // This is because a php error.
       $entityField =& $entity->$name;
 
-      switch($field['type']) {
+      switch ($field['type']) {
         case 'text_with_summary':
-          foreach($entityField as $languageName => $languageValue) {
-            foreach($languageValue as $itemName => $itemValue) {
+          foreach ($entityField as $languageName => $languageValue) {
+            foreach ($languageValue as $itemName => $itemValue) {
               _linkchecker_link_replace($entityField[$languageName][$itemName]['value'], $oldURL, $newURL);
               _linkchecker_link_replace($entityField[$languageName][$itemName]['summary'], $oldURL, $newURL);
             }
@@ -417,8 +417,8 @@ function _linkchecker_replace_fields($entity, $entityType, $bundle, $oldURL, $ne
           break;
 
         case 'text_long':
-          foreach($entityField as $languageName => $languageValue) {
-            foreach($languageValue as $itemName => $itemValue) {
+          foreach ($entityField as $languageName => $languageValue) {
+            foreach ($languageValue as $itemName => $itemValue) {
               _linkchecker_link_replace($entityField[$languageName][$itemName]['value'], $oldURL, $newURL);
             }
           }
