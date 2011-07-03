@@ -23,7 +23,7 @@ class LinkCheckerLinkExtractionTest extends DrupalWebTestCase {
       'edit own page content',
       'administer url aliases',
       'create url aliases',
-       filter_permission_name($full_html_format),
+      filter_permission_name($full_html_format),
     );
 
     $user = $this->drupalCreateUser($permissions);

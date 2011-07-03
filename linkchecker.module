@@ -229,8 +229,8 @@ function _linkchecker_status_handling($link, $response) {
             'fail_count' => 0,
             'last_checked' => time()
           ))
-         ->expression('fail_count', 'fail_count + 1')
-         ->execute();
+          ->expression('fail_count', 'fail_count + 1')
+          ->execute();
 
         // A HTTP status code of 301 tells us an existing link have changed to
         // a new link. The remote site owner was so kind to provide us the new
@@ -286,7 +286,7 @@ function _linkchecker_status_handling($link, $response) {
 
             // Now replace the outdated link with the permanently moved one in all custom block fields.
             foreach ($text_items as $text_item) {
-             _linkchecker_link_replace($block_custom[$text_item], $link->url, $response->redirect_url);
+              _linkchecker_link_replace($block_custom[$text_item], $link->url, $response->redirect_url);
             }
 
             // Save changed node and update the node link list.
