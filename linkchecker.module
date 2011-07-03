@@ -936,7 +936,6 @@ function _linkchecker_cleanup_comment_references($cid = 0, $links = array()) {
       ->fields('ll', array('lid'))
       ->condition('ll.urlhash', array_map('drupal_hash_base64', $links), 'IN');
 
-    // FIXME: http://drupal.org/node/564852
     db_delete('linkchecker_comment')
       ->condition('cid', $cid)
       ->condition('lid', $subquery, 'NOT IN')
