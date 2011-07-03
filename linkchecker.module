@@ -1109,14 +1109,16 @@ function _linkchecker_cleanup_links() {
   }
 
   // Remove dead links without references.
-  db_query('DELETE FROM {linkchecker_link}
-            WHERE lid NOT IN (
-              SELECT DISTINCT lid FROM {linkchecker_block_custom}
-              UNION
-              SELECT DISTINCT lid FROM {linkchecker_comment}
-              UNION
-              SELECT DISTINCT lid FROM {linkchecker_node}
-            )');
+  $linkchecker_node = db_select('linkchecker_node', 'ln')->distinct()->fields('ln' , array('lid'));
+  $linkchecker_comment = db_select('linkchecker_comment', 'lc')->distinct()->fields('lc' , array('lid'));
+  $linkchecker_block_custom = db_select('linkchecker_block_custom', 'lb')->distinct()->fields('lb' , array('lid'));
+
+  // UNION all linkchecker type tables.
+  $subquery = db_select($linkchecker_block_custom->union($linkchecker_comment)->union($linkchecker_node), 'q1')->distinct()->fields('q1', array('lid'));
+
+  db_delete('linkchecker_link')
+    ->condition('lid', $subquery, 'NOT IN')
+    ->execute();
 
 }
 
