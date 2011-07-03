@@ -194,7 +194,6 @@ function _linkchecker_status_handling($link, $response) {
   }
 
   switch ($response->code) {
-    case 200:
     case 304:
       db_update('linkchecker_link')
         ->condition('lid', $link->lid)
@@ -208,131 +207,100 @@ function _linkchecker_status_handling($link, $response) {
       //watchdog('linkchecker', 'Checked %link successfully.', array('%link' => $link->url), WATCHDOG_INFO);
       break;
 
-    case 301:
-      db_update('linkchecker_link')
-        ->condition('lid', $link->lid)
-        ->fields(array(
-          'code' => $response->code,
-          'error' => $response->error,
-          'fail_count' => 0,
-          'last_checked' => time()
-        ))
-        ->expression('fail_count', 'fail_count + 1')
-        ->execute();
-
-      // A HTTP status code of 301 tells us an existing link have changed to
-      // a new link. The remote site owner was so kind to provide us the new
-      // link and if we trust this change we are able to replace the old link
-      // with the new one without any hand work.
-      $auto_repair_301 = variable_get('linkchecker_action_status_code_301', 0);
-      if ($auto_repair_301 && $auto_repair_301 <= ($link->fail_count+1) && $response->redirect_code == 200 && valid_url($response->redirect_url, TRUE)) {
-
-        // NODES: Autorepair all nodes having this outdated link.
-        $result = db_query('SELECT * FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid));
-        foreach ($result as $row) {
-          $node = node_load($row->nid);
-
-          // Create array of node fields to scan (for e.g. $node->title, $node->links_weblink_url).
-          $text_items = array();
-          $text_items[] = 'title';
-          $text_items[] = 'body';
-          $text_items[] = 'teaser';
-
-          // Update 'weblink' nodes from 'links' module package.
-          if (module_exists('links_weblink') && $node->type == 'weblink' && isset($node->links_weblink_url)) {
-            $text_items[] = 'links_weblink_url';
-          }
-
-          // Update 'weblinks' nodes from 'weblinks' module.
-          if (module_exists('weblinks') && $node->type == 'weblinks' && isset($node->url)) {
-            $text_items[] = 'url';
-          }
-
-          // Now replace the outdated link with the permanently moved one in all node fields.
-          foreach ($text_items as $text_item) {
-            _linkchecker_link_replace($node->$text_item, $link->url, $response->redirect_url);
-          }
-
-          // Search for CCK-fields of types 'link' and 'text'.
-          if (module_exists('content')) {
-            // FIMXE: D7 upgrade path???
-            $fields = content_fields(NULL, $node->type);
-            foreach ($fields as $field) {
-              if (isset($node->{$field['field_name']})) {
-                if (module_exists('link') && $field['type'] == 'link') {
-                  foreach ($node->$field['field_name'] as $delta => $item) {
-                    _linkchecker_link_replace($node->{$field['field_name']}[$delta]['url'], $link->url, $response->redirect_url);
-                  }
-                }
-                elseif (module_exists('text') && $field['type'] == 'text') {
-                  foreach ($node->$field['field_name'] as $delta => $item) {
-                    _linkchecker_link_replace($node->{$field['field_name']}[$delta]['value'], $link->url, $response->redirect_url);
-                  }
-                }
-              }
-            }
-          }
-
-          // Always use the default revision setting. See node_object_prepare().
-          $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
-          $node->revision = in_array('revision', $node_options);
-
-          // Generate a log message for the node_revisions table, visible on the node's revisions tab.
-          $node->log = t('Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $row->nid), '%src' => $link->url, '%dst' => $response->redirect_url));
-
-          // Save changed node and update the node link list.
-          node_save($node);
-          watchdog('linkchecker', 'Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $row->nid), '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
-        }
-
-        // COMMENTS: Autorepair all comments having this outdated link.
-        if (variable_get('linkchecker_scan_comments', 0)) {
-          $result = db_query('SELECT * FROM {linkchecker_comment} WHERE lid = :lid', array(':lid' => $link->lid));
-          foreach ($result as $row) {
-            $comment = comment_load($row->cid);
-
-            // Create array of comment fields to scan (for e.g. $comment->subject, $comment->comment).
-            $text_items = array();
-            $text_items[] = 'subject';
-            $text_items[] = 'comment';
-
-            // Now replace the outdated link with the permanently moved one in all comment fields.
-            foreach ($text_items as $text_item) {
-              _linkchecker_link_replace($comment[$text_item], $link->url, $response->redirect_url);
-            }
-
-            // Save changed comment and update the comment link list.
-            comment_save($comment);
-            watchdog('linkchecker', 'Changed permanently moved link in comment %comment from %src to %dst.', array('%comment' => $comment['cid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
-          }
-        }
-
-        // CUSTOM BLOCKS: Autorepair all custom blocks having this outdated link.
-        $result = db_query('SELECT * FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
-        foreach ($result as $row) {
-          $block_custom = block_custom_block_get($row->bid);
-
-          // Create array of custom block fields to scan.
-          $text_items = array();
-          $text_items[] = 'info';
-          $text_items[] = 'title';
-          $text_items[] = 'body';
-
-          // Now replace the outdated link with the permanently moved one in all custom block fields.
-          foreach ($text_items as $text_item) {
-            _linkchecker_link_replace($block_custom[$text_item], $link->url, $response->redirect_url);
-          }
-
-          // Save changed node and update the node link list.
-          block_box_save($block_custom, $block_custom['bid']);
-          // There is no hook that fires on block_box_save(), therefore do it programmatically.
-          _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
-          watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom['bid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
-        }
-
+    case 200:
+      if (!isset($response->redirect_code)) {
+        // Link check was succsessful, no update required.
+        db_update('linkchecker_link')
+          ->condition('lid', $link->lid)
+          ->fields(array(
+            'code' => $response->code,
+            'error' => $response->error,
+            'fail_count' => 0,
+            'last_checked' => time()
+          ))
+          ->execute();
       }
-      else {
-        watchdog('linkchecker', 'Link %link has changed and needs to be updated.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
+      elseif ($response->redirect_code == 301) {
+        // Remote site send status code 301 and link needs an update.
+        db_update('linkchecker_link')
+          ->condition('lid', $link->lid)
+          ->fields(array(
+            'code' => $response->redirect_code,
+            'error' => $response->error,
+            'fail_count' => 0,
+            'last_checked' => time()
+          ))
+         ->expression('fail_count', 'fail_count + 1')
+         ->execute();
+
+        // A HTTP status code of 301 tells us an existing link have changed to
+        // a new link. The remote site owner was so kind to provide us the new
+        // link and if we trust this change we are able to replace the old link
+        // with the new one without any hand work.
+        $auto_repair_301 = variable_get('linkchecker_action_status_code_301', 0);
+        if ($auto_repair_301 && $auto_repair_301 <= ($link->fail_count+1) && valid_url($response->redirect_url, TRUE)) {
+          // NODES: Autorepair all nodes having this outdated link.
+          $result = db_query('SELECT * FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid));
+          foreach ($result as $row) {
+            $node = node_load(array('nid' => $row->nid));
+            $node = _linkchecker_replace_fields($node, $node->type, 'node', $link->url, $response->redirect_url);
+
+            // Always use the default revision setting. See node_object_prepare().
+            $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
+            $node->revision = in_array('revision', $node_options);
+
+            // Generate a log message for the node_revisions table, visible on the node's revisions tab.
+            $node->log = t('Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $row->nid), '%src' => $link->url, '%dst' => $response->redirect_url));
+
+            // Save changed node and update the node link list.
+            node_save($node);
+            watchdog('linkchecker', 'Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $row->nid), '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+          }
+
+          // COMMENTS: Autorepair all comments having this outdated link.
+          if (variable_get('linkchecker_scan_comments', 0)) {
+            $result = db_query('SELECT * FROM {linkchecker_comment} WHERE lid = :lid', array(':lid' => $link->lid));
+            foreach ($result as $row) {
+              $comment = comment_load($row->cid);
+              // Replace links in subject.
+              _linkchecker_link_replace($comment->subject, $link->url, $response->redirect_url);
+
+              // Replace links in fields.
+              $comment = _linkchecker_replace_fields($comment, $comment->node_type, 'comment', $link->url, $response->redirect_url);
+
+              // Save changed comment and update the comment link list.
+              comment_save($comment);
+              watchdog('linkchecker', 'Changed permanently moved link in comment %comment from %src to %dst.', array('%comment' => $comment['cid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+            }
+          }
+
+          // CUSTOM BLOCKS: Autorepair all custom blocks having this outdated link.
+          $result = db_query('SELECT * FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
+          foreach ($result as $row) {
+            $block_custom = block_custom_block_get($row->bid);
+
+            // Create array of custom block fields to scan.
+            $text_items = array();
+            $text_items[] = 'info';
+            $text_items[] = 'title';
+            $text_items[] = 'body';
+
+            // Now replace the outdated link with the permanently moved one in all custom block fields.
+            foreach ($text_items as $text_item) {
+             _linkchecker_link_replace($block_custom[$text_item], $link->url, $response->redirect_url);
+            }
+
+            // Save changed node and update the node link list.
+            block_box_save($block_custom, $block_custom['bid']);
+            // There is no hook that fires on block_box_save(), therefore do it programmatically.
+            _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
+            watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom['bid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+          }
+
+        }
+        else {
+          watchdog('linkchecker', 'Link %link has changed and needs to be updated.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
+        }
       }
       break;
 
@@ -415,6 +383,52 @@ function _linkchecker_status_handling($link, $response) {
         //watchdog('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
   }
+}
+
+/**
+ * Replace the old url by a new url on 301 status codes.
+ *
+ * @param Objetc $entity
+ *   The object we are working on, can be a $node, $comment.
+ * @param String $entityType
+ *   The type of entity, like $node->type or $comment->node_type.
+ * @param String $bundle
+ *   The type of bundle like 'node' or 'comment'.
+ * @param String $oldURL
+ *   The previous url.
+ *
+ * @param String $newURL
+ *   The new url to replace the old.
+ */
+function _linkchecker_replace_fields($entity, $entityType, $bundle, $oldURL, $newURL) {
+  $field_list = field_info_fields();
+  foreach($field_list as $name => $field) {
+    if (@in_array($entityType, $field['bundles'][$bundle])) {
+      // This is because a php error.
+      $entityField =& $entity->$name;
+
+      switch($field['type']) {
+        case 'text_with_summary':
+          foreach($entityField as $languageName => $languageValue) {
+            foreach($languageValue as $itemName => $itemValue) {
+              _linkchecker_link_replace($entityField[$languageName][$itemName]['value'], $oldURL, $newURL);
+              _linkchecker_link_replace($entityField[$languageName][$itemName]['summary'], $oldURL, $newURL);
+            }
+          }
+          break;
+
+        case 'text_long':
+          foreach($entityField as $languageName => $languageValue) {
+            foreach($languageValue as $itemName => $itemValue) {
+              _linkchecker_link_replace($entityField[$languageName][$itemName]['value'], $oldURL, $newURL);
+            }
+          }
+          break;
+      }
+    }
+  }
+
+  return $entity;
 }
 
 /**
@@ -622,7 +636,8 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
       $urlhash = drupal_hash_base64($url);
       $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash))->fetchObject();
       if (!$link) {
-        $link->urlhash = $urlhash;
+        $link = new stdClass();
+      	$link->urlhash = $urlhash;
         $link->url = $url;
         $link->status = _linkchecker_link_check_status_filter($url);
         drupal_write_record('linkchecker_link', $link);
@@ -713,7 +728,8 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
       $urlhash = drupal_hash_base64($url);
       $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash))->fetchObject();
       if (!$link) {
-        $link->urlhash = $urlhash;
+        $link = new stdClass();
+      	$link->urlhash = $urlhash;
         $link->url = $url;
         $link->status = _linkchecker_link_check_status_filter($url);
         drupal_write_record('linkchecker_link', $link);
@@ -802,7 +818,8 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
       $urlhash = drupal_hash_base64($url);
       $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash))->fetchObject();
       if (!$link) {
-        $link->urlhash = $urlhash;
+        $link = new stdClass();
+      	$link->urlhash = $urlhash;
         $link->url = $url;
         $link->status = _linkchecker_link_check_status_filter($url);
         drupal_write_record('linkchecker_link', $link);
@@ -1015,6 +1032,9 @@ function linkchecker_parse_fields($bundle, $entity, $type) {
   foreach ($field_list as $name => $field) {
     if (!empty($field['bundles'][$bundle]) && in_array($type, $field['bundles'][$bundle])) {
       // FIXME: This is because a php parse error.
+      if (empty($entity->$name)) {
+        continue;
+      }
       $entity_field = $entity->$name;
 
       switch ($field['type']) {
@@ -1337,7 +1357,7 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
         // TODO: If link text between opening an closing a-tag having the same
         // URL, also replace the link text. Create a replace regex for this task.
         $text = str_replace(array('>' . $old_html_link_fqdn . '</a>', '>' . $old_html_link . '</a>', '>' . $old_link . '</a>'), '>' . $new_html_link . '</a>', $text);
-        $replacements['/(<(a|area)\s[^>]*href=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '4';
+        $replacements['/(<(a|area)\s[^>]*href=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\4';
       }
 
       // Add replace rules for audio tags.
