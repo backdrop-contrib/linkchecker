@@ -257,13 +257,6 @@ EOT;
     // FIXME: Path alias seems not saved!???
     //$this->assertIdentical($node->path, $edit['path'], t('URL alias "@node-path" matches path "@edit-path".', array('@node-path' => $node->path, '@edit-path' => $edit['path'])));
 
-    // DEBUG
-    $result = db_query("SELECT * FROM {linkchecker_link}");
-    foreach ($result as $row) {
-      $rows[] = $row->url;
-    }
-    $this->verbose(theme_item_list(array('items' => $urls_relative, 'title' => 'Verify if following relative URLs exists:' , 'attributes' => array(), 'type' => 'ul')));
-
     // Verify if the content links are extracted correctly.
     global $base_root, $base_path;
     $urls_relative = array(
