@@ -635,7 +635,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
       $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash))->fetchObject();
       if (!$link) {
         $link = new stdClass();
-      	$link->urlhash = $urlhash;
+        $link->urlhash = $urlhash;
         $link->url = $url;
         $link->status = _linkchecker_link_check_status_filter($url);
         drupal_write_record('linkchecker_link', $link);
@@ -726,7 +726,7 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
       $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash))->fetchObject();
       if (!$link) {
         $link = new stdClass();
-      	$link->urlhash = $urlhash;
+        $link->urlhash = $urlhash;
         $link->url = $url;
         $link->status = _linkchecker_link_check_status_filter($url);
         drupal_write_record('linkchecker_link', $link);
@@ -815,7 +815,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
       $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash))->fetchObject();
       if (!$link) {
         $link = new stdClass();
-      	$link->urlhash = $urlhash;
+        $link->urlhash = $urlhash;
         $link->url = $url;
         $link->status = _linkchecker_link_check_status_filter($url);
         drupal_write_record('linkchecker_link', $link);
