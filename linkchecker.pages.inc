@@ -198,7 +198,7 @@ function _linkchecker_report_page($query, $account = NULL) {
   return $build;
 }
 
-function linkchecker_link_edit_form(&$form_state, $link) {
+function linkchecker_link_edit_form($form, &$form_state, $link) {
 
   $form['settings'] = array(
     '#type' => 'fieldset',
@@ -238,7 +238,7 @@ function linkchecker_link_edit_form(&$form_state, $link) {
     '#default_value' => 0,
     '#type' => 'checkbox',
     '#title' => t('Re-check link status on next cron run'),
-    '#description' => t('Enable this checkbox if you want to re-check the link during the next cron job rather than wait for the next scheduled check on @date.', array('@date' => format_date($link['last_checked'] + variable_get('linkchecker_check_links_interval', 2419200)))),
+    '#description' => t('Enable this checkbox if you want to re-check the link during the next cron job rather than wait for the next scheduled check on @date.', array('@date' => format_date($link->last_checked + variable_get('linkchecker_check_links_interval', 2419200)))),
   );
 
   $form['buttons']['submit'] = array('#type' => 'submit', '#value' => t('Save configuration'));
