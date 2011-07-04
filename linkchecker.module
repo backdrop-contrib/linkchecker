@@ -1082,12 +1082,12 @@ function _linkchecker_cleanup_links() {
   // Remove disabled node types no longer in use.
   $node_types = array_keys(array_filter(variable_get('linkchecker_scan_nodetypes', array())));
   if (!empty($node_types)) {
-    $subquery = db_select('node', 'n')
+    $subquery1 = db_select('node', 'n')
       ->fields('n', array('nid'))
       ->condition('n.type', $node_types, 'NOT IN');
 
     db_delete('linkchecker_node')
-      ->condition('nid', $subquery, 'IN')
+      ->condition('nid', $subquery1, 'IN')
       ->execute();
 
     // FIXME: Remove comments
@@ -1122,12 +1122,12 @@ function _linkchecker_cleanup_links() {
     ->fields('lb' , array('lid'));
 
   // UNION all linkchecker type tables.
-  $subquery = db_select($linkchecker_block_custom->union($linkchecker_comment)->union($linkchecker_node), 'q1')
+  $subquery2 = db_select($linkchecker_block_custom->union($linkchecker_comment)->union($linkchecker_node), 'q1')
     ->distinct()
     ->fields('q1', array('lid'));
 
   db_delete('linkchecker_link')
-    ->condition('lid', $subquery, 'NOT IN')
+    ->condition('lid', $subquery2, 'NOT IN')
     ->execute();
 
 }
