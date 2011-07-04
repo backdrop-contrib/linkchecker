@@ -274,26 +274,28 @@ function _linkchecker_status_handling($link, $response) {
           }
 
           // CUSTOM BLOCKS: Autorepair all custom blocks having this outdated link.
-          $result = db_query('SELECT * FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
-          foreach ($result as $row) {
-            $block_custom = block_custom_block_get($row->bid);
+          if (variable_get('linkchecker_scan_blocks', 0)) {
+            $result = db_query('SELECT * FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
+            foreach ($result as $row) {
+              $block_custom = block_custom_block_get($row->bid);
 
-            // Create array of custom block fields to scan.
-            $text_items = array();
-            $text_items[] = 'info';
-            $text_items[] = 'title';
-            $text_items[] = 'body';
+              // Create array of custom block fields to scan.
+              $text_items = array();
+              $text_items[] = 'info';
+              $text_items[] = 'title';
+              $text_items[] = 'body';
 
-            // Now replace the outdated link with the permanently moved one in all custom block fields.
-            foreach ($text_items as $text_item) {
-              _linkchecker_link_replace($block_custom[$text_item], $link->url, $response->redirect_url);
+              // Now replace the outdated link with the permanently moved one in all custom block fields.
+              foreach ($text_items as $text_item) {
+                _linkchecker_link_replace($block_custom[$text_item], $link->url, $response->redirect_url);
+              }
+
+              // Save changed node and update the node link list.
+              block_box_save($block_custom, $block_custom['bid']);
+              // There is no hook that fires on block_box_save(), therefore do it programmatically.
+              _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
+              watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom['bid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
             }
-
-            // Save changed node and update the node link list.
-            block_box_save($block_custom, $block_custom['bid']);
-            // There is no hook that fires on block_box_save(), therefore do it programmatically.
-            _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
-            watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom['bid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
           }
 
         }
