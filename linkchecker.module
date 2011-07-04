@@ -1095,19 +1095,19 @@ function _linkchecker_cleanup_links() {
   }
   else {
     // No active node_type. Remove all items from table.
-    db_delete('linkchecker_node')->execute();
+    db_truncate('linkchecker_node')->execute();
     // FIXME: Remove comments
   }
 
   // Remove comment link references if comment scanning is disabled.
   // TODO: Remove comments of unpublished nodes.
   if (variable_get('linkchecker_scan_comments', 0) == 0) {
-    db_delete('linkchecker_comment')->execute();
+    db_truncate('linkchecker_comment')->execute();
   }
 
   // Remove block link references if block scanning is disabled.
   if (variable_get('linkchecker_scan_blocks', 0) == 0) {
-    db_delete('linkchecker_block_custom')->execute();
+    db_truncate('linkchecker_block_custom')->execute();
   }
 
   // Remove dead links without references.
