@@ -465,7 +465,7 @@ function linkchecker_node_delete($node) {
  */
 function linkchecker_node_insert($node) {
   // The node is going to be published.
-  if ($node->status && _linkchecker_scan_nodetype($node->type)) {
+  if ($node->status == NODE_PUBLISHED && _linkchecker_scan_nodetype($node->type)) {
     _linkchecker_add_node_links($node);
   }
 }
@@ -478,7 +478,7 @@ function linkchecker_node_insert($node) {
  */
 function linkchecker_node_update($node) {
   // The node is going to be published.
-  if ($node->status && _linkchecker_scan_nodetype($node->type)) {
+  if ($node->status == NODE_PUBLISHED && _linkchecker_scan_nodetype($node->type)) {
     _linkchecker_add_node_links($node);
   }
   else {
@@ -506,7 +506,7 @@ function linkchecker_comment_delete($comment) {
 function linkchecker_comment_insert($comment) {
   // The comment is going to be published.
   $node_type = db_query('SELECT type FROM {node} WHERE nid = :nid', array(':nid' => $comment->nid))->fetchField();
-  if ($comment->status && _linkchecker_scan_nodetype($node_type)) {
+  if ($comment->status == COMMENT_PUBLISHED && _linkchecker_scan_nodetype($node_type)) {
     _linkchecker_add_comment_links($comment);
   }
 }
@@ -520,7 +520,7 @@ function linkchecker_comment_insert($comment) {
 function linkchecker_comment_update($comment) {
   // The node is going to be published.
   $node_type = db_query('SELECT type FROM {node} WHERE nid = :nid', array(':nid' => $comment->nid))->fetchField();
-  if ($comment->status && _linkchecker_scan_nodetype($node_type)) {
+  if ($comment->status == COMMENT_PUBLISHED && _linkchecker_scan_nodetype($node_type)) {
     _linkchecker_add_comment_links($comment);
   }
   else {
@@ -1631,7 +1631,7 @@ function _linkchecker_unpublish_nodes($lid) {
   $result = db_query('SELECT * FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $lid));
   foreach ($result as $row) {
     $node = node_load($row->nid);
-    $node->status = 0;
+    $node->status = NODE_NOT_PUBLISHED;
     node_save($node);
     watchdog('linkchecker', 'Set @type %title to unpublished.', array('@type' => $node->type, '%title' => $node->title));
   }
