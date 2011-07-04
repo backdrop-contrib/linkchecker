@@ -389,7 +389,7 @@ function _linkchecker_status_handling($link, $response) {
 /**
  * Replace the old url by a new url on 301 status codes.
  *
- * @param Objetc $entity
+ * @param Object $entity
  *   The object we are working on, can be a $node, $comment.
  * @param String $entityType
  *   The type of entity, like $node->type or $comment->node_type.
