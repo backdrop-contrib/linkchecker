@@ -241,7 +241,7 @@ function _linkchecker_status_handling($link, $response) {
           // NODES: Autorepair all nodes having this outdated link.
           $result = db_query('SELECT * FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid));
           foreach ($result as $row) {
-            $node = node_load(array('nid' => $row->nid));
+            $node = node_load($row->nid);
             $node = _linkchecker_replace_fields($node, $node->type, 'node', $link->url, $response->redirect_url);
 
             // Always use the default revision setting. See node_object_prepare().
