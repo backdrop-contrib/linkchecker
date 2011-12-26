@@ -55,6 +55,7 @@ function linkchecker_schema() {
       'bid' => array('block_custom' => 'bid'),
       'lid' => array('linkchecker_link' => 'lid'),
     ),
+  	'indexes' => array('lid' => array('lid')),
   );
 
   $schema['linkchecker_comment'] = array(
@@ -76,6 +77,7 @@ function linkchecker_schema() {
       'cid' => array('comment' => 'cid'),
       'lid' => array('linkchecker_link' => 'lid'),
     ),
+  	'indexes' => array('lid' => array('lid')),
   );
 
   $schema['linkchecker_node'] = array(
@@ -97,6 +99,7 @@ function linkchecker_schema() {
       'nid' => array('node' => 'nid'),
       'lid' => array('linkchecker_link' => 'lid'),
     ),
+  	'indexes' => array('lid' => array('lid')),
   );
 
   $schema['linkchecker_link'] = array(
@@ -282,6 +285,21 @@ function linkchecker_update_7002(&$sandbox) {
 }
 
 /**
+* Improve performance of queries.
+*/
+function linkchecker_update_7003() {
+  db_drop_index('linkchecker_block_custom', 'lid');
+  db_drop_index('linkchecker_comment', 'lid');
+  db_drop_index('linkchecker_node', 'lid');
+
+  db_add_index('linkchecker_block_custom', 'lid', array('lid'));
+  db_add_index('linkchecker_comment', 'lid', array('lid'));
+  db_add_index('linkchecker_node', 'lid', array('lid'));
+
+  return t('Added indexes to database tables.');
+}
+
+/**
  * Upgrade blacklisted internal filter names.
  *
  * - Line break converter, http://drupal.org/project/drupal
@@ -290,7 +308,7 @@ function linkchecker_update_7002(&$sandbox) {
  *     name: insert_view (D6: insert_view/0)
  */
 /*
-function linkchecker_update_7003() {
+function linkchecker_update_7004() {
   // See filter_update_7003();
   // Add drupal message that settings cannot updated for 'unknown' contrib filters.
 
@@ -302,7 +320,7 @@ function linkchecker_update_7003() {
  * Remove obsolete settings variable.
  */
 /*
-function linkchecker_update_7004() {
+function linkchecker_update_7005() {
   // Remove obsolete variable.
   variable_del('linkchecker_extract_from_source');
 
