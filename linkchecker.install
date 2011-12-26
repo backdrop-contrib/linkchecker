@@ -285,7 +285,7 @@ function linkchecker_update_7002(&$sandbox) {
 }
 
 /**
-* Improve performance of queries.
+* #1321378: Improve performance of queries.
 */
 function linkchecker_update_7003() {
   db_drop_index('linkchecker_block_custom', 'lid');
