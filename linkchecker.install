@@ -55,7 +55,7 @@ function linkchecker_schema() {
       'bid' => array('block_custom' => 'bid'),
       'lid' => array('linkchecker_link' => 'lid'),
     ),
-  	'indexes' => array('lid' => array('lid')),
+    'indexes' => array('lid' => array('lid')),
   );
 
   $schema['linkchecker_comment'] = array(
@@ -77,7 +77,7 @@ function linkchecker_schema() {
       'cid' => array('comment' => 'cid'),
       'lid' => array('linkchecker_link' => 'lid'),
     ),
-  	'indexes' => array('lid' => array('lid')),
+    'indexes' => array('lid' => array('lid')),
   );
 
   $schema['linkchecker_node'] = array(
@@ -99,7 +99,7 @@ function linkchecker_schema() {
       'nid' => array('node' => 'nid'),
       'lid' => array('linkchecker_link' => 'lid'),
     ),
-  	'indexes' => array('lid' => array('lid')),
+    'indexes' => array('lid' => array('lid')),
   );
 
   $schema['linkchecker_link'] = array(
