@@ -191,7 +191,7 @@ function linkchecker_admin_settings_form($form_state) {
     ),
   );
   $form['error']['linkchecker_ignore_response_codes'] = array(
-    '#default_value' => variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"),
+    '#default_value' => variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"),
     '#type' => 'textarea',
     '#title' => t("Don't treat these response codes as errors"),
     '#description' => t('One HTTP status code per line, e.g. 403.'),

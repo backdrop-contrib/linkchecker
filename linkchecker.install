@@ -300,6 +300,22 @@ function linkchecker_update_7003() {
 }
 
 /**
+* Add status code 206 to the default list of ignored response codes.
+*/
+function linkchecker_update_7004() {
+  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
+  if (!in_array('206', $ignore_response_codes)) {
+    $ignore_response_codes[] = '206';
+    sort($ignore_response_codes);
+    variable_set('linkchecker_ignore_response_codes', implode("\n", $ignore_response_codes));
+    return t('Added the status code 206 to the list of ignored response codes.');
+  }
+  else {
+    return t('No action taken. The status code 206 was already on the list of ignored response codes.');
+  }
+}
+
+/**
  * Upgrade blacklisted internal filter names.
  *
  * - Line break converter, http://drupal.org/project/drupal
@@ -308,7 +324,7 @@ function linkchecker_update_7003() {
  *     name: insert_view (D6: insert_view/0)
  */
 /*
-function linkchecker_update_7004() {
+function linkchecker_update_7005() {
   // See filter_update_7003();
   // Add drupal message that settings cannot updated for 'unknown' contrib filters.
 
@@ -320,7 +336,7 @@ function linkchecker_update_7004() {
  * Remove obsolete settings variable.
  */
 /*
-function linkchecker_update_7005() {
+function linkchecker_update_7006() {
   // Remove obsolete variable.
   variable_del('linkchecker_extract_from_source');
 

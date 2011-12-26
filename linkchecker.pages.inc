@@ -10,7 +10,7 @@
  */
 function linkchecker_admin_report_page() {
 
-  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"));
+  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
 
   // Search for broken links in nodes and comments and blocks of all users.
   // TODO: Try to make UNION'ed subselect resultset smaller.
@@ -46,7 +46,7 @@ function linkchecker_admin_report_page() {
 function linkchecker_user_report_page($account) {
   drupal_set_title($account->name);
 
-  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n302\n304\n401\n403"));
+  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
 
   // Build query for broken links in nodes of the current user.
   $subquery2 = db_select('node', 'n');
