@@ -752,7 +752,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
       // that is already being processed (if a batch operation performs a
       // drupal_execute).
       if ($batch = &batch_get() && !isset($batch['current_set'])) {
-        batch_process();
+        batch_process('node/' . $node->nid);
       }
     }
   }
@@ -843,7 +843,7 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
       // that is already being processed (if a batch operation performs a
       // drupal_execute).
       if ($batch = &batch_get() && !isset($batch['current_set'])) {
-        batch_process();
+        batch_process('node/' . $comment->nid);
       }
     }
   }
