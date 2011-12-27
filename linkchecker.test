@@ -275,7 +275,7 @@ EOT;
       'flvplayer2.swf' => $base_root . $base_path . $folder1 . '/flvplayer2.swf',
       'foo.ogg' => $base_root . $base_path . $folder1 . '/foo.ogg',
     );
-    $this->verbose(theme('item_list', array('items' => $links, 'title' => 'Verify if following relative URLs exists:')));
+    $this->verbose(theme('item_list', array('items' => $urls_relative, 'title' => 'Verify if following relative URLs exists:')));
 
     foreach ($urls_relative as $org_url => $check_url) {
       $link = $this->getLinkCheckerLink($check_url);
