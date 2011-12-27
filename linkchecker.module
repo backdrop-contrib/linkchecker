@@ -705,8 +705,7 @@ function linkchecker_block_custom_delete_form_submit($form, &$form_state) {
 function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALSE) {
   // Get current node language options for url() functions.
   $languages = language_list();
-  // FIXME: Notice: Undefined index: und in _linkchecker_add_node_links() (sites\all\modules\linkchecker\linkchecker.module).
-  $url_options = empty($node->language) ? array('absolute' => TRUE) : array('language' => $languages[$node->language], 'absolute' => TRUE);
+  $url_options = (empty($node->language) || !isset($languages[$node->language])) ? array('absolute' => TRUE) : array('language' => $languages[$node->language], 'absolute' => TRUE);
 
   $filter = new stdClass;
   $filter->settings['filter_url_length'] = 72;
@@ -808,7 +807,8 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
   // Get the absolute node path for extraction of relative links.
   $languages = language_list();
   $node = node_load($comment->nid);
-  $path = url('node/' . $comment->nid, array('language' => $languages[$node->language], 'absolute' => TRUE));
+  $url_options = (empty($node->language) || !isset($languages[$node->language])) ? array('absolute' => TRUE) : array('language' => $languages[$node->language], 'absolute' => TRUE);
+  $path = url('node/' . $comment->nid, $url_options);
 
   // Extract all links in a comment.
   $links = _linkchecker_extract_links(implode(' ', $text_items), $path);
