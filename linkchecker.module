@@ -493,13 +493,12 @@ function _linkchecker_status_handling($link, $response) {
  *   The type of entity, like $node->type or $comment->node_type.
  * @param String $bundle
  *   The type of bundle like 'node' or 'comment'.
- * @param String $oldURL
+ * @param String $old_url
  *   The previous url.
- *
- * @param String $newURL
+ * @param String $new_url
  *   The new url to replace the old.
  */
-function _linkchecker_replace_fields($entity, $entityType, $bundle, $oldURL, $newURL) {
+function _linkchecker_replace_fields($entity, $entityType, $bundle, $old_url, $new_url) {
   $field_list = field_info_fields();
   foreach ($field_list as $name => $field) {
     if (in_array($entityType, $field['bundles'][$bundle])) {
@@ -510,8 +509,8 @@ function _linkchecker_replace_fields($entity, $entityType, $bundle, $oldURL, $ne
         case 'text_with_summary':
           foreach ($entityField as $languageName => $languageValue) {
             foreach ($languageValue as $itemName => $itemValue) {
-              _linkchecker_link_replace($entityField[$languageName][$itemName]['value'], $oldURL, $newURL);
-              _linkchecker_link_replace($entityField[$languageName][$itemName]['summary'], $oldURL, $newURL);
+              _linkchecker_link_replace($entityField[$languageName][$itemName]['value'], $old_url, $new_url);
+              _linkchecker_link_replace($entityField[$languageName][$itemName]['summary'], $old_url, $new_url);
             }
           }
           break;
@@ -519,7 +518,7 @@ function _linkchecker_replace_fields($entity, $entityType, $bundle, $oldURL, $ne
         case 'text_long':
           foreach ($entityField as $languageName => $languageValue) {
             foreach ($languageValue as $itemName => $itemValue) {
-              _linkchecker_link_replace($entityField[$languageName][$itemName]['value'], $oldURL, $newURL);
+              _linkchecker_link_replace($entityField[$languageName][$itemName]['value'], $old_url, $new_url);
             }
           }
           break;
@@ -706,7 +705,7 @@ function linkchecker_block_custom_delete_form_submit($form, &$form_state) {
 function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALSE) {
   // Get current node language options for url() functions.
   $languages = language_list();
-  //FIXME: Notice: Undefined index: und in _linkchecker_add_node_links() (sites\all\modules\linkchecker\linkchecker.module).
+  // FIXME: Notice: Undefined index: und in _linkchecker_add_node_links() (sites\all\modules\linkchecker\linkchecker.module).
   $url_options = empty($node->language) ? array('absolute' => TRUE) : array('language' => $languages[$node->language], 'absolute' => TRUE);
 
   $filter = new stdClass;

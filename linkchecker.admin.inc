@@ -12,7 +12,7 @@ function linkchecker_admin_settings_form($form_state) {
     '#title' => t('General settings'),
     '#collapsible' => FALSE,
   );
-  //FIXME: node_type_get_names() can return an empty array!?
+  // FIXME: node_type_get_names() can return an empty array!?
   $names = node_type_get_names();
   $form['settings']['linkchecker_scan_nodetypes'] = array(
     '#type' => 'checkboxes',
@@ -117,7 +117,7 @@ function linkchecker_admin_settings_form($form_state) {
   $form['check'] = array(
     '#type' => 'fieldset',
     '#title' => t('Check settings'),
-    //'#description' => t('For simultaneous link checks it is highly recommended to install the <a href="@curl">cURL</a> library. This may be <strong>necessary</strong> on larger sites with very many links, but may still improve (speed up), link checking performance on smaller sites.', array('@curl' => 'http://www.php.net/manual/en/book.curl.php')),
+    // '#description' => t('For simultaneous link checks it is highly recommended to install the <a href="@curl">cURL</a> library. This may be <strong>necessary</strong> on larger sites with very many links, but may still improve (speed up), link checking performance on smaller sites.', array('@curl' => 'http://www.php.net/manual/en/book.curl.php')),
     '#collapsible' => FALSE,
   );
   $form['check']['linkchecker_check_useragent'] = array(
@@ -274,8 +274,7 @@ function linkchecker_admin_settings_form_submit($form, &$form_state) {
 }
 
 /**
- * Submit callback; Analyze all node types, comments, custom blocks and
- * cck fields.
+ * Submit callback; Analyze all node types, comments, custom blocks and cck fields.
  */
 function linkchecker_analyze_links_submit($form, &$form_state) {
   // Exclude unnecessary elements.
@@ -301,8 +300,7 @@ function linkchecker_analyze_links_submit($form, &$form_state) {
 }
 
 /**
- * Submit callback; Clear link data and analyze all node types, comments,
- * custom blocks and cck fields.
+ * Submit callback; Clear link data and analyze all node types, comments, custom blocks and cck fields.
  */
 function linkchecker_clear_analyze_links_submit($form, &$form_state) {
   // Exclude unnecessary elements.
