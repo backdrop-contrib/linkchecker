@@ -375,6 +375,32 @@ function _linkchecker_status_handling($link, $response) {
           watchdog('linkchecker', 'Link %link has changed and needs to be updated.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
         }
       }
+      // Don't treat a redirect code which is in the ignore list as error.
+      elseif (in_array($response->redirect_code, $ignore_response_codes) && ($response->redirect_code >= 300) && ($response->redirect_code < 400)) {
+        db_update('linkchecker_link')
+          ->condition('lid', $link->lid)
+          ->fields(array(
+            'code' => $response->redirect_code,
+            'error' => $response->error,
+            'fail_count' => 0,
+            'last_checked' => time(),
+          ))
+          ->execute();
+        //watchdog('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
+      }
+      else {
+        db_update('linkchecker_link')
+          ->condition('lid', $link->lid)
+          ->fields(array(
+            'code' => $response->redirect_code,
+            'error' => $response->error,
+            'fail_count' => 0,
+            'last_checked' => time()
+          ))
+          ->expression('fail_count', 'fail_count + 1')
+          ->execute();
+        //watchdog('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
+      }
       break;
 
     case 404:
