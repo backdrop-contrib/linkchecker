@@ -1640,6 +1640,11 @@ function _linkchecker_link_check_status_filter($url) {
     $status = FALSE;
   }
 
+  // Protocol whitelist check (without curl, only http/https is supported)
+  if (!preg_match('/^(https?):\/\//i', $url)) {
+    $status = FALSE;
+  }
+
   return $status;
 }
 
