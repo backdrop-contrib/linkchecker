@@ -1630,11 +1630,12 @@ function _linkchecker_absolute_content_path($url) {
 }
 
 /**
- * Verifies against the url blacklist, if the link status should be checked or not.
+ * Verifies against the blacklists, if the link status should be checked or not.
  */
 function _linkchecker_link_check_status_filter($url) {
   $status = TRUE;
 
+  // Domain blacklist check
   $urls = variable_get('linkchecker_disable_link_check_for_urls', LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS);
   if (!empty($urls) && preg_match('/' . implode('|', array_map(create_function('$links', 'return preg_quote($links, \'/\');'), preg_split('/(\r\n?|\n)/', $urls))) . '/', $url)) {
     $status = FALSE;
