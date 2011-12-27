@@ -705,6 +705,7 @@ function linkchecker_block_custom_delete_form_submit($form, &$form_state) {
 function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALSE) {
   // Get current node language options for url() functions.
   $languages = language_list();
+  // Note: An "undefined language" (value: 'und') isn't listed in the available languages variable $languages.
   $url_options = (empty($node->language) || !isset($languages[$node->language])) ? array('absolute' => TRUE) : array('language' => $languages[$node->language], 'absolute' => TRUE);
 
   $filter = new stdClass;
@@ -1137,8 +1138,9 @@ function linkchecker_parse_fields($bundle, $entity, $type) {
         case 'text_with_summary':
           foreach ($entity_field as $language) {
             foreach ($language as $item) {
-              $text_items[] = _linkchecker_check_markup($item['value'], $item['format'], $entity->language, TRUE);
-              $text_items[] = _linkchecker_check_markup($item['summary'], $item['format'], $entity->language, TRUE);
+              $format = isset($item['format']) ? $item['format'] : NULL;
+              $text_items[] = _linkchecker_check_markup($item['value'], $format, $entity->language, TRUE);
+              $text_items[] = _linkchecker_check_markup($item['summary'], $format, $entity->language, TRUE);
             }
           }
           break;
@@ -1148,7 +1150,8 @@ function linkchecker_parse_fields($bundle, $entity, $type) {
         case 'text':
           foreach ($entity_field as $language) {
             foreach ($language as $item) {
-              $text_items[] = _linkchecker_check_markup($item['value'], $item['format'], $entity->language, TRUE);
+              $format = isset($item['format']) ? $item['format'] : NULL;
+              $text_items[] = _linkchecker_check_markup($item['value'], $format, $entity->language, TRUE);
             }
           }
           break;
