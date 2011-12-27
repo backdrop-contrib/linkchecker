@@ -706,7 +706,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
   // Get current node language options for url() functions.
   $languages = language_list();
   // Note: An "undefined language" (value: 'und') isn't listed in the available languages variable $languages.
-  $url_options = (empty($node->language) || !isset($languages[$node->language])) ? array('absolute' => TRUE) : array('language' => $languages[$node->language], 'absolute' => TRUE);
+  $url_options = (empty($node->language) || empty($languages[$node->language])) ? array('absolute' => TRUE) : array('language' => $languages[$node->language], 'absolute' => TRUE);
 
   $filter = new stdClass;
   $filter->settings['filter_url_length'] = 72;
@@ -808,7 +808,7 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
   // Get the absolute node path for extraction of relative links.
   $languages = language_list();
   $node = node_load($comment->nid);
-  $url_options = (empty($node->language) || !isset($languages[$node->language])) ? array('absolute' => TRUE) : array('language' => $languages[$node->language], 'absolute' => TRUE);
+  $url_options = (empty($node->language) || empty($languages[$node->language])) ? array('absolute' => TRUE) : array('language' => $languages[$node->language], 'absolute' => TRUE);
   $path = url('node/' . $comment->nid, $url_options);
 
   // Extract all links in a comment.
