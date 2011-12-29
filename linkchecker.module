@@ -892,7 +892,6 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
  *   the need for content re-scans is detected by the number of missing links.
  */
 function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_links_detection = FALSE) {
-
   // Convert custom block array to object.
   $block_custom = (object) $block_custom;
 
