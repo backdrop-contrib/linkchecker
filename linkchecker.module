@@ -1377,19 +1377,22 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
   // Remove duplicate urls.
   $urls = array_unique($urls);
 
+  // What type of links schould be checked?
+  $check_links_types = variable_get('linkchecker_check_links_types', 1);
+
   $links = array();
   foreach ($urls as $url) {
     // Full qualified URLs.
     // FIXME: #1149596 HACK - Encode spaces in URLs, so validation equals TRUE and link gets added.
-    if (valid_url(str_replace(' ', '%20', $url), TRUE)) {
+    if ($check_links_types != 2 && valid_url(str_replace(' ', '%20', $url), TRUE)) {
       $links[] = $url;
     }
     // Skip mailto:, javascript:, etc.
     elseif (preg_match('/^\w[\w.+]*:/', $url)) {
       continue;
     }
-    // Local URLs.
-    elseif (valid_url($url, FALSE) && variable_get('linkchecker_fqdn_only', 1) == 0) {
+    // Local URLs. $check_links_types = 0 or 2
+    elseif ($check_links_types != 1 && valid_url($url, FALSE)) {
       // Get full qualified url with base path of content.
       $absolute_content_path = _linkchecker_absolute_content_path($content_path);
 

@@ -45,11 +45,16 @@ function linkchecker_admin_settings_form($form_state) {
     '#description' => t('Enable this checkbox if links in blocks should be checked.') . $block_custom_dependencies,
     '#disabled' => module_exists('block') ? FALSE : TRUE,
   );
-  $form['settings']['linkchecker_fqdn_only'] = array(
-    '#default_value' => variable_get('linkchecker_fqdn_only', 1),
-    '#type' => 'checkbox',
-    '#title' => t('Check full qualified domain names only'),
-    '#description' => t('Enable this checkbox if only full qualified URLs (http://example.com/foo/bar) should be checked. If unchecked, all internal (/node/123) and external (http://example.com/foo/bar) URLs will be checked.')
+  $form['settings']['linkchecker_check_links_types'] = array(
+    '#type' => 'select',
+    '#title' => t('What type of links should be checked?'),
+    '#description' => t('A full qualified link to a page (http://example.com/foo/bar) is considered external, whereas an absolute (/foo/bar) or relative link (node/123) without an domain is considered internal.'),
+    '#default_value' => variable_get('linkchecker_check_links_types', 1),
+    '#options' => array(
+      '0' => 'Internal and external',
+      '1' => 'External only (http://example.com/foo/bar)',
+      '2' => 'Internal only (node/123)',
+    ),
   );
 
   $form['tag'] = array(

@@ -12,6 +12,7 @@ function linkchecker_uninstall() {
   variable_del('linkchecker_action_status_code_301');
   variable_del('linkchecker_action_status_code_404');
   variable_del('linkchecker_check_links_interval');
+  variable_del('linkchecker_check_links_types');
   variable_del('linkchecker_check_links_max');
   variable_del('linkchecker_check_useragent');
   variable_del('linkchecker_cleanup_links_last');
@@ -24,7 +25,6 @@ function linkchecker_uninstall() {
   variable_del('linkchecker_extract_from_object');
   variable_del('linkchecker_extract_from_video');
   variable_del('linkchecker_filter_blacklist');
-  variable_del('linkchecker_fqdn_only');
   variable_del('linkchecker_ignore_response_codes');
   variable_del('linkchecker_scan_blocks');
   variable_del('linkchecker_scan_comments');
@@ -316,6 +316,18 @@ function linkchecker_update_7004() {
 }
 
 /**
+* Upgrade from linkchecker_fqdn_only to linkchecker_check_links_types variable.
+*/
+function linkchecker_update_7005() {
+
+  $linkchecker_fqdn_only = variable_get('linkchecker_fqdn_only', 1);
+  variable_set('linkchecker_check_links_types', $linkchecker_fqdn_only);
+  variable_del('linkchecker_fqdn_only');
+
+  return t('Upgraded "Check full qualified domain names only" to "What type of links should be checked" setting.');
+}
+
+/**
  * Upgrade blacklisted internal filter names.
  *
  * - Line break converter, http://drupal.org/project/drupal
@@ -324,7 +336,7 @@ function linkchecker_update_7004() {
  *     name: insert_view (D6: insert_view/0)
  */
 /*
-function linkchecker_update_7005() {
+function linkchecker_update_7006() {
   // See filter_update_7003();
   // Add drupal message that settings cannot updated for 'unknown' contrib filters.
 
@@ -336,7 +348,7 @@ function linkchecker_update_7005() {
  * Remove obsolete settings variable.
  */
 /*
-function linkchecker_update_7006() {
+function linkchecker_update_7007() {
   // Remove obsolete variable.
   variable_del('linkchecker_extract_from_source');
 
