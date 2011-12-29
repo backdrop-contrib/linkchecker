@@ -1146,6 +1146,10 @@ function linkchecker_parse_fields($bundle, $entity, $type) {
   $text_items = array();
   $field_list = field_info_fields();
 
+  // Create settings for _filter_url() function.
+  $filter = new stdClass;
+  $filter->settings['filter_url_length'] = 72;
+
   foreach ($field_list as $name => $field) {
     if (!empty($field['bundles'][$bundle]) && in_array($type, $field['bundles'][$bundle])) {
       // FIXME: This is because a php parse error.
@@ -1181,9 +1185,8 @@ function linkchecker_parse_fields($bundle, $entity, $type) {
         case 'link_field':
           foreach ($entity_field as $language) {
             foreach ($language as $item) {
-              // FIXME: Looks like broken code. May need to be _filter_url() to be save.
-              $text_items[] = _linkchecker_check_markup($item['url'], NULL, $entity->language, TRUE);
-              $text_items[] = _linkchecker_check_markup($item['title'], NULL, $entity->language, TRUE);
+              $text_items[] = _linkchecker_check_markup(_filter_url($item['url'], $filter), NULL, $entity->language, TRUE);
+              $text_items[] = _linkchecker_check_markup(_filter_url($item['title'], $filter), NULL, $entity->language, TRUE);
             }
           }
           break;
