@@ -357,14 +357,16 @@ function _linkchecker_status_handling($link, $response) {
               $text_items[] = 'title';
               $text_items[] = 'body';
 
-              // Now replace the outdated link with the permanently moved one in all custom block fields.
+              // Now replace the outdated link with the permanently moved one in
+              // all custom block fields.
               foreach ($text_items as $text_item) {
                 _linkchecker_link_replace($block_custom[$text_item], $link->url, $response->redirect_url);
               }
 
-              // Save changed node and update the node link list.
-              block_box_save($block_custom, $block_custom['bid']);
-              // There is no hook that fires on block_box_save(), therefore do it programmatically.
+              // Save changed block and update the block link list.
+              block_custom_block_save($block_custom, $block_custom['bid']);
+              // There is no hook that fires on block_custom_block_save(),
+              // therefore do link extraction programmatically.
               _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
               watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom['bid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
             }
@@ -879,26 +881,46 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
 }
 
 /**
- * Add block links to database.
+ * Add custom block links to database.
  *
- * @param $block_custom
+ * @param array/object $block_custom
  *   The fully populated custom block object.
+ * @param integer $bid
+ *   Block id from table {block}.bid.
  * @param $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
  *   the need for content re-scans is detected by the number of missing links.
  */
 function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_links_detection = FALSE) {
+
   // Convert custom block array to object.
   $block_custom = (object) $block_custom;
+
+  // Custom blocks really suxxx as it's very inconsistent core logic.
+  // Try to hack around this bad logic as good as possible to prevent issues.
+  if ($block_custom->module != 'block' && !is_numeric($block_custom->delta) && !is_numeric($bid) && $block_custom->delta != $bid) {
+    return;
+  }
 
   $filter = new stdClass;
   $filter->settings['filter_url_length'] = 72;
 
-  // Create array of custom block fields to scan.
+  // Create array of custom block fields to scan. All fields cannot exists.
   $text_items = array();
-  $text_items[] = _filter_url($block_custom->info, $filter);
-  $text_items[] = _filter_url($block_custom->title, $filter);
-  $text_items[] = _linkchecker_check_markup($block_custom->body, $block_custom->body_format);
+  if (!empty($block_custom->info)) {
+    $text_items[] = _filter_url($block_custom->info, $filter);
+  }
+  if (!empty($block_custom->title)) {
+    $text_items[] = _filter_url($block_custom->title, $filter);
+  }
+  // $block_custom from a scan for links in blocks. See block_custom_block_get().
+  if (!empty($block_custom->body) && isset($block_custom->format)) {
+    $text_items[] = _linkchecker_check_markup($block_custom->body, $block_custom->format);
+  }
+  // $block_custom from editing a block. See block_custom_block_save().
+  if (!empty($block_custom->body['value']) && isset($block_custom->body['format'])) {
+    $text_items[] = _linkchecker_check_markup($block_custom->body['value'], $block_custom->body['format']);
+  }
 
   // Extract all links in a custom block.
   $links = _linkchecker_extract_links(implode(' ', $text_items));
@@ -958,7 +980,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
       // that is already being processed (if a batch operation performs a
       // drupal_execute).
       if ($batch = &batch_get() && !isset($batch['current_set'])) {
-        batch_process();
+        batch_process('admin/structure/block');
       }
     }
   }
