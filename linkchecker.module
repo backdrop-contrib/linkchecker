@@ -26,12 +26,12 @@ define('LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS', "example.com\nexample.net\n
  *
  * - Line break converter, http://drupal.org/project/drupal
  *     name: filter_autop
- * - Insert view filter, http://drupal.org/project/insert_view
- *     name: insert_view
- *     tags: [view:my_view]
  * - Insert block, http://drupal.org/project/insert_block
  *     name: insert_block/0
  *     tags: [block:name of module=delta of block]
+ * - Insert view filter, http://drupal.org/project/insert_view
+ *     name: insert_view
+ *     tags: [view:my_view]
  *
  * TODO:
  * - Smileys Filter, http://drupal.org/project/smileys
