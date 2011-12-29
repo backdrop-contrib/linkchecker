@@ -328,6 +328,16 @@ function linkchecker_update_7005() {
 }
 
 /**
+ * Remove obsolete settings variable.
+ */
+function linkchecker_update_7006() {
+  // Remove obsolete variable.
+  variable_del('linkchecker_extract_from_source');
+
+  return t('Removed obsolete settings variable.');
+}
+
+/**
  * Upgrade blacklisted internal filter names.
  *
  * - Line break converter, http://drupal.org/project/drupal
@@ -336,22 +346,10 @@ function linkchecker_update_7005() {
  *     name: insert_view (D6: insert_view/0)
  */
 /*
-function linkchecker_update_7006() {
+function linkchecker_update_7007() {
   // See filter_update_7003();
   // Add drupal message that settings cannot updated for 'unknown' contrib filters.
 
   return t('Updated the blacklisted internal filter names from Drupal 6 to Drupal 7. The update has only updated the blacklisted filters linkchecker is aware of. Please verify the linkchecker extraction filter settings, if all filters with <em>references</em> to other content are still disabled.');
-}
-*/
-
-/**
- * Remove obsolete settings variable.
- */
-/*
-function linkchecker_update_7007() {
-  // Remove obsolete variable.
-  variable_del('linkchecker_extract_from_source');
-
-  return t('Removed obsolete settings variable.');
 }
 */
