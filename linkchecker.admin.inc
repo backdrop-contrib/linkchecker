@@ -158,7 +158,6 @@ function linkchecker_admin_settings_form($form_state) {
     '#type' => 'textarea',
     '#title' => t('Do not check the link status of links containing these URLs'),
     '#description' => t('By default this list contains the domain names reserved for use in documentation and not available for registration. See <a href="@rfc-2606">RFC 2606</a>, Section 3 for more information. URLs on this list are still extracted, but the link setting <em>Check link status</em> becomes automatically disabled to prevent false alarms. If you change this list you need to clear all link data and re-analyze your content. Otherwise this setting will only affect new links added after the configuration change.', array('@rfc-2606' => 'http://www.rfc-editor.org/rfc/rfc2606.txt')),
-    '#wysiwyg' => FALSE,
   );
 
   $form['error'] = array(
@@ -200,7 +199,6 @@ function linkchecker_admin_settings_form($form_state) {
     '#type' => 'textarea',
     '#title' => t("Don't treat these response codes as errors"),
     '#description' => t('One HTTP status code per line, e.g. 403.'),
-    '#wysiwyg' => FALSE,
   );
 
   // Buttons are only required for testing and debugging reasons.
