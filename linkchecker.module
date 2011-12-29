@@ -241,9 +241,9 @@ function linkchecker_cron() {
 /**
  * Status code handling.
  *
- * @param $link
+ * @param string $link
  *   An object containing the url, lid and fail_count.
- * @param $response
+ * @param object $response
  *   An object containing the HTTP request headers, response code, headers,
  *   data and redirect status.
  */
@@ -549,7 +549,7 @@ function linkchecker_node_prepare($node) {
 /**
  * Implements hook_node_delete().
  *
- * @param $node
+ * @param object $node
  *   The node object that is being deleted.
  */
 function linkchecker_node_delete($node) {
@@ -559,7 +559,7 @@ function linkchecker_node_delete($node) {
 /**
  * Implements hook_node_insert().
  *
- * @param $node
+ * @param object $node
  *   The node object that is being inserted.
  */
 function linkchecker_node_insert($node) {
@@ -572,7 +572,7 @@ function linkchecker_node_insert($node) {
 /**
  * Implements hook_node_update().
  *
- * @param $node
+ * @param object $node
  *   The node object that is being updated.
  */
 function linkchecker_node_update($node) {
@@ -589,7 +589,7 @@ function linkchecker_node_update($node) {
 /**
  * Implements hook_comment_delete().
  *
- * @param $comment
+ * @param object $comment
  *   The comment object that is being deleted.
  */
 function linkchecker_comment_delete($comment) {
@@ -599,7 +599,7 @@ function linkchecker_comment_delete($comment) {
 /**
  * Implements hook_comment_insert().
  *
- * @param $comment
+ * @param object $comment
  *   The comment object that is being inserted.
  */
 function linkchecker_comment_insert($comment) {
@@ -613,7 +613,7 @@ function linkchecker_comment_insert($comment) {
 /**
  * Implements hook_comment_update().
  *
- * @param $comment
+ * @param object $comment
  *   The comment object that is being updated.
  */
 function linkchecker_comment_update($comment) {
@@ -698,7 +698,7 @@ function linkchecker_block_custom_delete_form_submit($form, &$form_state) {
 /**
  * Add node links to database.
  *
- * @param $node
+ * @param object $node
  *   The fully populated node object.
  * @param $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
@@ -791,7 +791,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
 /**
  * Add comment links to database.
  *
- * @param $comment
+ * @param object $comment
  *   The fully populated comment object.
  * @param $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
@@ -885,7 +885,7 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
  *
  * @param array/object $block_custom
  *   The fully populated custom block object.
- * @param integer $bid
+ * @param int $bid
  *   Block id from table {block}.bid.
  * @param $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
@@ -1132,11 +1132,11 @@ function _linkchecker_block_custom_links_missing($bid, $links) {
  * This function parse all fields from the entity and returns an array of
  * filtered field items.
  *
- * @param $bundle
+ * @param string $bundle
  *   The bundle type to parse. Examples types are 'node', 'comment'.
- * @param $entity
+ * @param object $entity
  *   The entity to parse, a node or a comment object.
- * @param $type
+ * @param string $type
  *   Content type name e.g. $node->type or $comment->node_type.
  *
  * @return
@@ -1257,14 +1257,14 @@ function _linkchecker_cleanup_links() {
 /**
  * Extract links from content.
  *
- * @param $text
+ * @param string $text
  *    The text to be scanned for links.
- * @param $content_path
+ * @param string $content_path
  *    Path to the content that is currently scanned for links. This value is
  *    required to build full qualified links from relative links. Relative links
  *    are not extracted from content, if path is not provided.
  *
- * @return
+ * @return array
  *    Array of full qualified and unique URLs found in content.
  */
 function _linkchecker_extract_links($text = '', $content_path = NULL) {
@@ -1430,11 +1430,11 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
 /**
  * Replaces old link with new link in text.
  *
- * @param $text
+ * @param string $text
  *   The text a link is inside. Passed in as a reference.
- * @param $old_link_fqdn
+ * @param string $old_link_fqdn
  *   The old link to search for in strings.
- * @param $new_link_fqdn
+ * @param string $new_link_fqdn
  *   The old link should be overwritten with this new link.
  */
 function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn = '') {
@@ -1610,10 +1610,10 @@ function _linkchecker_check_markup($text, $format_id = NULL, $langcode = '', $ca
 /**
  * Get the path of an URL.
  *
- * @param $url
+ * @param string $url
  *   The http/https URL to parse.
  *
- * @return
+ * @return string
  *   Full qualified URL with absolute path of the URL.
  */
 function _linkchecker_absolute_content_path($url) {
@@ -1673,7 +1673,7 @@ function _linkchecker_link_check_status_filter($url) {
 /**
  * Defines the list of allowed response codes for form input validation.
  *
- * @param $code
+ * @param int $code
  *   An numeric response code.
  *
  * @return
@@ -1730,7 +1730,7 @@ function _linkchecker_isvalid_response_code($code) {
 /**
  * Should the defined node type scanned for links?
  *
- * @param $node_type
+ * @param string $node_type
  *   Verifies if the node type is enabled for link checks and should be scanned.
  *
  * @return
@@ -1752,7 +1752,7 @@ function _linkchecker_scan_nodetype($node_type = NULL) {
 /**
  * Unpublishes all nodes having the specified link id.
  *
- * @param $lid
+ * @param int $lid
  *   A link ID that have reached a defined failcount.
  */
 function _linkchecker_unpublish_nodes($lid) {

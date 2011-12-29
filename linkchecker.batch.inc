@@ -142,9 +142,9 @@ function _linkchecker_batch_block_custom_import_finished($success, $results, $op
 /**
  * Recurring scans of a single node via batch API.
  *
- * @param $nid
+ * @param int $nid
  *   The unique node id to scan for links.
- * @param $missing_links_count
+ * @param int $missing_links_count
  *   The number of links not yet added to linkchecker_links table. By this
  *   number the re-scan rounds are calulated.
  *
@@ -190,9 +190,9 @@ function _linkchecker_batch_single_node_import_finished($success, $results, $ope
 /**
  * Recurring scans of a single comment via batch API.
  *
- * @param $cid
+ * @param int $cid
  *   The unique comment id to scan for links.
- * @param $missing_links_count
+ * @param int $missing_links_count
  *   The number of links not yet added to linkchecker_links table. By this
  *   number the re-scan rounds are calulated.
  *
@@ -237,9 +237,9 @@ function _linkchecker_batch_single_comment_import_finished($success, $results, $
 /**
  * Recurring scans of a single block via batch API.
  *
- * @param $bid
+ * @param int $bid
  *   The unique block id to scan for links.
- * @param $missing_links_count
+ * @param int $missing_links_count
  *   The number of links not yet added to linkchecker_links table. By this
  *   number the re-scan rounds are calulated.
  *
