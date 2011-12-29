@@ -1377,7 +1377,8 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
   $links = array();
   foreach ($urls as $url) {
     // Full qualified URLs.
-    if (valid_url($url, TRUE)) {
+    // FIXME: #1149596 HACK - Encode spaces in URLs, so validation equals TRUE and link gets added.
+    if (valid_url(str_replace(' ', '%20', $url), TRUE)) {
       $links[] = $url;
     }
     // Skip mailto:, javascript:, etc.
