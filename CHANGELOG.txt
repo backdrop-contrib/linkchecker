@@ -1,6 +1,7 @@
 linkchecker 7.x-dev
 --------------------------------------
 
+* Upgraded README.txt to D7
 * Core upgrade.php destroys text
 * #909504: D7 port - Upgrade blacklisted internal filter names.
 * Removed obsolete linkchecker_extract_from_source variable
