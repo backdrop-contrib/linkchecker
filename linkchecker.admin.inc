@@ -48,7 +48,7 @@ function linkchecker_admin_settings_form($form_state) {
   $form['settings']['linkchecker_check_links_types'] = array(
     '#type' => 'select',
     '#title' => t('What type of links should be checked?'),
-    '#description' => t('A full qualified link to a page (http://example.com/foo/bar) is considered external, whereas an absolute (/foo/bar) or relative link (node/123) without an domain is considered internal.'),
+    '#description' => t('A full qualified link to a page (http://example.com/foo/bar) is considered external, whereas an absolute (/foo/bar) or relative link (node/123) without a domain is considered internal.'),
     '#default_value' => variable_get('linkchecker_check_links_types', 1),
     '#options' => array(
       '0' => 'Internal and external',
