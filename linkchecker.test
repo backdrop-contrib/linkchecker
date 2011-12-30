@@ -39,7 +39,7 @@ class LinkCheckerLinkExtractionTest extends DrupalWebTestCase {
 
     // Core enables the URL filter for "Full HTML" by default.
     // -> Blacklist / Disable URL filter for testing.
-    variable_set('linkchecker_filter_blacklist', array('filter/2'));
+    variable_set('linkchecker_filter_blacklist', array('filter_url' => 'filter_url'));
 
     // Extract from all link checker supported HTML tags.
     variable_set('linkchecker_extract_from_a', 1);
@@ -48,7 +48,6 @@ class LinkCheckerLinkExtractionTest extends DrupalWebTestCase {
     variable_set('linkchecker_extract_from_iframe', 1);
     variable_set('linkchecker_extract_from_img', 1);
     variable_set('linkchecker_extract_from_object', 1);
-    variable_set('linkchecker_extract_from_source', 1);
     variable_set('linkchecker_extract_from_video', 1);
 
     $body = <<<EOT
@@ -70,9 +69,11 @@ class LinkCheckerLinkExtractionTest extends DrupalWebTestCase {
 <a href="../foo3/../foo4/foo5">../foo3/../foo4/foo5</a>
 <a href="./foo4/../foo5/foo6">./foo4/../foo5/foo6</a>
 <a href="./foo4/./foo5/foo6">./foo4/./foo5/foo6</a>
+<a href="./test/foo bar/is_valid-hack.test">./test/foo bar/is_valid-hack.test</a>
 
 <!-- URL with uncommon chars that could potentially fail to extract. See http://drupal.org/node/465462. -->
 <a href="http://www.lagrandeepicerie.fr/#e-boutique/Les_produits_du_moment,2/coffret_vins_doux_naturels,149">URL with uncommon chars</a>
+<a href="http://example.com/foo bar/is_valid-hack.test">URL with space</a>
 
 <!-- object tag: Embed SWF files -->
 <object width="150" height="116"
@@ -188,7 +189,7 @@ EOT;
     $edit['body[und][0][format]'] = 'full_html';
 
     // Extract only full qualified URLs.
-    variable_set('linkchecker_fqdn_only', 1);
+    variable_set('linkchecker_check_links_types', 1);
 
     // Verify path input field appears on add "Basic page" form.
     $this->drupalGet('node/add/page');
@@ -226,6 +227,7 @@ EOT;
       'http://v2v.cc/~j/theora_testsuite/pixel_aspect_ratio.ogg',
       'http://v2v.cc/~j/theora_testsuite/pixel_aspect_ratio.mov',
       'http://v2v.cc/~j/theora_testsuite/320x240.ogg',
+    	'http://example.com/foo bar/is_valid-hack.test',
     );
 
     foreach ($urls_fqdn as $org_url => $check_url) {
@@ -247,7 +249,7 @@ EOT;
 
     // Extract all URLs including relative path.
     variable_set('clean_url', 1);
-    variable_set('linkchecker_fqdn_only', 0);
+    variable_set('linkchecker_check_links_types', 0);
 
     $node = $this->drupalGetNodeByTitle($edit['title']);
     $this->assertTrue($node, t('Node found in database.'));
@@ -267,7 +269,8 @@ EOT;
       '../foo3/../foo4/foo5' => $base_root . $base_path . 'foo4/foo5',
       './foo4/../foo5/foo6' => $base_root . $base_path . $folder1 . '/foo5/foo6',
       './foo4/./foo5/foo6' => $base_root . $base_path . $folder1 . '/foo4/foo5/foo6',
-      'flash.png' => $base_root . $base_path . $folder1 . '/flash.png',
+    	'./test/foo bar/is_valid-hack.test' => $base_root . $base_path . $folder1 . '/test/foo bar/is_valid-hack.test',
+    	'flash.png' => $base_root . $base_path . $folder1 . '/flash.png',
       'ritmo.mid' => $base_root . $base_path . $folder1 . '/ritmo.mid',
       'my_ogg_video.ogg' => $base_root . $base_path . $folder1 . '/my_ogg_video.ogg',
       'video.ogv' => $base_root . $base_path . $folder1 . '/video.ogv',
@@ -276,6 +279,13 @@ EOT;
       'foo.ogg' => $base_root . $base_path . $folder1 . '/foo.ogg',
     );
     $this->verbose(theme('item_list', array('items' => $urls_relative, 'title' => 'Verify if following relative URLs exists:')));
+
+    $links_debug = array();
+    $result = db_query('SELECT url FROM {linkchecker_link}');
+    foreach ($result as $row) {
+      $links_debug[] = $row->url;
+    }
+    $this->verbose(theme('item_list', array('items' => $links_debug, 'title' => 'Following URLs exists:')));
 
     foreach ($urls_relative as $org_url => $check_url) {
       $link = $this->getLinkCheckerLink($check_url);
@@ -311,6 +321,7 @@ EOT;
       $base_root . $base_path . 'foo4/foo5',
       $base_root . $base_path . $folder1 . '/foo5/foo6',
       $base_root . $base_path . $folder1 . '/foo4/foo5/foo6',
+      $base_root . $base_path . $folder1 . '/test/foo bar/is_valid-hack.test',
       $base_root . $base_path . $folder1 . '/flash.png',
       $base_root . $base_path . $folder1 . '/ritmo.mid',
       $base_root . $base_path . $folder1 . '/my_ogg_video.ogg',
@@ -340,6 +351,7 @@ EOT;
       'http://example.org/video/player2.swf',
       'http://example.org/video/player3.swf',
       'http://example.com/iframe/',
+      'http://example.com/foo bar/is_valid-hack.test',
     );
 
     foreach ($documentation_urls as $documentation_url) {
