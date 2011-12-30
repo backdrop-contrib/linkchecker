@@ -1378,9 +1378,11 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
 
   $links = array();
   foreach ($urls as $url) {
-    // Full qualified URLs.
     // FIXME: #1149596 HACK - Encode spaces in URLs, so validation equals TRUE and link gets added.
-    if ($linkchecker_check_links_types != 2 && valid_url(str_replace(' ', '%20', $url), TRUE)) {
+    $url_encoded = str_replace(' ', '%20', $url);
+
+    // Full qualified URLs.
+    if ($linkchecker_check_links_types != 2 && valid_url($url_encoded, TRUE)) {
       $links[] = $url;
     }
     // Skip mailto:, javascript:, etc.
@@ -1388,7 +1390,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
       continue;
     }
     // Local URLs. $linkchecker_check_links_types = 0 or 2
-    elseif ($linkchecker_check_links_types != 1 && valid_url(str_replace(' ', '%20', $url), FALSE)) {
+    elseif ($linkchecker_check_links_types != 1 && valid_url($url_encoded, FALSE)) {
       // Get full qualified url with base path of content.
       $absolute_content_path = _linkchecker_absolute_content_path($content_path);
 
