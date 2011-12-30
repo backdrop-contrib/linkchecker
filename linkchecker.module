@@ -920,7 +920,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
   // Extract all links in a custom block.
   $links = _linkchecker_extract_links(implode(' ', $text_items));
 
-  // Box have links.
+  // Custom block has links.
   if (!empty($links)) {
     // Remove all links from the links array already in the database
     // and only add missing links to database.
