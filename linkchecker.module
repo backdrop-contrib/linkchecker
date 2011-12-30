@@ -903,7 +903,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
   $filter = new stdClass;
   $filter->settings['filter_url_length'] = 72;
 
-  // Create array of custom block fields to scan. All body fields cannot exists.
+  // Create array of custom block fields to scan. All fields cannot exists.
   $text_items = array();
   if (!empty($block_custom->info)) {
     $text_items[] = _filter_url($block_custom->info, $filter);
