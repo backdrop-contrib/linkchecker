@@ -110,7 +110,7 @@ function linkchecker_admin_settings_form($form_state) {
   $filter_options = array();
   foreach ($filter_info as $name => $filter) {
     if (in_array($name, explode('|', LINKCHECKER_DEFAULT_FILTER_BLACKLIST))) {
-      $filter_options[$name] = t('@title <span class="form-required">(Recommended)</span>', array('@title' => $filter['title']));
+      $filter_options[$name] = t('!title <span class="form-required">(Recommended)</span>', array('!title' => $filter['title']));
     }
     else {
       $filter_options[$name] = $filter['title'];
