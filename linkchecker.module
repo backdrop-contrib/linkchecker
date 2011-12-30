@@ -1388,7 +1388,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
       continue;
     }
     // Local URLs. $linkchecker_check_links_types = 0 or 2
-    elseif ($linkchecker_check_links_types != 1 && valid_url($url, FALSE)) {
+    elseif ($linkchecker_check_links_types != 1 && valid_url(str_replace(' ', '%20', $url), FALSE)) {
       // Get full qualified url with base path of content.
       $absolute_content_path = _linkchecker_absolute_content_path($content_path);
 
