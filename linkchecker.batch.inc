@@ -130,8 +130,6 @@ function _linkchecker_batch_import_block_custom() {
 function _linkchecker_batch_import_block_custom_op($bid, &$context) {
   // Load the custom block and scan for links.
   $block_custom = block_custom_block_get($bid);
-  // block_custom_block_get() does not load 'title' automatically.
-  $block_custom += db_query("SELECT title FROM {block} WHERE module = :module AND delta = :bid", array(':module' => 'block', ':bid' => $bid))->fetchAssoc();
   _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
 
   // Store some result for post-processing in the finished callback.

@@ -354,7 +354,6 @@ function _linkchecker_status_handling($link, $response) {
               // Create array of custom block fields to scan.
               $text_items = array();
               $text_items[] = 'info';
-              $text_items[] = 'title';
               $text_items[] = 'body';
 
               // Now replace the outdated link with the permanently moved one in
@@ -904,13 +903,10 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
   $filter = new stdClass;
   $filter->settings['filter_url_length'] = 72;
 
-  // Create array of custom block fields to scan. All fields cannot exists.
+  // Create array of custom block fields to scan. All body fields cannot exists.
   $text_items = array();
   if (!empty($block_custom->info)) {
     $text_items[] = _filter_url($block_custom->info, $filter);
-  }
-  if (!empty($block_custom->title)) {
-    $text_items[] = _filter_url($block_custom->title, $filter);
   }
   // $block_custom from a scan for links in blocks. See block_custom_block_get().
   if (!empty($block_custom->body) && isset($block_custom->format)) {
