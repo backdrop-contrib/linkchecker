@@ -342,14 +342,57 @@ function linkchecker_update_7006() {
  *
  * - Line break converter, http://drupal.org/project/drupal
  *     name: filter_autop (D6: filter/1)
+ * - Insert block, http://drupal.org/project/insert_block
+ *     name: insert_block (D6 insert_block/0)
+ *     tags: [block:name of module=delta of block]
  * - Insert view filter, http://drupal.org/project/insert_view
  *     name: insert_view (D6: insert_view/0)
  */
-/*
 function linkchecker_update_7007() {
-  // See filter_update_7003();
-  // Add drupal message that settings cannot updated for 'unknown' contrib filters.
+  // See core filter_update_7003();
+  // Get an array of the renamed filter deltas, organized by module.
+  $renamed_deltas = array(
+    'filter' => array(
+      '0' => 'filter_html',
+      '1' => 'filter_autop',
+      '2' => 'filter_url',
+      '3' => 'filter_htmlcorrector',
+      '4' => 'filter_html_escape',
+    ),
+    'php' => array(
+      '0' => 'php_code',
+    ),
+    'gotwo' => array(
+      '0' => 'gotwo',
+    ),
+  	'insert_block' => array(
+      '0' => 'insert_block',
+    ),
+    'insert_view' => array(
+      '0' => 'insert_view',
+    ),
+    'smileys' => array(
+      '0' => 'smileys',
+    ),
+  );
 
-  return t('Updated the blacklisted internal filter names from Drupal 6 to Drupal 7. The update has only updated the blacklisted filters linkchecker is aware of. Please verify the linkchecker extraction filter settings, if all filters with <em>references</em> to other content are still disabled.');
+  $linkchecker_filter_blacklist = variable_get('linkchecker_filter_blacklist', explode('|', LINKCHECKER_DEFAULT_FILTER_BLACKLIST));
+  $linkchecker_filter_blacklist = array_values($linkchecker_filter_blacklist);
+  $linkchecker_filter_blacklist = array_filter($linkchecker_filter_blacklist);
+
+  // Loop through each filter and make changes to the core filter name.
+  foreach ($renamed_deltas as $module => $deltas) {
+    foreach ($deltas as $old_delta => $new_name) {
+      if (in_array($module . '/' . $old_delta, $linkchecker_filter_blacklist)) {
+        $id = array_search($module . '/' . $old_delta, $linkchecker_filter_blacklist);
+        $linkchecker_filter_blacklist = array_replace($linkchecker_filter_blacklist, array($id => $new_name));
+      }
+    }
+  }
+
+  $linkchecker_filter_blacklist = drupal_map_assoc($linkchecker_filter_blacklist);
+  variable_set('linkchecker_filter_blacklist', $linkchecker_filter_blacklist);
+
+  // This is not a 100% solution, but we tried the best... tell the admin.
+	return t('Updated the blacklisted internal filter names from Drupal 6 to Drupal 7. The update has only updated the blacklisted filters linkchecker is aware of. Please review the "Filters disabled for link extraction" settings, if all filters with <em>references</em> to other content are still disabled.');
 }
-*/
