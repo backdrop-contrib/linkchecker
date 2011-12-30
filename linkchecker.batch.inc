@@ -99,7 +99,15 @@ function _linkchecker_batch_comments_import_finished($success, $results, $operat
  * Batch: Scan blocks for links.
  */
 function _linkchecker_batch_import_block_custom() {
-  // Get all active {block_custom}.bid's.
+  // Get all active {block_custom}.bid's. Does not work as module is not
+  // notified if a block get assigned/unassigned to a region.
+  //$query = db_select('block_custom', 'bc');
+  //$query->leftJoin('block', 'b', 'b.delta = bc.bid AND module = :module ', array(':module' => 'block'));
+  //$query->fields('bc', array('bid'));
+  //$query->condition('b.status', 1);
+  //$result = $query->distinct()->execute();
+
+  // Get all {block_custom}.bid's as block module suxxx and has no usable hooks.
   $result = db_query('SELECT bid FROM {block_custom} ORDER BY bid');
 
   $operations = array();
@@ -122,6 +130,8 @@ function _linkchecker_batch_import_block_custom() {
 function _linkchecker_batch_import_block_custom_op($bid, &$context) {
   // Load the custom block and scan for links.
   $block_custom = block_custom_block_get($bid);
+  // block_custom_block_get() does not load 'title' automatically.
+  $block_custom += db_query("SELECT title FROM {block} WHERE module = :module AND delta = :bid", array(':module' => 'block', ':bid' => $bid))->fetchAssoc();
   _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
 
   // Store some result for post-processing in the finished callback.
