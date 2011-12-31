@@ -51,9 +51,9 @@ function linkchecker_admin_settings_form($form_state) {
     '#description' => t('A full qualified link to a page (http://example.com/foo/bar) is considered external, whereas an absolute (/foo/bar) or relative link (node/123) without a domain is considered internal.'),
     '#default_value' => variable_get('linkchecker_check_links_types', 1),
     '#options' => array(
-      '0' => 'Internal and external',
-      '1' => 'External only (http://example.com/foo/bar)',
-      '2' => 'Internal only (node/123)',
+      '0' => t('Internal and external'),
+      '1' => t('External only (http://example.com/foo/bar)'),
+      '2' => t('Internal only (node/123)'),
     ),
   );
 
