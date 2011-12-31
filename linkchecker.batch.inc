@@ -101,11 +101,11 @@ function _linkchecker_batch_comments_import_finished($success, $results, $operat
 function _linkchecker_batch_import_block_custom() {
   // Get all active {block_custom}.bid's. Does not work as module is not
   // notified if a block get assigned/unassigned to a region.
-  //$query = db_select('block_custom', 'bc');
-  //$query->leftJoin('block', 'b', 'b.delta = bc.bid AND module = :module ', array(':module' => 'block'));
-  //$query->fields('bc', array('bid'));
-  //$query->condition('b.status', 1);
-  //$result = $query->distinct()->execute();
+  // $query = db_select('block_custom', 'bc');
+  // $query->leftJoin('block', 'b', 'b.delta = bc.bid AND module = :module ', array(':module' => 'block'));
+  // $query->fields('bc', array('bid'));
+  // $query->condition('b.status', 1);
+  // $result = $query->distinct()->execute();
 
   // Get all {block_custom}.bid's as block module suxxx and has no usable hooks.
   $result = db_query('SELECT bid FROM {block_custom} ORDER BY bid');
@@ -156,7 +156,7 @@ function _linkchecker_batch_block_custom_import_finished($success, $results, $op
  *   The number of links not yet added to linkchecker_links table. By this
  *   number the re-scan rounds are calulated.
  *
- * @return
+ * @return array
  *   The batch task definition.
  */
 function _linkchecker_batch_import_single_node($nid, $missing_links_count) {
@@ -204,7 +204,7 @@ function _linkchecker_batch_single_node_import_finished($success, $results, $ope
  *   The number of links not yet added to linkchecker_links table. By this
  *   number the re-scan rounds are calulated.
  *
- * @return
+ * @return array
  *   The batch task definition.
  */
 function _linkchecker_batch_import_single_comment($cid, $missing_links_count) {
@@ -251,7 +251,7 @@ function _linkchecker_batch_single_comment_import_finished($success, $results, $
  *   The number of links not yet added to linkchecker_links table. By this
  *   number the re-scan rounds are calulated.
  *
- * @return
+ * @return array
  *   The batch task definition.
  */
 function _linkchecker_batch_import_single_block_custom($bid, $missing_links_count) {

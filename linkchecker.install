@@ -367,7 +367,7 @@ function linkchecker_update_7007() {
     'gotwo' => array(
       '0' => 'gotwo',
     ),
-  	'insert_block' => array(
+    'insert_block' => array(
       '0' => 'insert_block',
     ),
     'insert_view' => array(
@@ -396,5 +396,5 @@ function linkchecker_update_7007() {
   variable_set('linkchecker_filter_blacklist', $linkchecker_filter_blacklist);
 
   // This is not a 100% solution, but we tried the best... tell the admin.
-	return t('Updated the blacklisted internal filter names from Drupal 6 to Drupal 7. The update has only updated the blacklisted filters linkchecker is aware of. Please review the "Filters disabled for link extraction" settings, if all filters with <em>references</em> to other content are still disabled.');
+  return t('Updated the blacklisted internal filter names from Drupal 6 to Drupal 7. The update has only updated the blacklisted filters linkchecker is aware of. Please review the "Filters disabled for link extraction" settings, if all filters with <em>references</em> to other content are still disabled.');
 }
