@@ -94,6 +94,17 @@ function linkchecker_user_report_page($account) {
   return _linkchecker_report_page($query, $account);
 }
 
+/**
+ * Builds the HTML report page table with pager.
+ *
+ * @param DatabaseStatementInterface $query
+ * 	 The pager query for this report page. Can be user per user report or global.
+ * @param object|null $account
+ * 	 The user account object.
+ *
+ * @return string
+ *   Themed version of report page.
+ */
 function _linkchecker_report_page($query, $account = NULL) {
 
   $links_unchecked = db_query('SELECT COUNT(1) FROM {linkchecker_link} WHERE last_checked = :last_checked AND status = :status', array(':last_checked' => 0, ':status' => 1))->fetchField();
