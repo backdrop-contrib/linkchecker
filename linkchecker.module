@@ -507,6 +507,7 @@ function _linkchecker_replace_fields($entity, $entity_type, $bundle, $old_url, $
       $entity_field =& $entity->$name;
 
       switch ($field['type']) {
+        // Core fields.
         case 'text_with_summary':
           foreach ($entity_field as $language_name => $language_value) {
             foreach ($language_value as $item_name => $item_value) {
@@ -516,10 +517,22 @@ function _linkchecker_replace_fields($entity, $entity_type, $bundle, $old_url, $
           }
           break;
 
+        // Core fields.
         case 'text_long':
+        case 'text':
           foreach ($entity_field as $language_name => $language_value) {
             foreach ($language_value as $item_name => $item_value) {
               _linkchecker_link_replace($entity_field[$language_name][$item_name]['value'], $old_url, $new_url);
+            }
+          }
+          break;
+
+        // Link module field, http://drupal.org/project/link.
+        case 'link_field':
+          foreach ($entity_field as $language_name => $language_value) {
+            foreach ($language_value as $item_name => $item_value) {
+              _linkchecker_link_replace($entity_field[$language_name][$item_name]['url'], $old_url, $new_url);
+              _linkchecker_link_replace($entity_field[$language_name][$item_name]['title'], $old_url, $new_url);
             }
           }
           break;
