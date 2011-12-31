@@ -97,7 +97,7 @@ function linkchecker_user_report_page($account) {
 /**
  * Builds the HTML report page table with pager.
  *
- * @param DatabaseStatementInterface $query
+ * @param SelectQueryInterface $query
  * 	 The pager query for this report page. Can be user per user report or global.
  * @param object|null $account
  * 	 The user account object.

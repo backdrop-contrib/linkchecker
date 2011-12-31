@@ -365,8 +365,9 @@ EOT;
    *
    * @param string $url
    *   URL of the link to find.
+   *
    * @return object
-   *   Link object.
+   *   The link object.
    */
   function getLinkCheckerLink($url) {
     return db_query('SELECT * FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => drupal_hash_base64($url)))->fetchObject();

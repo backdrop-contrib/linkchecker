@@ -1212,7 +1212,7 @@ function _linkchecker_cleanup_links() {
       ->execute();
 
     // FIXME: Remove comments
-    //db_query('DELETE FROM {linkchecker_comment} WHERE cid IN (SELECT nid FROM {node} n WHERE n.type NOT IN (' . db_placeholders($node_types, 'varchar') . '))', $node_types);
+    // db_query('DELETE FROM {linkchecker_comment} WHERE cid IN (SELECT nid FROM {node} n WHERE n.type NOT IN (' . db_placeholders($node_types, 'varchar') . '))', $node_types);
   }
   else {
     // No active node_type. Remove all items from table.
