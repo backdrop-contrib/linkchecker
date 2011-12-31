@@ -95,7 +95,7 @@ function linkchecker_menu() {
 
   $items['admin/config/content/linkchecker'] = array(
     'access arguments' => array('administer linkchecker'),
-    'description' => 'Configure the link checker settings.',
+    'description' => 'Configure the content types that should be checked for broken links and how the hypertext links will be checked and reported and repaired.',
     'file' => 'linkchecker.admin.inc',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('linkchecker_admin_settings_form'),
