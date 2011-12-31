@@ -1,6 +1,7 @@
 linkchecker 7.x-dev
 --------------------------------------
 
+* #1388760: Use (node|comment)_load_multiple() where possible.
 * Upgraded README.txt to D7
 * Core upgrade.php destroys text
 * #909504: D7 port - Upgrade blacklisted internal filter names.
