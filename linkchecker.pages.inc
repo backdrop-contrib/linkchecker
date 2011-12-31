@@ -13,7 +13,7 @@ function linkchecker_admin_report_page() {
   $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
 
   // Search for broken links in nodes and comments and blocks of all users.
-  // TODO: Try to make UNION'ed subselect resultset smaller.
+  // @todo Try to make UNION'ed subselect resultset smaller.
   $subquery4 = db_select('linkchecker_node', 'ln')
     ->distinct()
     ->fields('ln' , array('lid'));
@@ -98,12 +98,12 @@ function linkchecker_user_report_page($account) {
  * Builds the HTML report page table with pager.
  *
  * @param SelectQueryInterface $query
- * 	 The pager query for this report page. Can be user per user report or global.
+ * 	 The pager query for the report page. Can be per user report or global.
  * @param object|null $account
  * 	 The user account object.
  *
  * @return string
- *   Themed version of report page.
+ *   Themed report page.
  */
 function _linkchecker_report_page($query, $account = NULL) {
 
@@ -184,7 +184,7 @@ function _linkchecker_report_page($query, $account = NULL) {
       $links[] = l(t('Create redirection'), 'admin/build/path-redirect/add', array('query' => array('src' => $link->internal)));
     }
 
-    // Create table data for output. Use inline styles to prevent extra CSS file.
+    // Create table data for output.
     $rows[] = array('data' =>
       array(
         l(_filter_url_trim($link->url, 40), $link->url),
@@ -259,7 +259,7 @@ function linkchecker_link_edit_form($form, &$form_state, $link) {
 }
 
 function linkchecker_link_edit_form_submit($form, &$form_state) {
-  // Force asap link re-check.
+  // Force link re-check asap.
   if ($form_state['values']['recheck']) {
     db_update('linkchecker_link')
       ->condition('lid', $form_state['values']['lid'])

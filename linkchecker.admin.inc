@@ -12,7 +12,7 @@ function linkchecker_admin_settings_form($form_state) {
     '#title' => t('General settings'),
     '#collapsible' => FALSE,
   );
-  // FIXME: node_type_get_names() can return an empty array!?
+  // @todo node_type_get_names() can return an empty array!?
   $names = node_type_get_names();
   $form['settings']['linkchecker_scan_nodetypes'] = array(
     '#type' => 'checkboxes',
@@ -257,7 +257,8 @@ function linkchecker_admin_settings_form_submit($form, &$form_state) {
   // Save form settings.
   system_settings_form_submit($form, $form_state);
 
-  // Re-scan items, if node types or comment or block selection have been changed.
+  // Re-scan items, if node types or comment or custom block selection has been
+  // changed.
   $additional_nodetypes_selected = array_diff($form_state['values']['linkchecker_scan_nodetypes'], $form['settings']['linkchecker_scan_nodetypes']['#default_value']);
   if (!empty($additional_nodetypes_selected) || $form_state['values']['linkchecker_scan_comments'] > $form['settings']['linkchecker_scan_comments']['#default_value']) {
     $node_types = array_keys(array_filter($form_state['values']['linkchecker_scan_nodetypes']));

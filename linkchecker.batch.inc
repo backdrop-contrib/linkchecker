@@ -3,8 +3,6 @@
 /**
  * @file
  * Batch API callbacks for the linkchecker module.
- *
- * TODO: Test with 500.000+ nodes/comments/blocks and review memory consumption.
  */
 
 /**

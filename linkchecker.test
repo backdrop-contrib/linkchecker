@@ -199,7 +199,7 @@ EOT;
     // Save node.
     $this->drupalPost('node/add/page', $edit, t('Save'));
 
-    // @TODO fix this test
+    // @todo fix this test
     // $this->assertText(t('@type %title has been created.', array('@type' => 'Basic page', '%title' => $edit['title'])), t('Node was created.'));
     $this->assertText(t('has been created.'), t('Node was created.'));
 
@@ -256,7 +256,7 @@ EOT;
     $this->drupalPost('node/' . $node->nid . '/edit', $edit, t('Save'));
     $this->assertRaw(t('@type %title has been updated.', array('@type' => 'Basic page', '%title' => $edit['title'])));
 
-    // FIXME: Path alias seems not saved!???
+    // @todo Path alias seems not saved!???
     // $this->assertIdentical($node->path, $edit['path'], t('URL alias "@node-path" matches path "@edit-path".', array('@node-path' => $node->path, '@edit-path' => $edit['path'])));
 
     // Verify if the content links are extracted correctly.
