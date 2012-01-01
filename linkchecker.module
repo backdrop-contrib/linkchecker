@@ -1313,7 +1313,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
       $urls[] = $audio->getAttribute('src');
 
       // Finds source tags with links in the audio tag.
-      $sources = $video->getElementsByTagName('source');
+      $sources = $audio->getElementsByTagName('source');
       foreach ($sources as $source) {
         $urls[] = $source->getAttribute('src');
       }
@@ -1519,6 +1519,8 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
       // Add replace rules for audio tags.
       if (variable_get('linkchecker_extract_from_audio', 0) == 1) {
         $replacements['/(<audio\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        // @toto this also catches source from video elements, http://drupal.org/node/1388756
+        $replacements['/(<source\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
       }
 
       // Add replace rules for embed tags.
@@ -1545,15 +1547,12 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
         $replacements['/(<param\s[^>]*((name|src)=["\'](archive|filename|href|movie|src|url)["\']\s[^>]*)+value=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\6';
       }
 
-      // Add replace rules for source tags.
-      if (variable_get('linkchecker_extract_from_source', 0) == 1) {
-        $replacements['/(<source\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
-      }
-
       // Add replace rules for video tags.
       if (variable_get('linkchecker_extract_from_video', 0) == 1) {
         $replacements['/(<video\s[^>]*poster=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
         $replacements['/(<video\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        // @toto this also catches source from audio elements, http://drupal.org/node/1388756
+        $replacements['/(<source\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
       }
 
       // Replace link by applying all replacement rules on text.
