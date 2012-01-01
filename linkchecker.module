@@ -1160,7 +1160,7 @@ function _linkchecker_block_custom_links_missing($bid, $links) {
  *   Content type name e.g. $node->type or $comment->node_type.
  *
  * @return array
- *    Array of field items with filters applied.
+ *   Array of field items with filters applied.
  */
 function linkchecker_parse_fields($bundle, $entity, $type) {
   $text_items = array();
