@@ -1320,6 +1320,11 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
       foreach ($sources as $source) {
         $urls[] = $source->getAttribute('src');
       }
+      // Finds track tags with links in the audio tag.
+      $tracks = $audio->getElementsByTagName('track');
+      foreach ($tracks as $track) {
+        $urls[] = $track->getAttribute('src');
+      }
     }
   }
 
@@ -1387,6 +1392,11 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
       $sources = $video->getElementsByTagName('source');
       foreach ($sources as $source) {
         $urls[] = $source->getAttribute('src');
+      }
+      // Finds track tags with links in the audio tag.
+      $tracks = $video->getElementsByTagName('track');
+      foreach ($tracks as $track) {
+        $urls[] = $track->getAttribute('src');
       }
     }
   }
@@ -1522,8 +1532,9 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
       // Add replace rules for audio tags.
       if (variable_get('linkchecker_extract_from_audio', 0) == 1) {
         $replacements['/(<audio\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
-        // @toto this also catches source from video elements, http://drupal.org/node/1388756
+        // @toto this also catches source/track tags from video elements, http://drupal.org/node/1388756
         $replacements['/(<source\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        $replacements['/(<track\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
       }
 
       // Add replace rules for embed tags.
@@ -1554,8 +1565,9 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
       if (variable_get('linkchecker_extract_from_video', 0) == 1) {
         $replacements['/(<video\s[^>]*poster=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
         $replacements['/(<video\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
-        // @toto this also catches source from audio elements, http://drupal.org/node/1388756
+        // @toto this also catches source/track tags from audio elements, http://drupal.org/node/1388756
         $replacements['/(<source\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        $replacements['/(<track\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
       }
 
       // Replace link by applying all replacement rules on text.

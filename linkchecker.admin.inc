@@ -71,7 +71,7 @@ function linkchecker_admin_settings_form($form_state) {
   $form['tag']['linkchecker_extract_from_audio'] = array(
     '#default_value' => variable_get('linkchecker_extract_from_audio', 0),
     '#type' => 'checkbox',
-    '#title' => t('Extract links in <code>&lt;audio&gt;</code> tags including their <code>&lt;source&gt;</code> tags'),
+    '#title' => t('Extract links in <code>&lt;audio&gt;</code> tags including their <code>&lt;source&gt;</code> and <code>&lt;track&gt;</code> tags'),
     '#description' => t('Enable this checkbox if links in audio tags should be extracted. The audio element is used to embed sound content.'),
   );
   $form['tag']['linkchecker_extract_from_embed'] = array(
@@ -101,7 +101,7 @@ function linkchecker_admin_settings_form($form_state) {
   $form['tag']['linkchecker_extract_from_video'] = array(
     '#default_value' => variable_get('linkchecker_extract_from_video', 0),
     '#type' => 'checkbox',
-    '#title' => t('Extract links in <code>&lt;video&gt;</code> tags including their <code>&lt;source&gt;</code> tags'),
+    '#title' => t('Extract links in <code>&lt;video&gt;</code> tags including their <code>&lt;source&gt;</code> and <code>&lt;track&gt;</code> tags'),
     '#description' => t('Enable this checkbox if links in video tags should be extracted. The video element is used in to embed video content.'),
   );
 
