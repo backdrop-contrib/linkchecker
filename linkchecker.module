@@ -2,7 +2,7 @@
 
 /**
  * @file
- * This module periodically check links in given node types, blocks, cck fields, etc.
+ * This module periodically check links in given node types, blocks etc.
  *
  * Developed by Alexander Hass, http://www.yaml-for-drupal.com/.
  */
@@ -1482,7 +1482,7 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
     $old_html_link = check_url($old_link);
     $new_html_link = check_url($new_link);
 
-    // Replace links in CCK link and text and Links weblink fields.
+    // Replace links in link fields and text and Links weblink fields.
     if (in_array($text, array($old_html_link_fqdn, $old_html_link, $old_link_fqdn, $old_link))) {
       // Keep old and new links in the same encoding and format and short or
       // fully qualified.

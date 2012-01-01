@@ -207,7 +207,7 @@ function linkchecker_admin_settings_form($form_state) {
   );
 
   // Buttons are only required for testing and debugging reasons.
-  $description = '<p>' . t('These actions will either clear all link checker tables in the database and/or analyze all selected node types, blocks and cck fields (see settings above) for new/updated/removed links. Normally there is no need to press one of these buttons. Use this only for immediate cleanup tasks and to force a full re-build of the links to be checked in the linkchecker tables. Keep in mind that all custom link settings will be lost!') . '</p>';
+  $description = '<p>' . t('These actions will either clear all link checker tables in the database and/or analyze all selected node types, blocks and fields (see settings above) for new/updated/removed links. Normally there is no need to press one of these buttons. Use this only for immediate cleanup tasks and to force a full re-build of the links to be checked in the linkchecker tables. Keep in mind that all custom link settings will be lost!') . '</p>';
   $description .= '<p>' . t('<strong>Note</strong>: These functions ONLY collect the links, they do not evaluate the HTTP response codes, this will be done during normal cron runs.') . '</p>';
 
   $form['clear'] = array(
@@ -283,7 +283,7 @@ function linkchecker_admin_settings_form_submit($form, &$form_state) {
 }
 
 /**
- * Submit callback; Analyze all node types, comments, custom blocks and cck fields.
+ * Submit callback; Analyze fields in all node types, comments, custom blocks.
  */
 function linkchecker_analyze_links_submit($form, &$form_state) {
   // Exclude unnecessary elements.
@@ -309,7 +309,7 @@ function linkchecker_analyze_links_submit($form, &$form_state) {
 }
 
 /**
- * Submit callback; Clear link data and analyze all node types, comments, custom blocks and cck fields.
+ * Submit callback; Clear link data and analyze fields in all node types, comments, custom blocks.
  */
 function linkchecker_clear_analyze_links_submit($form, &$form_state) {
   // Exclude unnecessary elements.
