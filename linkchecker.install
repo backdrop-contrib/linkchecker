@@ -160,6 +160,13 @@ function linkchecker_schema() {
     ),
     'primary key' => array('lid'),
     'unique keys' => array('urlhash' => array('urlhash')),
+    'indexes' => array(
+      'method' => array('method'),
+      'code' => array('code'),
+      'fail_count' => array('fail_count'),
+      'last_checked' => array('last_checked'),
+      'status' => array('status'),
+    ),
   );
 
   return $schema;
@@ -400,4 +407,23 @@ function linkchecker_update_7007() {
 
   // This is not a 100% solution, but we tried the best... tell the admin.
   return t('Updated the blacklisted internal filter names from Drupal 6 to Drupal 7. The update has only updated the blacklisted filters linkchecker is aware of. Please review the "Filters disabled for link extraction" settings, if all filters with <em>references</em> to other content are still disabled.');
+}
+
+/**
+* #965720: Add indexes to improve performance of views queries.
+*/
+function linkchecker_update_7008() {
+  db_drop_index('linkchecker_link', 'method');
+  db_drop_index('linkchecker_link', 'code');
+  db_drop_index('linkchecker_link', 'fail_count');
+  db_drop_index('linkchecker_link', 'last_checked');
+  db_drop_index('linkchecker_link', 'status');
+
+  db_add_index('linkchecker_link', 'method', array('method'));
+  db_add_index('linkchecker_link', 'code', array('code'));
+  db_add_index('linkchecker_link', 'fail_count', array('fail_count'));
+  db_add_index('linkchecker_link', 'last_checked', array('last_checked'));
+  db_add_index('linkchecker_link', 'status', array('status'));
+
+  return t('Added indexes to linkchecker_link database table.');
 }
