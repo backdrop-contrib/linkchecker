@@ -1,6 +1,7 @@
 linkchecker 7.x-dev
 --------------------------------------
 
+* HTML5: Added support for <track> tags in <audio> and <video> tags
 * Replace links with 301 redirections in all supported fields.
 * #1388760: Use (node|comment)_load_multiple() where possible.
 * Upgraded README.txt to D7
