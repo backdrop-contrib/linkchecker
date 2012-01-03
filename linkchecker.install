@@ -378,6 +378,9 @@ function linkchecker_update_7007() {
     ),
   );
 
+  // Manually load the linkchecker.module file or the constant may not defined.
+  drupal_load('module', 'linkchecker');
+
   $linkchecker_filter_blacklist = variable_get('linkchecker_filter_blacklist', explode('|', LINKCHECKER_DEFAULT_FILTER_BLACKLIST));
   $linkchecker_filter_blacklist = array_values($linkchecker_filter_blacklist);
   $linkchecker_filter_blacklist = array_filter($linkchecker_filter_blacklist);
