@@ -158,7 +158,7 @@ function _linkchecker_user_access_edit_link_settings($link) {
     $subquery2 = db_select('node', 'n');
     $subquery2->innerJoin('node_revision', 'r', 'r.vid = n.vid');
     $subquery2->innerJoin('linkchecker_node', 'ln', 'ln.nid = n.nid');
-    $subquery2->innerJoin('linkchecker_link', 'll', 'll.lid = ln.lid AND ll.lid = :lid', array(':lid' => $link['lid']));
+    $subquery2->innerJoin('linkchecker_link', 'll', 'll.lid = ln.lid AND ll.lid = :lid', array(':lid' => $link->lid));
     $subquery2->condition(db_or()
       ->condition('n.uid', $user->uid)
       ->condition('r.uid', $user->uid)
@@ -170,7 +170,7 @@ function _linkchecker_user_access_edit_link_settings($link) {
       // Build query for broken links in nodes and comments of the current user.
       $subquery3 = db_select('comment', 'c');
       $subquery3->innerJoin('linkchecker_comment', 'lc', 'lc.cid = c.cid');
-      $subquery3->innerJoin('linkchecker_link', 'll', 'll.lid = lc.lid AND ll.lid = :lid', array(':lid' => $link['lid']));
+      $subquery3->innerJoin('linkchecker_link', 'll', 'll.lid = lc.lid AND ll.lid = :lid', array(':lid' => $link->lid));
       $subquery3->condition('c.uid', $user->uid);
       $subquery3->distinct();
       $subquery3->fields('ll' , array('lid'));
