@@ -3,4 +3,5 @@ description = "Periodically checks for broken links in node types, blocks and fi
 configure = admin/config/content/linkchecker
 core = 7.x
 
+files[] = linkchecker.drush.inc
 files[] = linkchecker.test
