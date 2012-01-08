@@ -1440,7 +1440,14 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
       }
       // Relative URLs like "./foo/bar" and "../foo/bar".
       elseif (!empty($absolute_content_path) && preg_match('!^\.{1,2}/!', $url)) {
-        $path = $absolute_content_path . $url;
+        // Build the URI without hostname before the URI is normalized and
+        // dot-segments will be removed. The hostname is added back after the
+        // normalization has completed to prevent hostname removal by the regex.
+        // This logic intentionally does not implement all the rules definied in
+        // RFC 3986, section 5.2.4 to show broken links and over-dot-segmented
+        // URIs; e.g. http://example.com/../../foo/bar.
+        // For more information, see http://drupal.org/node/832388.
+        $path = substr_replace($absolute_content_path . $url, '', 0, strlen($base_root));
 
         // Remove './' segments where possible.
         $path = str_replace('/./', '/', $path);
@@ -1453,7 +1460,8 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
           $path = preg_replace('`(^|/)(?!\.\./)([^/]+)/\.\./`', '$1', $path);
         }
 
-        $links[] = $path;
+        // Glue the hostname and path to full-qualified URI.
+        $links[] = $base_root . $path;
       }
       // Relative URLs like "test.png".
       elseif (!empty($absolute_content_path) && preg_match('!^[^/]!', $url)) {
