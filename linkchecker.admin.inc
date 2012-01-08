@@ -187,7 +187,7 @@ function linkchecker_admin_settings_form($form_state) {
   );
   $form['error']['linkchecker_action_status_code_404'] = array(
     '#title' => t('Unpublish node on file not found error'),
-    '#description' => t('If enabled, a node with one or more broken links (status code 404) will be unpublished and moved to moderation queue for review after the number of specified fails. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily error.'),
+    '#description' => t('If enabled, a node with one or more broken links (status code 404) will be unpublished and moved to moderation queue for review after the number of specified checks failed. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily error.'),
     '#type' => 'select',
     '#default_value' => variable_get('linkchecker_action_status_code_404', 0),
     '#options' => array(
