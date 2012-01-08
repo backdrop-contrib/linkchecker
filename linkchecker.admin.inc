@@ -207,7 +207,7 @@ function linkchecker_admin_settings_form($form_state) {
   );
 
   // Buttons are only required for testing and debugging reasons.
-  $description = '<p>' . t('These actions will either clear all link checker tables in the database and/or analyze all selected node types, blocks and fields (see settings above) for new/updated/removed links. Normally there is no need to press one of these buttons. Use this only for immediate cleanup tasks and to force a full re-build of the links to be checked in the linkchecker tables. Keep in mind that all custom link settings will be lost!') . '</p>';
+  $description = '<p>' . t('These actions will either clear all link checker tables in the database and/or analyze all selected node types, blocks and fields (see settings above) for new/updated/removed links. Normally there is no need to press one of these buttons. Use this only for immediate cleanup tasks and to force a full re-build of the links to be checked in the linkchecker tables. Keep in mind that all custom link settings will be lost if you clear link data!') . '</p>';
   $description .= '<p>' . t('<strong>Note</strong>: These functions ONLY collect the links, they do not evaluate the HTTP response codes, this will be done during normal cron runs.') . '</p>';
 
   $form['clear'] = array(
