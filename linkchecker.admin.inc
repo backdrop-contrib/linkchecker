@@ -212,7 +212,7 @@ function linkchecker_admin_settings_form($form_state) {
 
   $form['clear'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Clear link data'),
+    '#title' => t('Maintenance'),
     '#description' => $description,
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
