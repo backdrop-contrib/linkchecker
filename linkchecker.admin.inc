@@ -16,10 +16,10 @@ function linkchecker_admin_settings_form($form_state) {
   $names = node_type_get_names();
   $form['settings']['linkchecker_scan_nodetypes'] = array(
     '#type' => 'checkboxes',
-    '#title' => t('Scan node types for links'),
+    '#title' => t('Scan content types for links'),
     '#default_value' => variable_get('linkchecker_scan_nodetypes', array()),
     '#options' => array_map('check_plain', $names),
-    '#description' => t('Enable link checking for the selected node type(s).'),
+    '#description' => t('Enable link checking for the selected content type(s).'),
   );
 
   $comment_dependencies = '<div class="admin-dependencies">';
@@ -30,7 +30,7 @@ function linkchecker_admin_settings_form($form_state) {
     '#default_value' => variable_get('linkchecker_scan_comments', 0),
     '#type' => 'checkbox',
     '#title' => t('Scan comments for links'),
-    '#description' => t('Enable this checkbox if links in comments of the above selected node type(s) should be checked.') . $comment_dependencies,
+    '#description' => t('Enable this checkbox if links in comments of the above selected content type(s) should be checked.') . $comment_dependencies,
     '#disabled' => module_exists('comment') ? FALSE : TRUE,
   );
 
