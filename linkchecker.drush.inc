@@ -12,7 +12,7 @@ function linkchecker_drush_command() {
   $commands = array();
 
   $commands['linkchecker-analyze'] = array(
-    'description' => 'Re-analyzes content for links. Recommended after module has been upgraded.',
+    'description' => 'Reanalyzes content for links. Recommended after module has been upgraded.',
   );
   $commands['linkchecker-clear'] = array(
     'description' => 'Clears all link data and analyze content for links. WARNING: Custom link check settings are deleted.',

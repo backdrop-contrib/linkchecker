@@ -219,7 +219,7 @@ function linkchecker_admin_settings_form($form_state) {
   );
   $form['clear']['linkchecker_analyze'] = array(
     '#type' => 'submit',
-    '#value' => t('Analyze content for links'),
+    '#value' => t('Reanalyze content for links'),
     '#submit' => array('linkchecker_analyze_links_submit'),
   );
   $form['clear']['linkchecker_clear_analyze'] = array(
