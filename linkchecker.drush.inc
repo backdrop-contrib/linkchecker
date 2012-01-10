@@ -36,7 +36,7 @@ function drush_linkchecker_analyze() {
   // Fake $form_state to leverage _submit function.
   $form_state = array(
     'values' => array('op' => t('Analyze content for links')),
-  	'buttons' => array(),
+    'buttons' => array(),
   );
 
   $node_types = array_keys(array_filter(variable_get('linkchecker_scan_nodetypes', array())));
@@ -58,7 +58,7 @@ function drush_linkchecker_clear() {
   // Fake $form_state to leverage _submit function.
   $form_state = array(
     'values' => array('op' => t('Clear link data and analyze content for links')),
-  	'buttons' => array(),
+    'buttons' => array(),
   );
 
   $node_types = array_keys(array_filter(variable_get('linkchecker_scan_nodetypes', array())));
