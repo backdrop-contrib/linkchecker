@@ -98,9 +98,9 @@ function linkchecker_user_report_page($account) {
  * Builds the HTML report page table with pager.
  *
  * @param SelectQueryInterface $query
- * 	 The pager query for the report page. Can be per user report or global.
+ *   The pager query for the report page. Can be per user report or global.
  * @param object|null $account
- * 	 The user account object.
+ *   The user account object.
  *
  * @return string
  *   Themed report page.
