@@ -1,6 +1,7 @@
 linkchecker 7.x-dev
 --------------------------------------
 
+* #1405512: After Deleting Blocks, Links are still displayed as Broken
 * #1405504: Re-check link after creating redirect
 * #1350926: Added Drush support
 * HTML5: Added support for <track> tags in <audio> and <video> tags

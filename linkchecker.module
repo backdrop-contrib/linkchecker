@@ -674,7 +674,7 @@ function linkchecker_form_alter(&$form, &$form_state, $form_id) {
       $form['#submit'][] = 'linkchecker_block_custom_configure_form_submit';
       break;
 
-    case 'block_box_delete':
+    case 'block_custom_block_delete':
       // Add custom submit handler to custom block delete form.
       $form['#submit'][] = 'linkchecker_block_custom_delete_form_submit';
       break;
