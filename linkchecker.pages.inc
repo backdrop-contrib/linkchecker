@@ -181,7 +181,7 @@ function _linkchecker_report_page($query, $account = NULL) {
 
     // Show link to redirect this broken internal link.
     if (module_exists('redirect') && $access_administer_redirects && _linkchecker_is_internal_url($link)) {
-      $links[] = l(t('Create redirection'), 'admin/config/search/redirect/add', array('query' => array('source' => $link->internal)));
+      $links[] = l(t('Create redirection'), 'admin/config/search/redirect/add', array('query' => array('source' => $link->internal, drupal_get_destination())));
     }
 
     // Create table data for output.
