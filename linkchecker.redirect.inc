@@ -17,11 +17,14 @@ function linkchecker_redirect_insert($redirect) {
 */
 function linkchecker_redirect_update($redirect) {
   // It's unknown if this is a redirect for HTTP/HTTPS or the encoded urls.
+  $url_http = url($redirect->source, array('absolute' => TRUE, $redirect->source_options));
+  $url_https = url($redirect->source, array('absolute' => TRUE, 'https' => TRUE, $redirect->source_options));
+
   $urls = array(
-    url($redirect->source, array('alias' => TRUE, 'absolute' => TRUE, $redirect->source_options)),
-    url($redirect->source, array('alias' => TRUE, 'absolute' => TRUE, 'https' => TRUE, $redirect->source_options)),
-    rawurldecode(url($redirect->source, array('alias' => TRUE, 'absolute' => TRUE, $redirect->source_options))),
-    rawurldecode(url($redirect->source, array('alias' => TRUE, 'absolute' => TRUE, 'https' => TRUE, $redirect->source_options))),
+    $url_http,
+    $url_https,
+    rawurldecode($url_http),
+    rawurldecode($url_https),
   );
 
   _linkchecker_redirect_reset($urls);
