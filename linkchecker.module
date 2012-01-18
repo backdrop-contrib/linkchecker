@@ -1513,75 +1513,172 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
       $text = str_replace($old_link, $new_link, $text);
     }
     else {
-      // Create an array of preg quoted links with HTML decoded and encoded
-      // URLs.
-      $old_links_quoted = array();
-      $old_links_quoted[] = preg_quote($old_html_link_fqdn, '/');
-      $old_links_quoted[] = preg_quote($old_html_link, '/');
-      $old_links_quoted[] = preg_quote($old_link, '/');
+      // Create an array of links with HTML decoded and encoded URLs.
+      $old_links = array(
+        $old_html_link_fqdn,
+        $old_html_link,
+        $old_link,
+      );
 
       // Remove duplicate URLs from array if URLs do not have URL parameters.
       // If more than one URL parameter exists - one URL in the array will have
       // an unencoded ampersand "&" and a second URL will have an HTML encoded
       // ampersand "&amp;".
-      $regex_old_links = implode('|', array_unique($old_links_quoted));
+      $old_links = array_unique($old_links);
 
-      // Create array to fill with replacement rules.
-      $replacements = array();
+      // Load HTML code into DOM
+      $html_dom = filter_dom_load($text);
 
-      // Add replace rules for a/area tags.
+      // Finds all hyperlinks in the content.
       if (variable_get('linkchecker_extract_from_a', 1) == 1) {
-        // @todo If link text between opening an closing a-tag having the same
-        // URL, also replace the link text. Create replace regex for this task.
-        $text = str_replace(array('>' . $old_html_link_fqdn . '</a>', '>' . $old_html_link . '</a>', '>' . $old_link . '</a>'), '>' . $new_html_link . '</a>', $text);
-        $replacements['/(<(a|area)\s[^>]*href=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\4';
+        $links = $html_dom->getElementsByTagName('a');
+        foreach ($links as $link) {
+          if (in_array($link->getAttribute('href'), $old_links)) {
+            $link->setAttribute('href', $new_html_link);
+          }
+          // Replace link text, if same like the URL. If a link text contains
+          // other child tags like <img> it will be skipped.
+          if (in_array($link->nodeValue, $old_links)) {
+            $link->nodeValue = $new_html_link;
+          }
+        }
+
+        $links = $html_dom->getElementsByTagName('area');
+        foreach ($links as $link) {
+          if (in_array($link->getAttribute('href'), $old_links)) {
+            $link->setAttribute('href', $new_html_link);
+          }
+        }
       }
 
-      // Add replace rules for audio tags.
-      if (variable_get('linkchecker_extract_from_audio', 0) == 1) {
-        $replacements['/(<audio\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
-        // @toto this also catches source/track tags from video elements, http://drupal.org/node/1388756
-        $replacements['/(<source\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
-        $replacements['/(<track\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+      // Finds all audio links in the content.
+      if (variable_get('linkchecker_extract_from_audio', 1) == 1) {
+        $audios = $html_dom->getElementsByTagName('audio');
+        foreach ($audios as $audio) {
+          if (in_array($audio->getAttribute('src'), $old_links)) {
+            $audio->setAttribute('src', $new_html_link);
+          }
+
+          // Finds source tags with links in the audio tag.
+          $sources = $audio->getElementsByTagName('source');
+          foreach ($sources as $source) {
+            if (in_array($source->getAttribute('src'), $old_links)) {
+              $source->setAttribute('src', $new_html_link);
+            }
+          }
+          // Finds track tags with links in the audio tag.
+          $tracks = $audio->getElementsByTagName('track');
+          foreach ($tracks as $track) {
+            if (in_array($track->getAttribute('src'), $old_links)) {
+              $track->setAttribute('src', $new_html_link);
+            }
+          }
+        }
       }
 
-      // Add replace rules for embed tags.
+      // Finds embed tags with links in the content.
       if (variable_get('linkchecker_extract_from_embed', 0) == 1) {
-        $replacements['/(<embed\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
-        $replacements['/(<embed\s[^>]*pluginurl=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
-        $replacements['/(<embed\s[^>]*pluginspage=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        $embeds = $html_dom->getElementsByTagName('embed');
+        foreach ($embeds as $embed) {
+          if (in_array($embed->getAttribute('src'), $old_links)) {
+            $embed->setAttribute('src', $new_html_link);
+          }
+          if (in_array($embed->getAttribute('pluginurl'), $old_links)) {
+            $embed->setAttribute('pluginurl', $new_html_link);
+          }
+          if (in_array($embed->getAttribute('pluginspage'), $old_links)) {
+            $embed->setAttribute('pluginspage', $new_html_link);
+          }
+        }
       }
 
-      // Add replace rules for iframe tags.
+      // Finds iframe tags with links in the content.
       if (variable_get('linkchecker_extract_from_iframe', 0) == 1) {
-        $replacements['/(<iframe\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        $iframes = $html_dom->getElementsByTagName('iframe');
+        foreach ($iframes as $iframe) {
+          if (in_array($iframe->getAttribute('src'), $old_links)) {
+            $iframe->setAttribute('src', $new_html_link);
+          }
+        }
       }
 
-      // Add replace rules for img tags.
+      // Finds img tags with links in the content.
       if (variable_get('linkchecker_extract_from_img', 0) == 1) {
-        $replacements['/(<img\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        $imgs = $html_dom->getElementsByTagName('img');
+        foreach ($imgs as $img) {
+          if (in_array($img->getAttribute('src'), $old_links)) {
+            $img->setAttribute('src', $new_html_link);
+          }
+          if (in_array($img->getAttribute('longdesc'), $old_links)) {
+            $img->setAttribute('longdesc', $new_html_link);
+          }
+        }
       }
 
-      // Add replace rules for object/param tags.
+      // Finds object/param tags with links in the content.
       if (variable_get('linkchecker_extract_from_object', 0) == 1) {
-        $replacements['/(<object\s[^>]*data=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
-        $replacements['/(<object\s[^>]*codebase=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
-        $replacements['/(<param\s[^>]*((name|src)=["\'](archive|filename|href|movie|src|url)["\']\s[^>]*)+value=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\6';
+        $objects = $html_dom->getElementsByTagName('object');
+        foreach ($objects as $object) {
+          if (in_array($object->getAttribute('data'), $old_links)) {
+            $object->setAttribute('data', $new_html_link);
+          }
+          if (in_array($object->getAttribute('codebase'), $old_links)) {
+            $object->setAttribute('codebase', $new_html_link);
+          }
+
+          // Finds param tags with links in the object tag.
+          $params = $object->getElementsByTagName('param');
+          foreach ($params as $param) {
+            // @todo
+            // - Try to replace links in unkown "flashvars" values
+            //   (e.g. file=http://, data=http://).
+            $names = array('archive', 'filename', 'href', 'movie', 'src', 'url');
+            if ($param->hasAttribute('name') && in_array($param->getAttribute('name'), $names)) {
+              if (in_array($param->getAttribute('value'), $old_links)) {
+                $param->setAttribute('value', $new_html_link);
+              }
+            }
+
+            $srcs = array('movie');
+            if ($param->hasAttribute('src') && in_array($param->getAttribute('src'), $srcs)) {
+              if (in_array($param->getAttribute('value'), $old_links)) {
+                $param->setAttribute('value', $new_html_link);
+              }
+            }
+          }
+        }
       }
 
-      // Add replace rules for video tags.
+      // Finds video tags with links in the content.
       if (variable_get('linkchecker_extract_from_video', 0) == 1) {
-        $replacements['/(<video\s[^>]*poster=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
-        $replacements['/(<video\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
-        // @toto this also catches source/track tags from audio elements, http://drupal.org/node/1388756
-        $replacements['/(<source\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
-        $replacements['/(<track\s[^>]*src=["\'])(' . $regex_old_links . ')(["\'][^>]*>)/i'] = '\1' . $new_html_link . '\3';
+        $videos = $html_dom->getElementsByTagName('video');
+        foreach ($videos as $video) {
+          if (in_array($video->getAttribute('poster'), $old_links)) {
+            $video->setAttribute('poster', $new_html_link);
+          }
+          if (in_array($video->getAttribute('src'), $old_links)) {
+            $video->setAttribute('src', $new_html_link);
+          }
+
+          // Finds source tags with links in the video tag.
+          $sources = $video->getElementsByTagName('source');
+          foreach ($sources as $source) {
+            if (in_array($source->getAttribute('src'), $old_links)) {
+              $source->setAttribute('src', $new_html_link);
+            }
+          }
+          // Finds track tags with links in the audio tag.
+          $tracks = $video->getElementsByTagName('track');
+          foreach ($tracks as $track) {
+            if (in_array($track->getAttribute('src'), $old_links)) {
+              $track->setAttribute('src', $new_html_link);
+            }
+          }
+        }
       }
 
-      // Replace link by applying all replacement rules on text.
-      foreach ($replacements as $pattern => $replacement) {
-        $text = preg_replace($pattern, $replacement, $text);
-      }
+      // Set the updated $text for the calling function.
+      $text = filter_dom_serialize($html_dom);
     }
   }
 }
