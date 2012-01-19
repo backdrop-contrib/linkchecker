@@ -31,6 +31,10 @@ function linkchecker_drush_command() {
  * Callback for command linkchecker-analyze.
  */
 function drush_linkchecker_analyze() {
+  if (drush_get_context('DRUSH_URI') == 'http://default') {
+    drush_die('You MUST configure the site $base_url or provide --uri parameter.');
+  }
+
   module_load_include('admin.inc', 'linkchecker');
 
   // Fake $form_state to leverage _submit function.
@@ -53,6 +57,10 @@ function drush_linkchecker_analyze() {
 * Callback for command linkchecker-analyze.
 */
 function drush_linkchecker_clear() {
+  if (drush_get_context('DRUSH_URI') == 'http://default') {
+    drush_die('You MUST configure the site $base_url or provide --uri parameter.');
+  }
+
   module_load_include('admin.inc', 'linkchecker');
 
   // Fake $form_state to leverage _submit function.
