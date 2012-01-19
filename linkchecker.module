@@ -199,6 +199,8 @@ function _linkchecker_user_access_edit_link_settings($link) {
  * Implements hook_cron().
  */
 function linkchecker_cron() {
+  // Get max_execution_time from configuration, override 0 with 240 seconds.
+  $max_execution_time = ini_get('max_execution_time') == 0 ? 240 : ini_get('max_execution_time');
 
   // Remove outdated links no longer in use once per day.
   if (REQUEST_TIME - variable_get('linkchecker_cleanup_links_last', 0) >= 86400) {
@@ -209,11 +211,14 @@ function linkchecker_cron() {
   // @todo Implement cURL support.
   // $has_curl = function_exists('curl_init');
 
-  // @todo Remove some confusion about the max links that can be checked per
+  // @todo: Remove some confusion about the max links that can be checked per
   // cron run and guess that 2 link can be checked per second what is
-  // nevertheless uncommon. For cURL we need to add this setting back or
-  // a thread limit per remote server for not overloading them.
-  $check_links_max_per_cron_run = variable_get('linkchecker_check_links_max', 100);
+  // nevertheless uncommon. But we can use the max_execution_time to calculate
+  // a value that is higher, but not totally out of scope to keep the query
+  // resultset small. For cURL we need to add this setting back or a thread
+  // limit per remote server for not overloading them.
+  $check_links_max_per_cron_run = $max_execution_time;
+  //$check_links_max_per_cron_run = variable_get('linkchecker_check_links_max', 10);
 
   $check_links_interval = variable_get('linkchecker_check_links_interval', 2419200);
   $useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
@@ -234,6 +239,10 @@ function linkchecker_cron() {
     // Fetch URL.
     $response = drupal_http_request($link->url, array('headers' => $headers, 'method' => $link->method, 'max_redirects' => 1));
     _linkchecker_status_handling($link, $response);
+
+    if ((timer_read('page') / 1000) > ($max_execution_time / 2)) {
+      break; // Stop once we have used over half of the maximum execution time.
+    }
   }
 }
 
