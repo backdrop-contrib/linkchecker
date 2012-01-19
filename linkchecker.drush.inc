@@ -17,12 +17,12 @@ function linkchecker_drush_command() {
   $commands['linkchecker-clear'] = array(
     'description' => 'Clears all link data and analyze content for links. WARNING: Custom link check settings are deleted.',
   );
-/*  $commands['linkchecker-check'] = array(
+  $commands['linkchecker-check'] = array(
     'description' => 'Check link status.',
-    'options' => array(
-      'links' => 'Integer with number of links to check in one round. Default: 100',
-    ),
-  ); */
+    // 'options' => array(
+    //   'links' => 'Number of links to check in one round. Default: 1000',
+    // ),
+  );
 
   return $commands;
 }
@@ -69,4 +69,20 @@ function drush_linkchecker_clear() {
   else {
     drush_log('No content configured for link analysis.', 'status');
   }
+}
+
+/**
+* Callback for command linkchecker-check.
+*/
+function drush_linkchecker_check() {
+  //global $conf;
+
+  //$linkchecker_check_links_max = (int) drush_get_option('links', 1000);
+  drush_log('Starting link checking...', 'status');
+
+  // Conditional override the default module setting.
+  //$conf['linkchecker_check_links_max'] = $linkchecker_check_links_max;
+
+  linkchecker_cron();
+  drush_log('Finished checking links.', 'status');
 }
