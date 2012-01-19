@@ -1,7 +1,10 @@
 linkchecker 7.x-dev
 --------------------------------------
 
-* #1405512: After Deleting Blocks, Links are still displayed as Broken
+* #1410376: Cannot open blocks to edit from the broken links report
+* #1410388: Cannot open comment to edit from links in the broken links report
+* #1410402: After deleting comments, Links are still displayed as Broken
+* #1405512: After deleting blocks, Links are still displayed as Broken
 * #1405504: Re-check link after creating redirect
 * #1350926: Added Drush support
 * HTML5: Added support for <track> tags in <audio> and <video> tags
