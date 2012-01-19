@@ -175,7 +175,7 @@ function _linkchecker_report_page($query, $account = NULL) {
     if ($access_administer_blocks) {
       $blocks_custom = db_query('SELECT bid FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
       foreach ($blocks_custom as $block_custom) {
-        $links[] = l(t('Edit block @block', array('@block' => $block_custom->bid)), 'admin/build/block/configure/block/' . $block_custom->bid, array('query' => drupal_get_destination()));
+        $links[] = l(t('Edit block @block', array('@block' => $block_custom->bid)), 'admin/structure/block/manage/block/' . $block_custom->bid . '/configure', array('query' => drupal_get_destination()));
       }
     }
 
