@@ -133,6 +133,20 @@ function linkchecker_menu() {
 }
 
 /**
+* Implements hook_admin_paths().
+*/
+function linkchecker_admin_paths() {
+  $paths = array(
+  // This is marked as an administrative path so that if it is visited from
+  // within the overlay, the user will stay within the overlay while the
+  // callback is being processed.
+    'user/*/linkchecker' => TRUE,
+    'linkchecker/*/edit' => TRUE,
+  );
+  return $paths;
+}
+
+/**
  * Access callback for user/%user/linkchecker.
  */
 function _linkchecker_user_access_own_broken_links_report($account) {
