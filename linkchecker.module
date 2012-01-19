@@ -218,7 +218,7 @@ function linkchecker_cron() {
   // resultset small. For cURL we need to add this setting back or a thread
   // limit per remote server for not overloading them.
   $check_links_max_per_cron_run = $max_execution_time;
-  //$check_links_max_per_cron_run = variable_get('linkchecker_check_links_max', 10);
+  // $check_links_max_per_cron_run = variable_get('linkchecker_check_links_max', 10);
 
   $check_links_interval = variable_get('linkchecker_check_links_interval', 2419200);
   $useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
