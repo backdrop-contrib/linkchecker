@@ -621,7 +621,7 @@ function linkchecker_node_update($node) {
  *   The comment object that is being deleted.
  */
 function linkchecker_comment_delete($comment) {
-  _linkchecker_delete_comment_links($comment->nid);
+  _linkchecker_delete_comment_links($comment->cid);
 }
 
 /**
