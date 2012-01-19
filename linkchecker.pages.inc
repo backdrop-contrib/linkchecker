@@ -168,7 +168,7 @@ function _linkchecker_report_page($query, $account = NULL) {
       $comments = db_query('SELECT cid FROM {linkchecker_comment} WHERE lid = :lid', array(':lid' => $link->lid));
     }
     foreach ($comments as $comment) {
-      $links[] = l(t('Edit comment @comment', array('@comment' => $comment->cid)), 'comment/edit/' . $comment->cid, array('query' => drupal_get_destination()));
+      $links[] = l(t('Edit comment @comment', array('@comment' => $comment->cid)), 'comment/' . $comment->cid . '/edit', array('query' => drupal_get_destination()));
     }
 
     // Show link to blocks having this broken link.
