@@ -457,6 +457,12 @@ function _linkchecker_status_handling($link, $response) {
       // @todo: Response 'allow' header contains a list of allowed methods.
       // in_array('GET', preg_split('/,\s?/', $response->headers['allow']));
       $response = drupal_http_request($link->url, array('headers' => array('User-Agent' => 'User-Agent: ' . $useragent, 'Range' => 'bytes=0-1024'), 'method' => 'GET', 'max_redirects' => 0));
+
+      // Prevent E_ALL warnings for non-existing $response->error.
+      if (!isset($response->error)) {
+        $response->error = '';
+      }
+
       if (in_array($response->code, array('200', '206'))) {
         db_update('linkchecker_link')
           ->condition('lid', $link->lid)
