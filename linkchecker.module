@@ -137,9 +137,9 @@ function linkchecker_menu() {
 */
 function linkchecker_admin_paths() {
   $paths = array(
-  // This is marked as an administrative path so that if it is visited from
-  // within the overlay, the user will stay within the overlay while the
-  // callback is being processed.
+    // This is marked as an administrative path so that if it is visited from
+    // within the overlay, the user will stay within the overlay while the
+    // callback is being processed.
     'user/*/linkchecker' => TRUE,
     'linkchecker/*/edit' => TRUE,
   );
@@ -290,7 +290,7 @@ function _linkchecker_status_handling($link, $response) {
     case 200:
     case 206:
       if (!isset($response->redirect_code)) {
-        // Link check was succsessful, no update required.
+        // Link check was successful, no update required.
         db_update('linkchecker_link')
           ->condition('lid', $link->lid)
           ->fields(array(
@@ -1252,13 +1252,13 @@ function _linkchecker_cleanup_links() {
   // Remove dead links without references.
   $linkchecker_node = db_select('linkchecker_node', 'ln')
     ->distinct()
-    ->fields('ln' , array('lid'));
+    ->fields('ln', array('lid'));
   $linkchecker_comment = db_select('linkchecker_comment', 'lc')
     ->distinct()
-    ->fields('lc' , array('lid'));
+    ->fields('lc', array('lid'));
   $linkchecker_block_custom = db_select('linkchecker_block_custom', 'lb')
     ->distinct()
-    ->fields('lb' , array('lid'));
+    ->fields('lb', array('lid'));
 
   // UNION all linkchecker type tables.
   $subquery2 = db_select($linkchecker_block_custom->union($linkchecker_comment)->union($linkchecker_node), 'q1')

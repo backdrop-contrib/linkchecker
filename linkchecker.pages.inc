@@ -16,15 +16,15 @@ function linkchecker_admin_report_page() {
   // @todo Try to make UNION'ed subselect resultset smaller.
   $subquery4 = db_select('linkchecker_node', 'ln')
     ->distinct()
-    ->fields('ln' , array('lid'));
+    ->fields('ln', array('lid'));
 
   $subquery3 = db_select('linkchecker_comment', 'lc')
     ->distinct()
-    ->fields('lc' , array('lid'));
+    ->fields('lc', array('lid'));
 
   $subquery2 = db_select('linkchecker_block_custom', 'lb')
     ->distinct()
-    ->fields('lb' , array('lid'));
+    ->fields('lb', array('lid'));
 
   // UNION all linkchecker type tables.
   $subquery1 = db_select($subquery2->union($subquery3)->union($subquery4), 'q1')->fields('q1', array('lid'));
