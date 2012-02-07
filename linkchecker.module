@@ -287,19 +287,6 @@ function _linkchecker_status_handling($link, $response) {
   }
 
   switch ($response->code) {
-    case 304:
-      db_update('linkchecker_link')
-        ->condition('lid', $link->lid)
-        ->fields(array(
-          'code' => $response->code,
-          'error' => $response->error,
-          'fail_count' => 0,
-          'last_checked' => time()
-        ))
-        ->execute();
-      // watchdog('linkchecker', 'Checked %link successfully.', array('%link' => $link->url), WATCHDOG_INFO);
-      break;
-
     case 200:
     case 206:
       if (!isset($response->redirect_code)) {
@@ -451,44 +438,21 @@ function _linkchecker_status_handling($link, $response) {
       break;
 
     case 405:
-      // Special error handling if method is not allowed. Switch link checking
-      // to GET method and try again.
+    case 500:
+      // - 405: Special error handling if method is not allowed. Switch link
+      //        checking to GET method and try again.
+      // - 500: Like WGET, try with GET on "500 Internal server error".
+      db_update('linkchecker_link')
+        ->condition('lid', $link->lid)
+        ->fields(array('method' => 'GET'))
+        ->execute();
 
-      // @todo: Response 'allow' header contains a list of allowed methods.
-      // in_array('GET', preg_split('/,\s?/', $response->headers['allow']));
-      $response = drupal_http_request($link->url, array('headers' => array('User-Agent' => 'User-Agent: ' . $useragent, 'Range' => 'bytes=0-1024'), 'method' => 'GET', 'max_redirects' => 0));
-
-      // Prevent E_ALL warnings for non-existing $response->error.
-      if (!isset($response->error)) {
-        $response->error = '';
+      if ($response->code == 405) {
+        watchdog('linkchecker', 'Method HEAD is not allowed for link %link. Method has been changed to GET.', array('%link' => $link->url), WATCHDOG_INFO, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
-
-      if (in_array($response->code, array('200', '206'))) {
-        db_update('linkchecker_link')
-          ->condition('lid', $link->lid)
-          ->fields(array(
-            'code' => $response->code,
-            'error' => $response->error,
-            'fail_count' => 0,
-            'last_checked' => time(),
-            'method' => 'GET'
-          ))
-          ->execute();
+      elseif ($response->code == 500) {
+        watchdog('linkchecker', 'Internal server error for link %link. Method has been changed to GET.', array('%link' => $link->url), WATCHDOG_INFO, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
-      else {
-        db_update('linkchecker_link')
-          ->condition('lid', $link->lid)
-          ->fields(array(
-            'code' => $response->code,
-            'error' => $response->error,
-            'fail_count' => 0,
-            'last_checked' => time(),
-            'method' => 'GET'
-          ))
-          ->expression('fail_count', 'fail_count + 1')
-          ->execute();
-      }
-      watchdog('linkchecker', 'Method HEAD is not allowed for link %link. Method has been changed to GET.', array('%link' => $link->url), WATCHDOG_INFO, l(t('Broken links'), 'admin/reports/linkchecker'));
       break;
 
     default:
