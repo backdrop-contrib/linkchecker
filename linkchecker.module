@@ -1199,8 +1199,9 @@ function linkchecker_parse_fields($bundle, $entity, $type) {
           foreach ($entity_field as $language) {
             foreach ($language as $item) {
               $options = drupal_parse_url($item['url']);
-              $text_items[] = l($item['title'], $options['path'], $options);
-              $text_items[] = _linkchecker_check_markup($item['title'], NULL, $entity->language, TRUE);
+              $title = !empty($item['title']) ? $item['title'] : '';
+              $text_items[] = l($title, $options['path'], $options);
+              $text_items[] = _linkchecker_check_markup($title, NULL, $entity->language, TRUE);
             }
           }
           break;
