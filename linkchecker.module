@@ -278,7 +278,7 @@ function _linkchecker_status_handling($link, $response) {
   //   what results in a database UPDATE failure. For more information, see
   //   http://drupal.org/node/371495.
   //   Workaround: ISO-8859-1 as source encoding may be wrong, but WFM.
-  $response->error = trim(drupal_convert_to_utf8($errstr, 'ISO-8859-1'));
+  $response->error = trim(drupal_convert_to_utf8($response->error, 'ISO-8859-1'));
 
   // Make response object consistent with HTTPRL.
   if ($response->code == 301 && !isset($response->redirect_code)) {
