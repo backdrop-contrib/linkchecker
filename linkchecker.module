@@ -251,7 +251,7 @@ function linkchecker_cron() {
     if ($link->method == 'GET') { $headers['Range'] = 'bytes=0-1024'; }
 
     // Fetch URL.
-    $response = drupal_http_request($link->url, array('headers' => $headers, 'method' => $link->method, 'max_redirects' => 1));
+    $response = drupal_http_request($link->url, array('headers' => $headers, 'method' => $link->method, 'max_redirects' => 0));
     _linkchecker_status_handling($link, $response);
 
     if ((timer_read('page') / 1000) > ($max_execution_time / 2)) {
