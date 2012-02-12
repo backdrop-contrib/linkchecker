@@ -273,147 +273,104 @@ function _linkchecker_status_handling($link, $response) {
   $useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
   $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
 
-  // @todo drupal_http_request() may not provide an UTF8 encoded error message
-  // what results in a database UPDATE failure. For more information, see
-  // http://drupal.org/node/371495.
-  // Workaround: ISO-8859-1 as source encoding may be wrong, but WFM.
-  if (!empty($response->error) && !drupal_validate_utf8($response->error)) {
-    $response->error = drupal_convert_to_utf8($response->error, 'ISO-8859-1');
-  }
+  // - Prevent E_ALL warnings in DB updates for non-existing $response->error.
+  // - @todo drupal_http_request() may not provide an UTF8 encoded error message
+  //   what results in a database UPDATE failure. For more information, see
+  //   http://drupal.org/node/371495.
+  //   Workaround: ISO-8859-1 as source encoding may be wrong, but WFM.
+  $response->error = trim(drupal_convert_to_utf8($errstr, 'ISO-8859-1'));
 
-  // Prevent E_ALL warnings for non-existing $response->error.
-  if (!isset($response->error)) {
-    $response->error = '';
+  // Make response object consistent with HTTPRL.
+  if ($response->code == 301 && !isset($response->redirect_code)) {
+    $response->redirect_code = $response->code;
   }
 
   switch ($response->code) {
-    case 200:
-    case 206:
-      if (!isset($response->redirect_code)) {
-        // Link check was successful, no update required.
-        db_update('linkchecker_link')
-          ->condition('lid', $link->lid)
-          ->fields(array(
-            'code' => $response->code,
-            'error' => $response->error,
-            'fail_count' => 0,
-            'last_checked' => time()
-          ))
-          ->execute();
-      }
-      elseif ($response->redirect_code == 301) {
-        // Remote site send status code 301 and link needs an update.
-        db_update('linkchecker_link')
-          ->condition('lid', $link->lid)
-          ->fields(array(
-            'code' => $response->redirect_code,
-            'error' => $response->error,
-            'fail_count' => 0,
-            'last_checked' => time()
-          ))
-          ->expression('fail_count', 'fail_count + 1')
-          ->execute();
+    case 301:
+      // Remote site send status code 301 and link needs an update.
+      db_update('linkchecker_link')
+        ->condition('lid', $link->lid)
+        ->fields(array(
+          'code' => $response->redirect_code,
+          'error' => $response->error,
+          'fail_count' => 0,
+          'last_checked' => time()
+        ))
+        ->expression('fail_count', 'fail_count + 1')
+        ->execute();
 
-        // A HTTP status code of 301 tells us an existing link have changed to
-        // a new link. The remote site owner was so kind to provide us the new
-        // link and if we trust this change we are able to replace the old link
-        // with the new one without any hand work.
-        $auto_repair_301 = variable_get('linkchecker_action_status_code_301', 0);
-        if ($auto_repair_301 && $auto_repair_301 <= ($link->fail_count+1) && valid_url($response->redirect_url, TRUE)) {
-          // NODES: Autorepair all nodes having this outdated link.
-          $nids = db_query('SELECT nid FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid))->fetchCol();
-          $nodes = node_load_multiple($nids);
-          foreach ($nodes as $node) {
-            $node = _linkchecker_replace_fields($node, $node->type, 'node', $link->url, $response->redirect_url);
+      // A HTTP status code of 301 tells us an existing link have changed to
+      // a new link. The remote site owner was so kind to provide us the new
+      // link and if we trust this change we are able to replace the old link
+      // with the new one without any hand work.
+      $auto_repair_301 = variable_get('linkchecker_action_status_code_301', 0);
+      if ($auto_repair_301 && $auto_repair_301 <= ($link->fail_count+1) && valid_url($response->redirect_url, TRUE)) {
+        // NODES: Autorepair all nodes having this outdated link.
+        $nids = db_query('SELECT nid FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid))->fetchCol();
+        $nodes = node_load_multiple($nids);
+        foreach ($nodes as $node) {
+          $node = _linkchecker_replace_fields($node, $node->type, 'node', $link->url, $response->redirect_url);
 
-            // Always use the default revision setting. For more information,
-            // see node_object_prepare().
-            $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
-            $node->revision = in_array('revision', $node_options);
+          // Always use the default revision setting. For more information,
+          // see node_object_prepare().
+          $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
+          $node->revision = in_array('revision', $node_options);
 
-            // Generate a log message for the node_revisions table, visible on
-            // the node's revisions tab.
-            $node->log = t('Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $row->nid), '%src' => $link->url, '%dst' => $response->redirect_url));
+          // Generate a log message for the node_revisions table, visible on
+          // the node's revisions tab.
+          $node->log = t('Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $row->nid), '%src' => $link->url, '%dst' => $response->redirect_url));
 
-            // Save changed node and update the node link list.
-            node_save($node);
-            watchdog('linkchecker', 'Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $row->nid), '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
-          }
-
-          // COMMENTS: Autorepair all comments having this outdated link.
-          if (variable_get('linkchecker_scan_comments', 0)) {
-            $cids = db_query('SELECT cid FROM {linkchecker_comment} WHERE lid = :lid', array(':lid' => $link->lid))->fetchCol();
-            $comments = comment_load_multiple($cids);
-            foreach ($comments as $comment) {
-              // Replace links in subject.
-              _linkchecker_link_replace($comment->subject, $link->url, $response->redirect_url);
-
-              // Replace links in fields.
-              $comment = _linkchecker_replace_fields($comment, $comment->node_type, 'comment', $link->url, $response->redirect_url);
-
-              // Save changed comment and update the comment link list.
-              comment_save($comment);
-              watchdog('linkchecker', 'Changed permanently moved link in comment %comment from %src to %dst.', array('%comment' => $comment['cid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
-            }
-          }
-
-          // CUSTOM BLOCKS: Autorepair all custom blocks having this outdated
-          // link.
-          if (variable_get('linkchecker_scan_blocks', 0)) {
-            $result = db_query('SELECT bid FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
-            foreach ($result as $row) {
-              $block_custom = block_custom_block_get($row->bid);
-
-              // Create array of custom block fields to scan.
-              $text_items = array();
-              $text_items[] = 'info';
-              $text_items[] = 'body';
-
-              // Now replace the outdated link with the permanently moved one in
-              // all custom block fields.
-              foreach ($text_items as $text_item) {
-                _linkchecker_link_replace($block_custom[$text_item], $link->url, $response->redirect_url);
-              }
-
-              // Save changed block and update the block link list.
-              block_custom_block_save($block_custom, $block_custom['bid']);
-              // There is no hook that fires on block_custom_block_save(),
-              // therefore do link extraction programmatically.
-              _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
-              watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom['bid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
-            }
-          }
-
+          // Save changed node and update the node link list.
+          node_save($node);
+          watchdog('linkchecker', 'Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $row->nid), '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
         }
-        else {
-          watchdog('linkchecker', 'Link %link has changed and needs to be updated.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
+
+        // COMMENTS: Autorepair all comments having this outdated link.
+        if (variable_get('linkchecker_scan_comments', 0)) {
+          $cids = db_query('SELECT cid FROM {linkchecker_comment} WHERE lid = :lid', array(':lid' => $link->lid))->fetchCol();
+          $comments = comment_load_multiple($cids);
+          foreach ($comments as $comment) {
+            // Replace links in subject.
+            _linkchecker_link_replace($comment->subject, $link->url, $response->redirect_url);
+
+            // Replace links in fields.
+            $comment = _linkchecker_replace_fields($comment, $comment->node_type, 'comment', $link->url, $response->redirect_url);
+
+            // Save changed comment and update the comment link list.
+            comment_save($comment);
+            watchdog('linkchecker', 'Changed permanently moved link in comment %comment from %src to %dst.', array('%comment' => $comment['cid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+          }
         }
-      }
-      // Don't treat a redirect code which is in the ignore list as error.
-      elseif (in_array($response->redirect_code, $ignore_response_codes) && ($response->redirect_code >= 300) && ($response->redirect_code < 400)) {
-        db_update('linkchecker_link')
-          ->condition('lid', $link->lid)
-          ->fields(array(
-            'code' => $response->redirect_code,
-            'error' => $response->error,
-            'fail_count' => 0,
-            'last_checked' => time(),
-          ))
-          ->execute();
-        // watchdog('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
+
+        // CUSTOM BLOCKS: Autorepair all custom blocks having this outdated
+        // link.
+        if (variable_get('linkchecker_scan_blocks', 0)) {
+          $result = db_query('SELECT bid FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
+          foreach ($result as $row) {
+            $block_custom = block_custom_block_get($row->bid);
+
+            // Create array of custom block fields to scan.
+            $text_items = array();
+            $text_items[] = 'info';
+            $text_items[] = 'body';
+
+            // Now replace the outdated link with the permanently moved one in
+            // all custom block fields.
+            foreach ($text_items as $text_item) {
+              _linkchecker_link_replace($block_custom[$text_item], $link->url, $response->redirect_url);
+            }
+
+            // Save changed block and update the block link list.
+            block_custom_block_save($block_custom, $block_custom['bid']);
+            // There is no hook that fires on block_custom_block_save(),
+            // therefore do link extraction programmatically.
+            _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
+            watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom['bid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+          }
+        }
       }
       else {
-        db_update('linkchecker_link')
-          ->condition('lid', $link->lid)
-          ->fields(array(
-            'code' => $response->redirect_code,
-            'error' => $response->error,
-            'fail_count' => 0,
-            'last_checked' => time()
-          ))
-          ->expression('fail_count', 'fail_count + 1')
-          ->execute();
-        // watchdog('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
+        watchdog('linkchecker', 'Link %link has changed and needs to be updated.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
       break;
 
