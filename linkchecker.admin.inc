@@ -173,7 +173,7 @@ function linkchecker_admin_settings_form($form_state) {
   );
   $form['error']['linkchecker_action_status_code_301'] = array(
     '#title' => t('Update permanently moved links'),
-    '#description' => t('If enabled, outdated links in content providing a status <em>Moved Permanently</em> (status code 301) are automatically updated to the most recent URL. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily change. This feature trust sites to provide a valid permanent redirect. A new node revision is automatically created on link updates if <em>create new revision</em> is enabled in the <a href="@content_types">content types</a> publishing options. It is recommended to create new revisions for all link checker enabled content types. Link updates are nevertheless always logged in <a href="@dblog">recent log entries</a>.', array('@dblog' => url('admin/reports/dblog'), '@content_types' => url('admin/structure/types'))),
+    '#description' => t('If enabled, outdated links in content providing a status <em>Moved Permanently</em> (status code 301) are automatically updated to the most recent URL. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily change. This feature trust sites to provide a valid permanent redirect. A new content revision is automatically created on link updates if <em>create new revision</em> is enabled in the <a href="@content_types">content types</a> publishing options. It is recommended to create new revisions for all link checker enabled content types. Link updates are nevertheless always logged in <a href="@dblog">recent log entries</a>.', array('@dblog' => url('admin/reports/dblog'), '@content_types' => url('admin/structure/types'))),
     '#type' => 'select',
     '#default_value' => variable_get('linkchecker_action_status_code_301', 0),
     '#options' => array(
@@ -186,8 +186,8 @@ function linkchecker_admin_settings_form($form_state) {
     ),
   );
   $form['error']['linkchecker_action_status_code_404'] = array(
-    '#title' => t('Unpublish node on file not found error'),
-    '#description' => t('If enabled, a node with one or more broken links (status code 404) will be unpublished and moved to moderation queue for review after the number of specified checks failed. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily error.'),
+    '#title' => t('Unpublish content on file not found error'),
+    '#description' => t('If enabled, content with one or more broken links (status code 404) will be unpublished and moved to moderation queue for review after the number of specified checks failed. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily error.'),
     '#type' => 'select',
     '#default_value' => variable_get('linkchecker_action_status_code_404', 0),
     '#options' => array(
@@ -207,7 +207,7 @@ function linkchecker_admin_settings_form($form_state) {
   );
 
   // Buttons are only required for testing and debugging reasons.
-  $description = '<p>' . t('These actions will either clear all link checker tables in the database and/or analyze all selected node types, blocks and fields (see settings above) for new/updated/removed links. Normally there is no need to press one of these buttons. Use this only for immediate cleanup tasks and to force a full re-build of the links to be checked in the linkchecker tables. Keep in mind that all custom link settings will be lost if you clear link data!') . '</p>';
+  $description = '<p>' . t('These actions will either clear all link checker tables in the database and/or analyze all selected content types, blocks and fields (see settings above) for new/updated/removed links. Normally there is no need to press one of these buttons. Use this only for immediate cleanup tasks and to force a full re-build of the links to be checked in the linkchecker tables. Keep in mind that all custom link settings will be lost if you clear link data!') . '</p>';
   $description .= '<p>' . t('<strong>Note</strong>: These functions ONLY collect the links, they do not evaluate the HTTP response codes, this will be done during normal cron runs.') . '</p>';
 
   $form['clear'] = array(
@@ -309,7 +309,7 @@ function linkchecker_analyze_links_submit($form, &$form_state) {
 }
 
 /**
- * Submit callback; Clear link data and analyze fields in all node types, comments, custom blocks.
+ * Submit callback; Clear link data and analyze fields in all content types, comments, custom blocks.
  */
 function linkchecker_clear_analyze_links_submit($form, &$form_state) {
   // Exclude unnecessary elements.

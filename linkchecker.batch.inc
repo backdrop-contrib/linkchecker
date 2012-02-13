@@ -36,7 +36,7 @@ function _linkchecker_batch_node_import_op($nid, &$context) {
 
   // Store results for post-processing in the finished callback.
   $context['results'][] = $node->nid;
-  $context['message'] = t('Node: @title', array('@title' => $node->title));
+  $context['message'] = t('Content: @title', array('@title' => $node->title));
 }
 
 function _linkchecker_batch_node_import_finished($success, $results, $operations) {
@@ -44,7 +44,7 @@ function _linkchecker_batch_node_import_finished($success, $results, $operations
     $message = format_plural(count($results), 'One node has been scanned.', '@count nodes have been scanned.');
   }
   else {
-    $message = t('Scanning for links in nodes have failed with an error.');
+    $message = t('Scanning for links in content has failed with an error.');
   }
   drupal_set_message($message);
 }
@@ -180,7 +180,7 @@ function _linkchecker_batch_single_node_import_op($nid, &$context) {
 
   // Store results for post-processing in the finished callback.
   $context['results'][] = $node->nid;
-  $context['message'] = t('Node: @title', array('@title' => $node->title));
+  $context['message'] = t('Content: @title', array('@title' => $node->title));
 }
 
 function _linkchecker_batch_single_node_import_finished($success, $results, $operations) {
@@ -188,7 +188,7 @@ function _linkchecker_batch_single_node_import_finished($success, $results, $ope
     $message = format_plural(count($results), 'Node @nid has been re-scanned once to collect all links.', 'Node @nid has been re-scanned @count times to collect all links.', array('@nid' => $results[0]));
   }
   else {
-    $message = t('Recurring scanning for links in node @nid have failed with an error.', array('@nid' => $results[0]));
+    $message = t('Recurring scanning for links in node @nid has failed with an error.', array('@nid' => $results[0]));
   }
   drupal_set_message($message);
 }
@@ -235,7 +235,7 @@ function _linkchecker_batch_single_comment_import_finished($success, $results, $
     $message = format_plural(count($results), 'Comment @cid has been re-scanned once to collect all links.', 'Comment @cid has been re-scanned @count times to collect all links.', array('@cid' => $results[0]));
   }
   else {
-    $message = t('Recurring scanning for links in comment @cid have failed with an error.', array('@cid' => $results[0]));
+    $message = t('Recurring scanning for links in comment @cid has failed with an error.', array('@cid' => $results[0]));
   }
   drupal_set_message($message);
 }
@@ -283,7 +283,7 @@ function _linkchecker_batch_single_block_custom_import_finished($success, $resul
     $message = format_plural(count($results), 'Block @bid has been re-scanned once to collect all links.', 'Block @bid has been re-scanned @count times to collect all links.', array('@bid' => $results[0]));
   }
   else {
-    $message = t('Recurring scanning for links in block @bid have failed with an error.', array('@bid' => $results[0]));
+    $message = t('Recurring scanning for links in block @bid has failed with an error.', array('@bid' => $results[0]));
   }
   drupal_set_message($message);
 }
