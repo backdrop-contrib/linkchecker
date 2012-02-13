@@ -1,6 +1,7 @@
 linkchecker 7.x-dev
 --------------------------------------
 
+* #1438376: D7 Upgrade failed with PHP 5 < 5.3.0, array_replace() missing
 * #1429284: Only follow one redirect
 * #1416830: Link fields are not being extracted
 * #1410376: Cannot open blocks to edit from the broken links report
