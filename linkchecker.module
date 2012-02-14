@@ -283,7 +283,7 @@ function _linkchecker_status_handling($link, $response) {
   $response->error = trim(drupal_convert_to_utf8($response->error, 'ISO-8859-1'));
   $response->status_message = trim(drupal_convert_to_utf8($response->status_message, 'ISO-8859-1'));
 
-  // Make response object consistent with HTTPRL.
+  // Make core response object consistent with HTTPRL.
   if ($response->code == 301 && !isset($response->redirect_code)) {
     $response->redirect_code = $response->code;
   }
