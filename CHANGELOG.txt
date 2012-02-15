@@ -1,5 +1,5 @@
-linkchecker 7.x-dev
---------------------------------------
+linkchecker 7.x-1.0-beta1, February 15, 2012
+--------------------------------------------
 
 * #1438376: D7 Upgrade failed with PHP 5 < 5.3.0, array_replace() missing
 * #1429284: Don't follow redirects
