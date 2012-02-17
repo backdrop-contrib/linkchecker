@@ -886,11 +886,11 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
     $text_items[] = _filter_url($block_custom->info, $filter);
   }
   // $block_custom from a scan for links in blocks. See block_custom_block_get().
-  if (!is_array($block_custom->body) && !empty($block_custom->body) && isset($block_custom->format)) {
+  if (!empty($block_custom->body) && !is_array($block_custom->body) && isset($block_custom->format)) {
     $text_items[] = _linkchecker_check_markup($block_custom->body, $block_custom->format);
   }
   // $block_custom from editing a block. See block_custom_block_save().
-  if (is_array($block_custom->body) && array_key_exists('value', $block_custom->body) && array_key_exists('format', $block_custom->body)) {
+  if (!empty($block_custom->body) && is_array($block_custom->body) && array_key_exists('value', $block_custom->body) && array_key_exists('format', $block_custom->body)) {
     $text_items[] = _linkchecker_check_markup($block_custom->body['value'], $block_custom->body['format']);
   }
 
