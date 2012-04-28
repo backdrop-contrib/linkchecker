@@ -398,19 +398,53 @@ function _linkchecker_status_handling($link, $response) {
       break;
 
     case 405:
-    case 500:
       // - 405: Special error handling if method is not allowed. Switch link
       //        checking to GET method and try again.
-      // - 500: Like WGET, try with GET on "500 Internal server error".
       db_update('linkchecker_link')
         ->condition('lid', $link->lid)
-        ->fields(array('method' => 'GET'))
+        ->fields(array(
+          'method' => 'GET',
+          'code' => $response->code,
+          'error' => $response->error,
+          'fail_count' => 0,
+          'last_checked' => time()
+        ))
+        ->expression('fail_count', 'fail_count + 1')
         ->execute();
 
-      if ($response->code == 405) {
-        watchdog('linkchecker', 'Method HEAD is not allowed for link %link. Method has been changed to GET.', array('%link' => $link->url), WATCHDOG_INFO, l(t('Broken links'), 'admin/reports/linkchecker'));
+      watchdog('linkchecker', 'Method HEAD is not allowed for link %link. Method has been changed to GET.', array('%link' => $link->url), WATCHDOG_INFO, l(t('Broken links'), 'admin/reports/linkchecker'));
+      break;
+
+    case 500:
+      // - 500: Like WGET, try with GET on "500 Internal server error".
+      // - If GET also fails with status code 500, than the link is broken.
+      if ($link->method == 'GET' && $response->code == 500) {
+        db_update('linkchecker_link')
+        ->condition('lid', $link->lid)
+        ->fields(array(
+          'code' => $response->code,
+          'error' => $response->error,
+          'fail_count' => 0,
+          'last_checked' => time()
+        ))
+        ->expression('fail_count', 'fail_count + 1')
+        ->execute();
+
+        watchdog('linkchecker', 'Broken link %link has been found.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
-      elseif ($response->code == 500) {
+      else {
+        db_update('linkchecker_link')
+        ->condition('lid', $link->lid)
+        ->fields(array(
+          'method' => 'GET',
+          'code' => $response->code,
+          'error' => $response->error,
+          'fail_count' => 0,
+          'last_checked' => time()
+        ))
+        ->expression('fail_count', 'fail_count + 1')
+        ->execute();
+
         watchdog('linkchecker', 'Internal server error for link %link. Method has been changed to GET.', array('%link' => $link->url), WATCHDOG_INFO, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
       break;
