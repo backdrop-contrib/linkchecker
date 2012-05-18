@@ -244,7 +244,7 @@ function linkchecker_cron() {
     drupal_set_time_limit(240);
 
     $headers = array();
-    $headers['User-Agent'] = 'User-Agent: ' . $useragent;
+    $headers['User-Agent'] = $useragent;
 
     // Range: Only request the first 1024 bytes from remote server. This is
     // required to prevent timeouts on URLs that are large downloads.
