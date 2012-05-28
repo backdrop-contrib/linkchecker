@@ -686,15 +686,19 @@ function linkchecker_form_alter(&$form, &$form_state, $form_id) {
  * Custom submit handler for block add page.
  */
 function linkchecker_block_custom_add_form_submit($form, &$form_state) {
-  $bid = db_query('SELECT MAX(bid) FROM {block_custom}')->fetchField();
-  _linkchecker_add_block_custom_links($form_state['values'], $bid);
+  if (variable_get('linkchecker_scan_blocks', 0)) {
+    $bid = db_query('SELECT MAX(bid) FROM {block_custom}')->fetchField();
+    _linkchecker_add_block_custom_links($form_state['values'], $bid);
+  }
 }
 
 /**
  * Custom submit handler for block configure page.
  */
 function linkchecker_block_custom_configure_form_submit($form, &$form_state) {
-  _linkchecker_add_block_custom_links($form_state['values'], $form_state['values']['delta']);
+  if (variable_get('linkchecker_scan_blocks', 0)) {
+    _linkchecker_add_block_custom_links($form_state['values'], $form_state['values']['delta']);
+  }
 }
 
 /**
