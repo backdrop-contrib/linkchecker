@@ -909,9 +909,11 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
   // Convert custom block array to object.
   $block_custom = (object) $block_custom;
 
-  // Custom blocks really suxxx as it's very inconsistent core logic.
-  // Try to hack around this bad logic as good as possible to prevent issues.
-  if ($block_custom->module != 'block' && !is_numeric($block_custom->delta) && !is_numeric($bid) && $block_custom->delta != $bid) {
+  // Custom blocks really suxxx as it's very inconsistent core logic (values are
+  // integers or strings) and there are no usable hooks. Try to workaround this
+  // bad logic as good as possible to prevent warnings/errors.
+  // @todo: Only custom blocks from block.module are supported. Skip all others.
+  if ($block_custom->module != 'block' || !is_numeric($block_custom->delta) || !is_numeric($bid) || $block_custom->delta != $bid) {
     return;
   }
 
