@@ -350,25 +350,19 @@ function _linkchecker_status_handling($link, $response) {
         if (variable_get('linkchecker_scan_blocks', 0)) {
           $result = db_query('SELECT bid FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
           foreach ($result as $row) {
-            $block_custom = block_custom_block_get($row->bid);
-
-            // Create array of custom block fields to scan.
-            $text_items = array();
-            $text_items[] = 'info';
-            $text_items[] = 'body';
+            $block_custom = linkchecker_block_custom_block_get($row->bid);
 
             // Now replace the outdated link with the permanently moved one in
             // all custom block fields.
-            foreach ($text_items as $text_item) {
-              _linkchecker_link_replace($block_custom[$text_item], $link->url, $response->redirect_url);
-            }
+            _linkchecker_link_replace($block_custom->info, $link->url, $response->redirect_url);
+            _linkchecker_link_replace($block_custom->body['value'], $link->url, $response->redirect_url);
 
             // Save changed block and update the block link list.
-            block_custom_block_save($block_custom, $block_custom['bid']);
+            block_custom_block_save($block_custom, $block_custom->delta);
             // There is no hook that fires on block_custom_block_save(),
             // therefore do link extraction programmatically.
-            _linkchecker_add_block_custom_links($block_custom, $block_custom['bid']);
-            watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom['bid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+            _linkchecker_add_block_custom_links($block_custom, $block_custom->delta);
+            watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom->delta, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
           }
         }
       }
@@ -709,6 +703,40 @@ function linkchecker_block_custom_delete_form_submit($form, &$form_state) {
 }
 
 /**
+ * Returns information from database about a user-created (custom) block.
+ *
+ * @param $bid
+ *   ID of the block to get information for.
+ *
+ * @return
+ *   Associative object of information stored in the database for this block.
+ *   Object keys:
+ *   - module: 'block' as the source of the custom blocks data.
+ *   - delta: Block ID.
+ *   - info: Block description.
+ *   - body['value']: Block contents.
+ *   - body['format']: Filter ID of the filter format for the body.
+ */
+function linkchecker_block_custom_block_get($bid) {
+  $block_custom = block_custom_block_get($bid);
+
+  if ($block_custom) {
+    $block = new stdClass;
+    $block->module = 'block';
+    $block->delta = $block_custom['bid'];
+    $block->info = $block_custom['info'];
+    $block->body = array();
+    $block->body['value'] = $block_custom['body'];
+    $block->body['format'] = $block_custom['format'];
+  }
+  else {
+    $block = FALSE;
+  }
+
+  return $block;
+}
+
+/**
  * Add node links to database.
  *
  * @param object $node
@@ -907,12 +935,13 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
  */
 function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_links_detection = FALSE) {
   // Convert custom block array to object.
+  // @todo: Are we able to remove this global conversion?
   $block_custom = (object) $block_custom;
 
   // Custom blocks really suxxx as it's very inconsistent core logic (values are
   // integers or strings) and there are no usable hooks. Try to workaround this
   // bad logic as good as possible to prevent warnings/errors.
-  // @todo: Only custom blocks from block.module are supported. Skip all others.
+  // NOTE: Only custom blocks from block.module are supported. Skip all others.
   if ($block_custom->module != 'block' || !is_numeric($block_custom->delta) || !is_numeric($bid) || $block_custom->delta != $bid) {
     return;
   }
@@ -925,11 +954,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
   if (!empty($block_custom->info)) {
     $text_items[] = _filter_url($block_custom->info, $filter);
   }
-  // $block_custom from a scan for links in blocks. See block_custom_block_get().
-  if (!empty($block_custom->body) && !is_array($block_custom->body) && isset($block_custom->format)) {
-    $text_items[] = _linkchecker_check_markup($block_custom->body, $block_custom->format);
-  }
-  // $block_custom from editing a block. See block_custom_block_save().
+  // $block_custom from editing/scanning a block. See block_custom_block_save().
   if (!empty($block_custom->body) && is_array($block_custom->body) && array_key_exists('value', $block_custom->body) && array_key_exists('format', $block_custom->body)) {
     $text_items[] = _linkchecker_check_markup($block_custom->body['value'], $block_custom->body['format']);
   }
