@@ -22,8 +22,8 @@ function linkchecker_admin_settings_form($form_state) {
     '#description' => t('Enable link checking for the selected content type(s).'),
   );
 
-  $comment_dependencies = '<div class="admin-dependencies">';
-  $comment_dependencies .= t('Depends on: !dependencies', array('!dependencies' => (module_exists('comment') ? t('@module (<span class="admin-enabled">enabled</span>)', array('@module' => 'Comment')) : t('@module (<span class="admin-disabled">disabled</span>)', array('@module' => 'Comment')))));
+  $comment_dependencies = '<div class="admin-requirements">';
+  $comment_dependencies .= t('Requires: !module-list', array('!module-list' => (module_exists('comment') ? t('@module (<span class="admin-enabled">enabled</span>)', array('@module' => 'Comment')) : t('@module (<span class="admin-disabled">disabled</span>)', array('@module' => 'Comment')))));
   $comment_dependencies .= '</div>';
 
   $form['settings']['linkchecker_scan_comments'] = array(
@@ -34,8 +34,8 @@ function linkchecker_admin_settings_form($form_state) {
     '#disabled' => module_exists('comment') ? FALSE : TRUE,
   );
 
-  $block_custom_dependencies = '<div class="admin-dependencies">';
-  $block_custom_dependencies .= t('Depends on: !dependencies', array('!dependencies' => (module_exists('block') ? t('@module (<span class="admin-enabled">enabled</span>)', array('@module' => 'Block')) : t('@module (<span class="admin-disabled">disabled</span>)', array('@module' => 'Block')))));
+  $block_custom_dependencies = '<div class="admin-requirements">';
+  $block_custom_dependencies .= t('Requires: !module-list', array('!module-list' => (module_exists('block') ? t('@module (<span class="admin-enabled">enabled</span>)', array('@module' => 'Block')) : t('@module (<span class="admin-disabled">disabled</span>)', array('@module' => 'Block')))));
   $block_custom_dependencies .= '</div>';
 
   $form['settings']['linkchecker_scan_blocks'] = array(
