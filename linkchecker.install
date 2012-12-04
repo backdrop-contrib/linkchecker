@@ -173,36 +173,6 @@ function linkchecker_schema() {
 }
 
 /**
- * Implements hook_requirements().
- */
-function linkchecker_requirements($phase) {
-  $requirements = array();
-  $t = get_t();
-
-  switch ($phase) {
-    case 'runtime':
-      // Module cannot work without external HTTP requests.
-      if (variable_get('drupal_http_request_fails', TRUE) && !system_check_http_request()) {
-        $requirements['http requests'] = array(
-          'title' => $t('HTTP request status'),
-          'value' => $t('Fails'),
-          'severity' => REQUIREMENT_ERROR,
-          'description' => $t('Your system or network configuration does not allow Drupal to access web pages, resulting in reduced functionality. This could be due to your webserver configuration or PHP settings, and should be resolved in order to download information about available updates, fetch aggregator feeds, sign in via OpenID, or use other network-dependent services.'),
-        );
-      }
-
-/*      $requirements['linkchecker_curl'] = array(
-        'title' => $t('cURL'),
-        'value' => $has_curl ? $t('Enabled') : $t('Not found'),
-        'severity' => $has_curl ? REQUIREMENT_OK : REQUIREMENT_WARNING,
-        'description' => $t('You should install cURL for checking links with link checker module. If cURL is installed, simultaneuos link checks are used to speeds up the link checking process dramatically.'),
-      ); */
-      break;
-  }
-  return $requirements;
-}
-
-/**
  * If the core modules are disabled the integration need to be disabled.
  */
 function linkchecker_modules_disabled($modules) {
