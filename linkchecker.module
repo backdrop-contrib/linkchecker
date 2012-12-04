@@ -829,22 +829,25 @@ function linkchecker_form_alter(&$form, &$form_state, $form_id) {
       // Add custom submit handler to custom block delete form.
       $form['#submit'][] = 'linkchecker_block_custom_delete_form_submit';
       break;
+  }
+}
 
-    case 'comment_form':
-      // When displaying the form as 'view' or 'preview', show the broken links
-      // warning.
-      if ((empty($form_state['input']) || isset($form_state['input']['op']) && $form_state['input']['op'] == t('Preview')) && arg(0) == 'comment' && arg(1) == 'edit' && is_numeric(arg(2))) {
-        // Show a message on comment edit page if a link check failed once or
-        // more often.
-        $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
-        $links = db_query('SELECT ll.* FROM {linkchecker_comment} lc INNER JOIN {linkchecker_link} ll ON lc.lid = ll.lid WHERE lc.cid = :cid AND ll.fail_count > :fail_count AND ll.status = :status AND ll.code NOT IN (:codes)', array(':cid' => arg(2), ':fail_count' => 0, ':status' => 1, ':codes' => $ignore_response_codes));
-        foreach ($links as $link) {
-          if (_linkchecker_link_access($link)) {
-            drupal_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
-          }
-        }
+/**
+ * Implements hook_form_BASE_FORM_ID_alter().
+ */
+function linkchecker_form_comment_form_alter(&$form, &$form_state, $form_id) {
+  // When displaying the form as 'view' or 'preview', show the broken links
+  // warning.
+  if ((empty($form_state['input']) || (isset($form_state['input']['op']) && $form_state['input']['op'] == t('Preview'))) && arg(0) == 'comment' && is_numeric(arg(1)) && arg(2) == 'edit') {
+    // Show a message on comment edit page if a link check failed once or
+    // more often.
+    $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
+    $links = db_query('SELECT ll.* FROM {linkchecker_comment} lc INNER JOIN {linkchecker_link} ll ON lc.lid = ll.lid WHERE lc.cid = :cid AND ll.fail_count > :fail_count AND ll.status = :status AND ll.code NOT IN (:codes)', array(':cid' => arg(1), ':fail_count' => 0, ':status' => 1, ':codes' => $ignore_response_codes));
+    foreach ($links as $link) {
+      if (_linkchecker_link_access($link)) {
+        drupal_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
       }
-      break;
+    }
   }
 }
 
