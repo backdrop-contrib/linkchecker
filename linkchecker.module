@@ -305,8 +305,9 @@ function _linkchecker_link_node_ids($link, $node_author_account = NULL) {
  *   current user is allowed to view.
  */
 function _linkchecker_link_comment_ids($link, $comment_author_account = NULL) {
-  // If the user cannot access comments, there is no need to check further.
-  if (!user_access('access comments')) {
+  // Exit if comments are disabled or if the user cannot access comments, there
+  // is no need to check further.
+  if (variable_get('linkchecker_scan_comments', 0) || !user_access('access comments')) {
     return array();
   }
 
@@ -346,7 +347,10 @@ function _linkchecker_link_comment_ids($link, $comment_author_account = NULL) {
  *   current user is allowed to view.
  */
 function _linkchecker_link_block_ids($link) {
-  global $user;
+  // Exit if blocks are disabled.
+  if (!variable_get('linkchecker_scan_blocks', 0)) {
+    return array();
+  }
 
   // Get the initial list of block IDs.
   $bids = db_query('SELECT bid FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid))->fetchCol();
@@ -358,6 +362,7 @@ function _linkchecker_link_block_ids($link) {
 
   // Otherwise, only return blocks that this user (or anonymous users) have
   // access to.
+  global $user;
   $rids = array_keys($user->roles);
   $rids[] = DRUPAL_ANONYMOUS_RID;
 
@@ -732,7 +737,7 @@ function linkchecker_node_delete($node) {
  */
 function linkchecker_node_insert($node) {
   // The node is going to be published.
-  if ($node->status == NODE_PUBLISHED && _linkchecker_scan_nodetype($node->type)) {
+  if (_linkchecker_scan_nodetype($node->type) && $node->status == NODE_PUBLISHED) {
     _linkchecker_add_node_links($node);
   }
 }
@@ -745,7 +750,7 @@ function linkchecker_node_insert($node) {
  */
 function linkchecker_node_update($node) {
   // The node is going to be published.
-  if ($node->status == NODE_PUBLISHED && _linkchecker_scan_nodetype($node->type)) {
+  if (_linkchecker_scan_nodetype($node->type) && $node->status == NODE_PUBLISHED) {
     _linkchecker_add_node_links($node);
   }
   else {
@@ -773,7 +778,7 @@ function linkchecker_comment_delete($comment) {
 function linkchecker_comment_insert($comment) {
   // The comment is going to be published.
   $node_type = db_query('SELECT type FROM {node} WHERE nid = :nid', array(':nid' => $comment->nid))->fetchField();
-  if ($comment->status == COMMENT_PUBLISHED && _linkchecker_scan_nodetype($node_type)) {
+  if (_linkchecker_scan_nodetype($node_type) && variable_get('linkchecker_scan_comments', 0) && $comment->status == COMMENT_PUBLISHED) {
     _linkchecker_add_comment_links($comment);
   }
 }
@@ -787,7 +792,7 @@ function linkchecker_comment_insert($comment) {
 function linkchecker_comment_update($comment) {
   // The node is going to be published.
   $node_type = db_query('SELECT type FROM {node} WHERE nid = :nid', array(':nid' => $comment->nid))->fetchField();
-  if ($comment->status == COMMENT_PUBLISHED && _linkchecker_scan_nodetype($node_type)) {
+  if (_linkchecker_scan_nodetype($node_type) && variable_get('linkchecker_scan_comments', 0) && $comment->status == COMMENT_PUBLISHED) {
     _linkchecker_add_comment_links($comment);
   }
   else {
