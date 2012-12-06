@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* Notice: Undefined variable: is_https in _linkchecker_extract_links()
 * #1804842: Lots of warnings when comment/block modules are not installed
 * Set full HTML format in block test
 * Added interface tests to verify drupal_set_message()

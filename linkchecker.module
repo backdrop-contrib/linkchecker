@@ -1553,7 +1553,7 @@ function _linkchecker_cleanup_links() {
  *    corresponding to each fully qualified URL.
  */
 function _linkchecker_extract_links($text = '', $content_path = NULL) {
-  global $base_root;
+  global $base_root, $is_https;
 
   $html_dom = filter_dom_load($text);
   $urls = array();
