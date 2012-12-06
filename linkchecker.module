@@ -307,7 +307,7 @@ function _linkchecker_link_node_ids($link, $node_author_account = NULL) {
 function _linkchecker_link_comment_ids($link, $comment_author_account = NULL) {
   // Exit if comments are disabled or if the user cannot access comments, there
   // is no need to check further.
-  if (variable_get('linkchecker_scan_comments', 0) || !user_access('access comments')) {
+  if (!variable_get('linkchecker_scan_comments', 0) || !user_access('access comments')) {
     return array();
   }
 
