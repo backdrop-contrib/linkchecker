@@ -510,6 +510,7 @@ class LinkCheckerInterfaceTest extends DrupalWebTestCase {
     $custom_block['info'] = $this->randomName(8);
     $custom_block['title'] = $this->randomName(8);
     $custom_block['body[value]'] = $body;
+    $custom_block['body[format]'] = 'full_html';
     $this->drupalPost('admin/structure/block/add', $custom_block, t('Save block'));
 
     // Confirm that the custom block has been created, and then query the created bid.
