@@ -1,6 +1,8 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* #1804842: Lots of warnings when comment/block modules are not installed
+* Set full HTML format in block test
 * Added interface tests to verify drupal_set_message()
 * #1857620: hook_form_alter() fails on BASE_FORM_ID 'comment_form'
 * #1811908: Allow extracting protocol relative url's
