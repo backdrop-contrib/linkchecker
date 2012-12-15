@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* #1727552: Notice: Undefined property: stdClass::$language in linkchecker_parse_fields(). Core follow up of #1495648: Introduce entity language support
 * Notice: Undefined variable: is_https in _linkchecker_extract_links()
 * #1804842: Lots of warnings when comment/block modules are not installed
 * Set full HTML format in block test

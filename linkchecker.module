@@ -1442,8 +1442,8 @@ function linkchecker_parse_fields($bundle, $entity, $type, $return_field_names =
           foreach ($entity_field as $language) {
             foreach ($language as $item) {
               $format = isset($item['format']) ? $item['format'] : NULL;
-              $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, $entity->language, TRUE);
-              $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['summary'], $format, $entity->language, TRUE);
+              $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, entity_language($bundle, $entity), TRUE);
+              $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['summary'], $format, entity_language($bundle, $entity), TRUE);
             }
           }
           break;
@@ -1454,7 +1454,7 @@ function linkchecker_parse_fields($bundle, $entity, $type, $return_field_names =
           foreach ($entity_field as $language) {
             foreach ($language as $item) {
               $format = isset($item['format']) ? $item['format'] : NULL;
-              $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, $entity->language, TRUE);
+              $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, entity_language($bundle, $entity), TRUE);
             }
           }
           break;
@@ -1466,7 +1466,7 @@ function linkchecker_parse_fields($bundle, $entity, $type, $return_field_names =
               $options = drupal_parse_url($item['url']);
               $title = !empty($item['title']) ? $item['title'] : '';
               $text_items[] = $text_items_by_field[$field['field_name']][] = l($title, $options['path'], $options);
-              $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($title, NULL, $entity->language, TRUE);
+              $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($title, NULL, entity_language($bundle, $entity), TRUE);
             }
           }
           break;

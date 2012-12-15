@@ -2,6 +2,6 @@ name = Link checker
 description = "Periodically checks for broken links in node types, blocks and fields and reports the results."
 configure = admin/config/content/linkchecker
 core = 7.x
-
 files[] = linkchecker.drush.inc
 files[] = linkchecker.test
+dependencies[] = system (>7.14)
