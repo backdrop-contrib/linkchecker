@@ -479,6 +479,9 @@ function _linkchecker_status_handling($link, $response) {
       // with the new one without any hand work.
       $auto_repair_301 = variable_get('linkchecker_action_status_code_301', 0);
       if ($auto_repair_301 && $auto_repair_301 <= ($link->fail_count+1) && valid_url($response->redirect_url, TRUE)) {
+        // Switch anonymous user to an admin.
+        linkchecker_impersonate_user(user_load_by_name(variable_get('linkchecker_impersonate_user', '')));
+
         // NODES: Autorepair all nodes having this outdated link.
         $nids = db_query('SELECT nid FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid))->fetchCol();
         $nodes = node_load_multiple($nids);
@@ -536,6 +539,9 @@ function _linkchecker_status_handling($link, $response) {
             watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom->delta, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
           }
         }
+
+        // Revert user back to anonymous.
+        linkchecker_revert_user();
       }
       else {
         watchdog('linkchecker', 'Link %link has changed and needs to be updated.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
@@ -558,7 +564,10 @@ function _linkchecker_status_handling($link, $response) {
       // If unpublishing limit is reached, unpublish all nodes having this link.
       $linkchecker_action_status_code_404 = variable_get('linkchecker_action_status_code_404', 0);
       if ($linkchecker_action_status_code_404 && $linkchecker_action_status_code_404 <= ($link->fail_count+1)) {
+        // Switch anonymous user to an admin.
+        linkchecker_impersonate_user(user_load_by_name(variable_get('linkchecker_impersonate_user', '')));
         _linkchecker_unpublish_nodes($link->lid);
+        linkchecker_revert_user();
       }
       break;
 
@@ -2194,6 +2203,65 @@ function _linkchecker_unpublish_nodes($lid) {
  */
 function linkchecker_link_load($lid) {
   return db_query('SELECT * FROM {linkchecker_link} WHERE lid = :lid', array(':lid' => $lid))->fetchObject();
+}
+
+/**
+ * Impersonates another user. http://drupal.org/node/287292#comment-3162350
+ *
+ * Each time this function is called, the active user is saved and $new_user
+ * becomes the active user. Multiple calls to this function can be nested,
+ * and session saving will be disabled until all impersonation attempts have
+ * been reverted using linkchecker_revert_user().
+ *
+ * @param $new_user
+ *   User to impersonate, either a UID or a user object.
+ *
+ * @return
+ *   Current user object.
+ *
+ * @see linkchecker_revert_user()
+ */
+function linkchecker_impersonate_user($new_user = NULL) {
+  global $user;
+  $user_original = &drupal_static(__FUNCTION__);
+
+  if (!isset($new_user)) {
+    if (isset($user_original) && !empty($user_original)) {
+      // Restore the previous user from the stack.
+      $user = array_pop($user_original);
+
+      // Re-enable session saving if we are no longer impersonating a user.
+      if (empty($user_original)) {
+        drupal_save_session(TRUE);
+      }
+    }
+  }
+  else {
+    // Push the original user onto the stack and prevent session saving.
+    $user_original[] = $user;
+    drupal_save_session(FALSE);
+
+    if (is_numeric($new_user)) {
+      $user = user_load($new_user);
+    }
+    else {
+      $user = is_object($new_user) ? $new_user : (object) $new_user;
+    }
+  }
+
+  return $user;
+}
+
+/**
+ * Reverts to the previous user after impersonating.
+ *
+ * @return
+ *   Current user.
+ *
+ * @see linkchecker_impersonate_user()
+ */
+function linkchecker_revert_user() {
+  return linkchecker_impersonate_user();
 }
 
 /**

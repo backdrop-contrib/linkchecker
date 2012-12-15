@@ -578,3 +578,69 @@ class LinkCheckerInterfaceTest extends DrupalWebTestCase {
     return db_query('SELECT * FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => drupal_hash_base64($url)))->fetchObject();
   }
 }
+
+/**
+ * Test case for impersonating users.
+ *
+ * Based on http://drupal.org/node/287292#comment-3162350
+ */
+class LinkCheckerUserImpersonatingUserTestCase extends DrupalWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Link checker impersonate users',
+      'description' => 'Temporarily impersonate another user, and then restore the original user.',
+      'group' => 'Link checker',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('linkchecker');
+  }
+
+  function testLinkCheckerImpersonateUser() {
+    global $user;
+    $original_user = $user;
+
+    // If not currently logged in, use linkchecker_impersonate_user() to switch to
+    // user 1. If logged in, switch to the anonymous user instead.
+    if (user_is_anonymous()) {
+      linkchecker_impersonate_user(1);
+    }
+    else {
+      linkchecker_impersonate_user(0);
+    }
+
+    // Verify that the active user has changed, and that session saving is
+    // disabled.
+    $this->assertEqual($user->uid, ($original_user->uid == 0 ? 1 : 0), t('User switched'));
+    $this->assertFalse(drupal_save_session(), t('Session saving is disabled.'));
+
+    // Perform a second (nested) impersonation.
+    linkchecker_impersonate_user(1);
+    $this->assertEqual($user->uid, 1, t('User switched.'));
+
+    // Revert to the user which was active between the first and second
+    // impersonation attempt.
+    linkchecker_revert_user();
+
+    // Since we are still impersonating the user from the first attempt,
+    // session handling still needs to be disabled.
+    $this->assertEqual($user->uid, ($original_user->uid == 0 ? 1 : 0), t('User switched.'));
+    $this->assertFalse(drupal_save_session(), t('Session saving is disabled.'));
+
+    // Revert to the original user which was active before the first
+    // impersonation attempt.
+    linkchecker_revert_user();
+
+    // Assert that the original user is the active user again, and that session
+    // saving has been re-enabled.
+    $this->assertEqual($user->uid, $original_user->uid, t('Original user successfully restored.'));
+
+    // Simpletest uses linkchecker_impersonate_user() too, revert the impersonation by
+    // Simpletest to enable session saving again. This is safe because calling
+    // linkchecker_revert_user() too often simply results in returning the active user.
+    linkchecker_revert_user();
+    $this->assertTrue(drupal_save_session(), t('Session saving is enabled.'));
+  }
+}

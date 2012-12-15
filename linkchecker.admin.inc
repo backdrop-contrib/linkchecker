@@ -171,6 +171,16 @@ function linkchecker_admin_settings_form($form_state) {
     '#description' => t('Defines error handling and custom actions to be executed if specific HTTP requests are failing.'),
     '#collapsible' => FALSE,
   );
+  $linkchecker_default_impersonate_user = user_load(1);
+  $form['error']['linkchecker_impersonate_user'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Impersonate user account'),
+    '#description' => t('If below error handling actions are executed they can be impersonated with a custom user account. By default this is user %name, but you are able to assign a custom user to allow easier identification of these automatic revision updates. Make sure you select a user with <em>full</em> permissions on your site or the user may not able to access and save all content.', array('%name' => $linkchecker_default_impersonate_user->name)),
+    '#size' => 30,
+    '#maxlength' => 60,
+    '#autocomplete_path' => 'user/autocomplete',
+    '#default_value' => variable_get('linkchecker_impersonate_user', ''),
+  );
   $form['error']['linkchecker_action_status_code_301'] = array(
     '#title' => t('Update permanently moved links'),
     '#description' => t('If enabled, outdated links in content providing a status <em>Moved Permanently</em> (status code 301) are automatically updated to the most recent URL. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily change. This feature trust sites to provide a valid permanent redirect. A new content revision is automatically created on link updates if <em>create new revision</em> is enabled in the <a href="@content_types">content types</a> publishing options. It is recommended to create new revisions for all link checker enabled content types. Link updates are nevertheless always logged in <a href="@dblog">recent log entries</a>.', array('@dblog' => url('admin/reports/dblog'), '@content_types' => url('admin/structure/types'))),
@@ -248,6 +258,12 @@ function linkchecker_admin_settings_form_validate($form, &$form_state) {
   // reserved documentation domains and not "example" hostnames!
   $linkchecker_disable_link_check_for_urls = array_filter(preg_split('/(\r\n?|\n)/', $form_state['values']['linkchecker_disable_link_check_for_urls']));
   $form_state['values']['linkchecker_disable_link_check_for_urls'] = implode("\n", array_unique(array_merge(explode("\n", LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS), $linkchecker_disable_link_check_for_urls)));
+
+  // Validate impersonation user name.
+  $linkchecker_impersonate_user = user_load_by_name($form_state['values']['linkchecker_impersonate_user']);
+  if (empty($linkchecker_impersonate_user->uid)) {
+    form_set_error('linkchecker_impersonate_user', t('User account %name cannot found.', array('%name' => $form_state['values']['linkchecker_impersonate_user'])));
+  }
 }
 
 function linkchecker_admin_settings_form_submit($form, &$form_state) {

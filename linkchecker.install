@@ -6,6 +6,14 @@
  */
 
 /**
+ * Implements hook_install().
+ */
+function linkchecker_install() {
+  $linkchecker_default_impersonate_user = user_load(1);
+  variable_set('linkchecker_impersonate_user', $linkchecker_default_impersonate_user->name);
+}
+
+/**
  * Implements hook_uninstall().
  */
 function linkchecker_uninstall() {
@@ -26,6 +34,7 @@ function linkchecker_uninstall() {
   variable_del('linkchecker_extract_from_video');
   variable_del('linkchecker_filter_blacklist');
   variable_del('linkchecker_ignore_response_codes');
+  variable_del('linkchecker_impersonate_user');
   variable_del('linkchecker_scan_blocks');
   variable_del('linkchecker_scan_comments');
   variable_del('linkchecker_scan_nodetypes');
@@ -396,6 +405,14 @@ function linkchecker_update_7008() {
   db_add_index('linkchecker_link', 'status', array('status'));
 
   return t('Added indexes to linkchecker_link database table.');
+}
+
+/**
+ * Set user 1 as default user to impersonate content updates.
+ */
+function linkchecker_update_7009() {
+  $linkchecker_default_impersonate_user = user_load(1);
+  variable_set('linkchecker_impersonate_user', $linkchecker_default_impersonate_user->name);
 }
 
 /**
