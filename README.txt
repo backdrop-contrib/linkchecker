@@ -31,16 +31,6 @@ Required:
    the sites settings.php with your public sites URL. Better save than sorry!
 
 
-Advanced configuration
-
-1. Link checker by default checks 100 links per cron run. This setting can be
-   overriden via settings.php. Add the below line to check 200 links per cron
-   run. You can lower or higher the limit for your needs if the machine can or
-   cannot handle the default number of link checks.
-
-   $conf['linkchecker_check_links_max'] = 200;
-
-
 Known issues:
 
 1. drupal_http_request() does handle (invalid) non-absolute redirects. The
