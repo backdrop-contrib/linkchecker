@@ -271,8 +271,8 @@ function linkchecker_update_7002(&$sandbox) {
 }
 
 /**
-* #1321378: Improve performance of queries.
-*/
+ * #1321378: Improve performance of queries.
+ */
 function linkchecker_update_7003() {
   db_drop_index('linkchecker_block_custom', 'lid');
   db_drop_index('linkchecker_comment', 'lid');
@@ -286,8 +286,8 @@ function linkchecker_update_7003() {
 }
 
 /**
-* Add status code 206 to the default list of ignored response codes.
-*/
+ * Add status code 206 to the default list of ignored response codes.
+ */
 function linkchecker_update_7004() {
   $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
   if (!in_array('206', $ignore_response_codes)) {
@@ -302,8 +302,8 @@ function linkchecker_update_7004() {
 }
 
 /**
-* Upgrade from linkchecker_fqdn_only to linkchecker_check_links_types variable.
-*/
+ * Upgrade from linkchecker_fqdn_only to linkchecker_check_links_types variable.
+ */
 function linkchecker_update_7005() {
 
   $linkchecker_fqdn_only = variable_get('linkchecker_fqdn_only', 1);
@@ -389,8 +389,8 @@ function linkchecker_update_7007() {
 }
 
 /**
-* #965720: Add indexes to improve performance of views queries.
-*/
+ * #965720: Add indexes to improve performance of views queries.
+ */
 function linkchecker_update_7008() {
   db_drop_index('linkchecker_link', 'method');
   db_drop_index('linkchecker_link', 'code');
@@ -416,8 +416,8 @@ function linkchecker_update_7009() {
 }
 
 /**
-* PHP 5.3 backport for array_replace().
-*/
+ * PHP 5.3 backport for array_replace().
+ */
 if (!function_exists('array_replace')) {
   function array_replace() {
     $array = array();
