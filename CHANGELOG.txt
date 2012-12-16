@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* #1867460: Prevent save on automatic updates, if content has not changed.
 * #1804842 follow up: Exit if all node types are disabled
 * #1450672: Cron task does not impersonate to admin user on automatic content updates.
 * Remove documentation leftover from readme about a setting not available.
