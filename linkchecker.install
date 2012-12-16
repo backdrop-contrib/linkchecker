@@ -411,8 +411,12 @@ function linkchecker_update_7008() {
  * Set user 1 as default user to impersonate content updates.
  */
 function linkchecker_update_7009() {
-  $linkchecker_default_impersonate_user = user_load(1);
-  variable_set('linkchecker_impersonate_user', $linkchecker_default_impersonate_user->name);
+  // Do not overwrite D6 settings.
+  $linkchecker_impersonate_user = variable_get('linkchecker_impersonate_user', '');
+  if (empty($linkchecker_impersonate_user)) {
+    $linkchecker_default_impersonate_user = user_load(1);
+    variable_set('linkchecker_impersonate_user', $linkchecker_default_impersonate_user->name);
+  }
 }
 
 /**
