@@ -584,7 +584,7 @@ class LinkCheckerInterfaceTest extends DrupalWebTestCase {
  *
  * Based on http://drupal.org/node/287292#comment-3162350
  */
-class LinkCheckerUserImpersonatingUserTestCase extends DrupalWebTestCase {
+class LinkCheckerImpersonatingUserTestCase extends DrupalWebTestCase {
 
   public static function getInfo() {
     return array(
