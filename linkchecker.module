@@ -204,8 +204,10 @@ function _linkchecker_link_access($link) {
 function _linkchecker_link_node_ids($link, $node_author_account = NULL) {
   static $fields_with_node_links = array();
 
-  // If the user cannot access content, there is no need to check further.
-  if (!user_access('access content')) {
+  // Exit if all node types are disabled or if the user cannot access content,
+  // there is no need to check further.
+  $linkchecker_scan_nodetypes = array_filter(variable_get('linkchecker_scan_nodetypes', array()));
+  if (empty($linkchecker_scan_nodetypes) || !user_access('access content')) {
     return array();
   }
 
