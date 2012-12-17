@@ -488,10 +488,10 @@ function _linkchecker_status_handling($link, $response) {
         $nids = db_query('SELECT nid FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid))->fetchCol();
         $nodes = node_load_multiple($nids);
         foreach ($nodes as $node) {
-          $node_original = $node;
+          $node_original = clone $node;
           $node = _linkchecker_replace_fields($node, $node->type, 'node', $link->url, $response->redirect_url);
 
-          if (linkchecker_compare($node_original, $node)) {
+          if ($node_original != $node) {
             // Always use the default revision setting. For more information,
             // see node_object_prepare().
             $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
@@ -515,7 +515,7 @@ function _linkchecker_status_handling($link, $response) {
           $cids = db_query('SELECT cid FROM {linkchecker_comment} WHERE lid = :lid', array(':lid' => $link->lid))->fetchCol();
           $comments = comment_load_multiple($cids);
           foreach ($comments as $comment) {
-            $comment_original = $comment;
+            $comment_original = clone $comment;
 
             // Replace links in subject.
             _linkchecker_link_replace($comment->subject, $link->url, $response->redirect_url);
@@ -524,7 +524,7 @@ function _linkchecker_status_handling($link, $response) {
             $comment = _linkchecker_replace_fields($comment, $comment->node_type, 'comment', $link->url, $response->redirect_url);
 
             // Save changed comment and update the comment link list.
-            if (linkchecker_compare($comment_original, $comment)) {
+            if ($comment_original != $comment) {
               comment_save($comment);
               watchdog('linkchecker', 'Changed permanently moved link in comment %comment from %src to %dst.', array('%comment' => $comment['cid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
             }
@@ -539,14 +539,15 @@ function _linkchecker_status_handling($link, $response) {
         if (variable_get('linkchecker_scan_blocks', 0)) {
           $result = db_query('SELECT bid FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
           foreach ($result as $row) {
-            $block_custom_original = $block_custom = linkchecker_block_custom_block_get($row->bid);
+            $block_custom = linkchecker_block_custom_block_get($row->bid);
+            $block_custom_original = clone $block_custom;
 
             // Now replace the outdated link with the permanently moved one in
             // all custom block fields.
             _linkchecker_link_replace($block_custom->info, $link->url, $response->redirect_url);
             _linkchecker_link_replace($block_custom->body['value'], $link->url, $response->redirect_url);
 
-            if (linkchecker_compare($block_custom_original, $block_custom)) {
+            if ($block_custom_original != $block_custom) {
               // Save changed block and update the block link list.
               block_custom_block_save($block_custom, $block_custom->delta);
               // There is no hook that fires on block_custom_block_save(),
@@ -2282,21 +2283,6 @@ function linkchecker_impersonate_user($new_user = NULL) {
  */
 function linkchecker_revert_user() {
   return linkchecker_impersonate_user();
-}
-
-/**
- * Compare two arrays or objects.
- *
- * @return bool
- *   FALSE if they are equal, TRUE otherwise.
- */
-function linkchecker_compare($a, $b) {
-  if (drupal_json_encode($a) === drupal_json_encode($b)) {
-    return FALSE;
-  }
-  else {
-    return TRUE;
-  }
 }
 
 /**
