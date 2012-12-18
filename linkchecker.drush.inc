@@ -55,8 +55,8 @@ function drush_linkchecker_analyze() {
 }
 
 /**
-* Callback for command linkchecker-analyze.
-*/
+ * Callback for command linkchecker-analyze.
+ */
 function drush_linkchecker_clear() {
   global $base_url;
   if ($base_url == 'http://default') {
@@ -82,17 +82,10 @@ function drush_linkchecker_clear() {
 }
 
 /**
-* Callback for command linkchecker-check.
-*/
+ * Callback for command linkchecker-check.
+ */
 function drush_linkchecker_check() {
-  //global $conf;
-
-  //$linkchecker_check_links_max = (int) drush_get_option('links', 1000);
   drush_log('Starting link checking...', 'status');
-
-  // Conditional override the default module setting.
-  //$conf['linkchecker_check_links_max'] = $linkchecker_check_links_max;
-
   linkchecker_cron();
   drush_log('Finished checking links.', 'status');
 }
