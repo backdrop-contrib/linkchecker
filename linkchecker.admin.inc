@@ -127,7 +127,6 @@ function linkchecker_admin_settings_form($form_state) {
   $form['check'] = array(
     '#type' => 'fieldset',
     '#title' => t('Check settings'),
-    // '#description' => t('For simultaneous link checks it is highly recommended to install the <a href="@curl">cURL</a> library. This may be <strong>necessary</strong> on larger sites with very many links, but may still improve (speed up), link checking performance on smaller sites.', array('@curl' => 'http://www.php.net/manual/en/book.curl.php')),
     '#collapsible' => FALSE,
   );
   $form['check']['linkchecker_check_useragent'] = array(
@@ -143,14 +142,6 @@ function linkchecker_admin_settings_form($form_state) {
       'Mozilla/5.0 (Windows; U; Windows NT 6.0; de; rv:1.9.0.5) Gecko/2008120122 Firefox/3.0.5' => 'Windows Vista / Mozilla Firefox 3.0.5',
     ),
   );
-/* For now it's better to guess this value from max_execution_time.
-   $form['check']['linkchecker_check_links_max'] = array(
-    '#type' => 'select',
-    '#title' => t('Check number of links per cron run'),
-    '#description' => t('Defines the number of links that will be checked per cron run. The possible setting hardly depends on your PHP timeout value and remote servers speed and may increased if <a href="@curl">cURL</a> is installed and use simultaneous request checking. All cron jobs may fail, if this setting is too high!', array('@curl' => 'http://www.php.net/manual/en/book.curl.php')),
-    '#default_value' => variable_get('linkchecker_check_links_max', 10),
-    '#options' => drupal_map_assoc(array(5, 10, 25, 50, 100, 200, 250, 300, 350, 400, 450, 500, 750, 1000)),
-  ); */
   $form['check']['linkchecker_check_links_interval'] = array(
     '#type' => 'select',
     '#title' => t('Check interval for links'),

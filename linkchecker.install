@@ -21,7 +21,6 @@ function linkchecker_uninstall() {
   variable_del('linkchecker_action_status_code_404');
   variable_del('linkchecker_check_links_interval');
   variable_del('linkchecker_check_links_types');
-  variable_del('linkchecker_check_links_max');
   variable_del('linkchecker_check_useragent');
   variable_del('linkchecker_cleanup_links_last');
   variable_del('linkchecker_disable_link_check_for_urls');
@@ -417,7 +416,19 @@ function linkchecker_update_7009() {
     $linkchecker_default_impersonate_user = user_load(1);
     variable_set('linkchecker_impersonate_user', $linkchecker_default_impersonate_user->name);
   }
+
+  return t('Set user 1 as default user to impersonate content updates.');
 }
+
+/**
+ * Remove obsolete linkchecker_check_links_max variable.
+ */
+function linkchecker_update_7010() {
+  variable_del('linkchecker_check_links_max');
+
+  return t('Removed obsolete linkchecker_check_links_max variable.');
+}
+
 
 /**
  * PHP 5.3 backport for array_replace().

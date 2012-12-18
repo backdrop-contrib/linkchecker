@@ -395,29 +395,24 @@ function linkchecker_cron() {
     variable_set('linkchecker_cleanup_links_last', REQUEST_TIME);
   }
 
-  // @todo Implement cURL support.
-  // $has_curl = function_exists('curl_init');
-
-  // @todo: Remove some confusion about the max links that can be checked per
-  // cron run and guess that 2 link can be checked per second what is
-  // nevertheless uncommon. But we can use the max_execution_time to calculate
-  // a value that is higher, but not totally out of scope to keep the query
-  // resultset small. For cURL we need to add this setting back or a thread
-  // limit per remote server for not overloading them.
+  // Do not confuse admins with a setting of maximum checkable links per cron
+  // run and guess that 2 links can be checked per second with 1 thread, what is
+  // nevertheless uncommon. The max_execution_time can be used to calculate
+  // a useful value that is higher, but not totally out of scope and limits the
+  // query resultset to a resonable size.
   $check_links_max_per_cron_run = $max_execution_time;
-  // $check_links_max_per_cron_run = variable_get('linkchecker_check_links_max', 10);
 
-  $check_links_interval = variable_get('linkchecker_check_links_interval', 2419200);
-  $useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
+  $linkchecker_check_links_interval = variable_get('linkchecker_check_links_interval', 2419200);
+  $linkchecker_check_useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
 
   // Get URLs for checking.
-  $result = db_query_range('SELECT * FROM {linkchecker_link} WHERE last_checked < :last_checked AND status = :status ORDER BY last_checked, lid ASC', 0, $check_links_max_per_cron_run, array(':last_checked' => REQUEST_TIME - $check_links_interval, ':status' => 1));
-  foreach ($result as $link) {
+  $links = db_query_range('SELECT * FROM {linkchecker_link} WHERE last_checked < :last_checked AND status = :status ORDER BY last_checked, lid ASC', 0, $check_links_max_per_cron_run, array(':last_checked' => REQUEST_TIME - $linkchecker_check_links_interval, ':status' => 1));
+  foreach ($links as $link) {
     // Make sure we have enough time to validate the link.
     drupal_set_time_limit(240);
 
     $headers = array();
-    $headers['User-Agent'] = $useragent;
+    $headers['User-Agent'] = $linkchecker_check_useragent;
 
     // Range: Only request the first 1024 bytes from remote server. This is
     // required to prevent timeouts on URLs that are large downloads.
@@ -443,7 +438,6 @@ function linkchecker_cron() {
  *   data and redirect status.
  */
 function _linkchecker_status_handling($link, $response) {
-  $useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
   $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
 
   // - Prevent E_ALL warnings in DB updates for non-existing $response->error.
