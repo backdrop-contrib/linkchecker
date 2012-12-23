@@ -447,7 +447,7 @@ function linkchecker_update_7011() {
 
   if (isset($useragent_upgrade[$linkchecker_check_useragent])) {
     variable_set('linkchecker_check_useragent', $useragent_upgrade[$linkchecker_check_useragent]);
-    return t('Updated user agent from "@user_agent_old" to "@user_agent_new".', array('@user_agent_old' => $linkchecker_check_useragent, '@user_agent_new' => $useragent_upgrade[$linkchecker_check_useragent]));
+    return t('Upgraded outdated HTTP user agent from "@user_agent_old" to "@user_agent_new".', array('@user_agent_old' => $linkchecker_check_useragent, '@user_agent_new' => $useragent_upgrade[$linkchecker_check_useragent]));
   }
   else {
     return t('User agent already up to date.');
