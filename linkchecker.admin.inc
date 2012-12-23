@@ -162,10 +162,10 @@ function linkchecker_admin_settings_form($form_state) {
     '#default_value' => variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)'),
     '#options' => array(
       'Drupal (+http://drupal.org/)' => 'Drupal (+http://drupal.org/)',
-      'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1;)' => 'Windows XP / Internet Explorer 7.0',
-      'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.0.5) Gecko/2008120122 Firefox/3.0.5' => 'Windows XP / Mozilla Firefox 3.0.5',
-      'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0;)' => 'Windows Vista / Internet Explorer 7.0',
-      'Mozilla/5.0 (Windows; U; Windows NT 6.0; de; rv:1.9.0.5) Gecko/2008120122 Firefox/3.0.5' => 'Windows Vista / Mozilla Firefox 3.0.5',
+      'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)' => 'Windows 7 (x64), Internet Explorer 9.0',
+      'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0' => 'Windows 7 (x64), Mozilla Firefox 17.0',
+      'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; WOW64; Trident/6.0)' => 'Windows 8 (x64), Internet Explorer 10.0',
+      'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0' => 'Windows 8 (x64), Mozilla Firefox 17.0',
     ),
   );
   $form['check']['linkchecker_check_links_interval'] = array(

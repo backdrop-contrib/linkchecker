@@ -431,6 +431,29 @@ function linkchecker_update_7010() {
   return t('Removed obsolete linkchecker_check_links_max variable.');
 }
 
+/**
+ * Upgrade outdated HTTP user agents.
+ */
+function linkchecker_update_7011() {
+
+  $linkchecker_check_useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
+
+  $useragent_upgrade = array(
+    'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1;)' => 'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)',
+    'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0;)' => 'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; WOW64; Trident/6.0)',
+    'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.0.5) Gecko/2008120122 Firefox/3.0.5' => 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0',
+    'Mozilla/5.0 (Windows; U; Windows NT 6.0; de; rv:1.9.0.5) Gecko/2008120122 Firefox/3.0.5' => 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0',
+  );
+
+  if (isset($useragent_upgrade[$linkchecker_check_useragent])) {
+    variable_set('linkchecker_check_useragent', $useragent_upgrade[$linkchecker_check_useragent]);
+    return t('Updated user agent from "@user_agent_old" to "@user_agent_new".', array('@user_agent_old' => $linkchecker_check_useragent, '@user_agent_new' => $useragent_upgrade[$linkchecker_check_useragent]));
+  }
+  else {
+    return t('User agent already up to date.');
+  }
+}
+
 
 /**
  * PHP 5.3 backport for array_replace().
