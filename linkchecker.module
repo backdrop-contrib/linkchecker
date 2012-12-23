@@ -386,31 +386,68 @@ function _linkchecker_link_block_ids($link) {
  * Implements hook_cron().
  */
 function linkchecker_cron() {
-  // Get max_execution_time from configuration, override 0 with 240 seconds.
-  $max_execution_time = ini_get('max_execution_time') == 0 ? 240 : ini_get('max_execution_time');
-
   // Remove outdated links no longer in use once per day.
   if (REQUEST_TIME - variable_get('linkchecker_cleanup_links_last', 0) >= 86400) {
     _linkchecker_cleanup_links();
     variable_set('linkchecker_cleanup_links_last', REQUEST_TIME);
   }
 
+  // Run link checker in a new process, independent of cron.
+  if (module_exists('httprl') && variable_get('linkchecker_check_library', 'core') == 'httprl') {
+    // Setup callback options array; call _linkchecker_check_links() in the
+    // background.
+    $callback_options = array(array('function' => '_linkchecker_check_links'));
+    // Queue up the request.
+    httprl_queue_background_callback($callback_options);
+    // Execute request.
+    httprl_send_request();
+
+    // Exit here so we don't call _linkchecker_check_links() in this process.
+    return;
+  }
+  // Run the link checks the normal way.
+  _linkchecker_check_links();
+}
+
+/**
+ * Run link checks.
+ */
+function _linkchecker_check_links() {
+  // Get max_execution_time from configuration, override 0 with 240 seconds.
+  $max_execution_time = ini_get('max_execution_time') == 0 ? 240 : ini_get('max_execution_time');
+  // Make sure we have enough time to validate all of the links.
+  drupal_set_time_limit($max_execution_time);
+
+  // Make sure this is the only process trying to run this function.
+  if (!lock_acquire(__FUNCTION__, $max_execution_time)) {
+    watchdog('linkchecker', 'Attempted to re-run link checks while they are already running.', array(), WATCHDOG_WARNING);
+    return FALSE;
+  }
+
+  $has_httprl = (module_exists('httprl') && variable_get('linkchecker_check_library', 'core') == 'httprl');
+
   // Do not confuse admins with a setting of maximum checkable links per cron
   // run and guess that 2 links can be checked per second with 1 thread, what is
   // nevertheless uncommon. The max_execution_time can be used to calculate
   // a useful value that is higher, but not totally out of scope and limits the
   // query resultset to a resonable size.
-  $check_links_max_per_cron_run = $max_execution_time;
+  $linkchecker_check_connections_max = variable_get('linkchecker_check_connections_max', 8);
+  $check_links_max_per_cron_run = ($has_httprl) ? ($linkchecker_check_connections_max * $max_execution_time) : $max_execution_time;
 
   $linkchecker_check_links_interval = variable_get('linkchecker_check_links_interval', 2419200);
   $linkchecker_check_useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
 
+  // Connection limit can be overriden via settings.php. Two connections is the
+  // limit defined in RFC http://www.ietf.org/rfc/rfc2616.txt. Modern browsers
+  // are typically using 6-8 connections and no more. Never use more and keep
+  // in mind that you can overload other people servers.
+  $linkchecker_check_domain_connections = variable_get('linkchecker_check_domain_connections', 2);
+
   // Get URLs for checking.
   $links = db_query_range('SELECT * FROM {linkchecker_link} WHERE last_checked < :last_checked AND status = :status ORDER BY last_checked, lid ASC', 0, $check_links_max_per_cron_run, array(':last_checked' => REQUEST_TIME - $linkchecker_check_links_interval, ':status' => 1));
-  foreach ($links as $link) {
-    // Make sure we have enough time to validate the link.
-    drupal_set_time_limit(240);
+  $links_remaining = $links->rowCount();
 
+  foreach ($links as $link) {
     $headers = array();
     $headers['User-Agent'] = $linkchecker_check_useragent;
 
@@ -418,26 +455,65 @@ function linkchecker_cron() {
     // required to prevent timeouts on URLs that are large downloads.
     if ($link->method == 'GET') { $headers['Range'] = 'bytes=0-1024'; }
 
-    // Fetch URL.
-    $response = drupal_http_request($link->url, array('headers' => $headers, 'method' => $link->method, 'max_redirects' => 0));
-    _linkchecker_status_handling($link, $response);
+    // Add in the headers.
+    $options = array(
+      'headers' => $headers,
+      'method' => $link->method,
+      'max_redirects' => 0,
+    );
 
-    if ((timer_read('page') / 1000) > ($max_execution_time / 2)) {
-      break; // Stop once we have used over half of the maximum execution time.
+    if ($has_httprl) {
+      // Define the callback and add the $link object to it.
+      // Notes:
+      // - 'global_timeout' does not require a timer_read('page'), as this job
+      //   runs in a new process, independent of cron.
+      $options += array(
+        'global_connections' => $linkchecker_check_connections_max,
+        'global_timeout' => $max_execution_time - 30,
+        'domain_connections' => $linkchecker_check_domain_connections,
+        'callback' => array(
+          array(
+            'function' => '_linkchecker_status_handling',
+          ),
+          $link, // This need to be passed or it's not send back to _linkchecker_status_handling()
+        )
+      );
+      // Queue up the requests.
+      httprl_request($link->url, $options);
+      $links_remaining--;
+
+      // After all links are queued, run the url checks.
+      if ($links_remaining == 0) {
+        httprl_send_request();
+      }
+    }
+    else {
+      $response = drupal_http_request($link->url, $options);
+      _linkchecker_status_handling($response, $link);
+
+      if ((timer_read('page') / 1000) > ($max_execution_time / 2)) {
+        break; // Stop once we have used over half of the maximum execution time.
+      }
     }
   }
+
+  // Release the lock.
+  lock_release(__FUNCTION__);
+  watchdog('linkchecker', 'Link checks completed.', array(), WATCHDOG_INFO);
+  watchdog('linkchecker', 'Memory usage: @memory_get_usage, Peak memory usage: @memory_get_peak_usage.', array('@memory_get_peak_usage' => format_size(memory_get_peak_usage()), '@memory_get_usage' => format_size(memory_get_usage())), WATCHDOG_DEBUG);
+  return TRUE;
 }
 
 /**
  * Status code handling.
  *
- * @param string $link
- *   An object containing the url, lid and fail_count.
  * @param object $response
  *   An object containing the HTTP request headers, response code, headers,
  *   data and redirect status.
+ * @param string $link
+ *   An object containing the url, lid and fail_count.
  */
-function _linkchecker_status_handling($link, $response) {
+function _linkchecker_status_handling(&$response, $link) {
   $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
 
   // - Prevent E_ALL warnings in DB updates for non-existing $response->error.
@@ -456,6 +532,11 @@ function _linkchecker_status_handling($link, $response) {
   }
 
   switch ($response->code) {
+    case -4: // HTTPRL: httprl_send_request timed out.
+      // Skip these and try them again next cron run.
+      break;
+
+    case  -2: // HTTPRL: maximum allowed redirects exhausted.
     case 301:
       // Remote site send status code 301 and link needs an update.
       db_update('linkchecker_link')
@@ -666,6 +747,8 @@ function _linkchecker_status_handling($link, $response) {
         // watchdog('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
   }
+  // Free Memory.
+  $response = new StdClass();
 }
 
 /**

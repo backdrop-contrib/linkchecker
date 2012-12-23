@@ -124,10 +124,36 @@ function linkchecker_admin_settings_form($form_state) {
     '#description' => t('If a filter has been enabled for an input format it runs first and afterwards the link extraction. This helps the link checker module to find all links normally created by custom filters (e.g. Markdown filter, Bbcode). All filters used as an inline references (e.g. Weblink filter <code>[link: id]</code>) to other content and filters only wasting processing time (e.g. Line break converter) should be disabled. This setting does not have any effect on how content is shown on a page. This feature optimizes the internal link extraction process for link checker and prevents false alarms about broken links in content not having the real data of a link.'),
   );
 
+  $count_lids_enabled = db_query("SELECT count(lid) FROM {linkchecker_link} WHERE status = :status", array(':status' => 1))->fetchField();
+  $count_lids_disabled = db_query("SELECT count(lid) FROM {linkchecker_link} WHERE status = :status", array(':status' => 0))->fetchField();
   $form['check'] = array(
     '#type' => 'fieldset',
     '#title' => t('Check settings'),
+    '#description' => t('For simultaneous link checks it is recommended to install the <a href="@httprl">HTTP Parallel Request & Threading Library</a>. This may be <strong>necessary</strong> on larger sites with very many links (30.000+), but will also improve overall link check duration on smaller sites. Currently the site has @count links (@count_enabled enabled / @count_disabled disabled).', array('@httprl' => 'http://drupal.org/project/httprl', '@count' => $count_lids_enabled+$count_lids_disabled, '@count_enabled' => $count_lids_enabled, '@count_disabled' => $count_lids_disabled)),
     '#collapsible' => FALSE,
+  );
+  $form['check']['linkchecker_check_library'] = array(
+    '#type' => 'select',
+    '#title' => t('Check library'),
+    '#description' => t('Defines the library that is used for checking links.'),
+    '#default_value' => variable_get('linkchecker_check_library', 'core'),
+    '#options' => array(
+      'core' => t('Drupal core'),
+      'httprl' => t('HTTP Parallel Request Library'),
+    ),
+  );
+  $form['check']['linkchecker_check_connections_max'] = array(
+    '#type' => 'select',
+    '#title' => t('Number of simultaneous connections'),
+    '#description' => t('Defines the maximum number of simultaneous connections that can be opened by the server. <em>HTTP Parallel Request & Threading Library</em> make sure that a single domain is not overloaded beyond RFC limits. For small hosting plans with very limited CPU and RAM it may be required to reduce the default limit.'),
+    '#default_value' => variable_get('linkchecker_check_connections_max', 8),
+    '#options' => drupal_map_assoc(array(2, 4, 8, 16, 24, 32, 48, 64, 96, 128)),
+    '#states' => array(
+      // Hide the setting when Drupal core check library is selected.
+      'invisible' => array(
+        ':input[name="linkchecker_check_library"]' => array('value' => 'core'),
+      ),
+    ),
   );
   $form['check']['linkchecker_check_useragent'] = array(
     '#type' => 'select',

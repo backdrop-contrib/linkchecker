@@ -85,7 +85,12 @@ function drush_linkchecker_clear() {
  * Callback for command linkchecker-check.
  */
 function drush_linkchecker_check() {
-  drush_log('Starting link checking...', 'status');
-  linkchecker_cron();
-  drush_log('Finished checking links.', 'status');
+  drush_log('Starting link checking...', 'info');
+  $run = _linkchecker_check_links();
+  if (!$run) {
+    drush_log('Attempted to re-run link checks while they are already running.', 'warning');
+  }
+  else {
+    drush_log('Finished checking links.', 'completed');
+  }
 }
