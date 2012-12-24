@@ -500,7 +500,7 @@ class LinkCheckerInterfaceTest extends DrupalWebTestCase {
 
     // Confirm that the add block link appears on block overview pages.
     $this->drupalGet('admin/structure/block');
-    $this->assertRaw(l('Add block', 'admin/structure/block/add'), t('Add block link is present on block overview page for default theme.'));
+    $this->assertRaw(l(t('Add block'), 'admin/structure/block/add'), t('Add block link is present on block overview page for default theme.'));
 
     $url1 = 'http://example.com/block/broken/link';
     $body = 'Lorem ipsum dolor sit amet <a href="' . $url1 . '">broken link</a> sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat';

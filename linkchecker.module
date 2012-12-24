@@ -755,8 +755,9 @@ function _linkchecker_status_handling(&$response, $link) {
         // watchdog('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
   }
+
   // Free Memory.
-  $response = new StdClass();
+  $response = new stdClass();
 }
 
 /**

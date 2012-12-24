@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* Minor code style fixes
 
 linkchecker 7.x-1.0, December 24, 2012
 --------------------------------------
