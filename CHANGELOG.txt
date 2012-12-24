@@ -1,6 +1,8 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* #1850210: Autorepair may run out of memory by loading all nodes/comments at once.
+* #1210606: Limited argument length in entity_load() and other functions.
 * Upgraded outdated HTTP user agents.
 * #380052: Add support with non-blocking parallel link checking.
 * #1867460: Prevent save on automatic updates, if content has not changed.

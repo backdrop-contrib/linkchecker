@@ -560,9 +560,13 @@ function _linkchecker_status_handling(&$response, $link) {
         linkchecker_impersonate_user(user_load_by_name(variable_get('linkchecker_impersonate_user', '')));
 
         // NODES: Autorepair all nodes having this outdated link.
-        $nids = db_query('SELECT nid FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid))->fetchCol();
-        $nodes = node_load_multiple($nids);
-        foreach ($nodes as $node) {
+        $result = db_query('SELECT nid FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid));
+        foreach ($result as $row) {
+          // Explicitly don't use node_load_multiple() or the module may run
+          // into issues like http://drupal.org/node/1210606. With this logic
+          // nodes can be updated until an out of memory occurs and further
+          // updates will be made on the remaining nodes only.
+          $node = node_load($row->nid);
           $node_original = clone $node;
           $node = _linkchecker_replace_fields($node, $node->type, 'node', $link->url, $response->redirect_url);
 
@@ -574,11 +578,11 @@ function _linkchecker_status_handling(&$response, $link) {
 
             // Generate a log message for the node_revisions table, visible on
             // the node's revisions tab.
-            $node->log = t('Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $row->nid), '%src' => $link->url, '%dst' => $response->redirect_url));
+            $node->log = t('Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $node->nid), '%src' => $link->url, '%dst' => $response->redirect_url));
 
             // Save changed node and update the node link list.
             node_save($node);
-            watchdog('linkchecker', 'Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $row->nid), '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+            watchdog('linkchecker', 'Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $node->nid), '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
           }
           else {
             watchdog('linkchecker', 'Link update in node failed. Permanently moved link %src not found in node %node. Manual fix required.', array('%node' => url('node/' . $row->nid), '%src' => $link->url), WATCHDOG_WARNING);
@@ -587,9 +591,13 @@ function _linkchecker_status_handling(&$response, $link) {
 
         // COMMENTS: Autorepair all comments having this outdated link.
         if (variable_get('linkchecker_scan_comments', 0)) {
-          $cids = db_query('SELECT cid FROM {linkchecker_comment} WHERE lid = :lid', array(':lid' => $link->lid))->fetchCol();
-          $comments = comment_load_multiple($cids);
-          foreach ($comments as $comment) {
+          $result = db_query('SELECT cid FROM {linkchecker_comment} WHERE lid = :lid', array(':lid' => $link->lid));
+          foreach ($result as $row) {
+            // Explicitly don't use comment_load_multiple() or the module may run
+            // into issues like http://drupal.org/node/1210606. With this logic
+            // comment can be updated until an out of memory occurs and further
+            // updates will be made on the remaining comments only.
+            $comment = comment_load($row->cid);
             $comment_original = clone $comment;
 
             // Replace links in subject.
@@ -601,10 +609,10 @@ function _linkchecker_status_handling(&$response, $link) {
             // Save changed comment and update the comment link list.
             if ($comment_original != $comment) {
               comment_save($comment);
-              watchdog('linkchecker', 'Changed permanently moved link in comment %comment from %src to %dst.', array('%comment' => $comment['cid'], '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+              watchdog('linkchecker', 'Changed permanently moved link in comment %comment from %src to %dst.', array('%comment' => $comment->cid, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
             }
             else {
-              watchdog('linkchecker', 'Link update in comment failed. Permanently moved link %src not found in comment %comment. Manual fix required.', array('%comment' => $comment['cid'], '%src' => $link->url), WATCHDOG_WARNING);
+              watchdog('linkchecker', 'Link update in comment failed. Permanently moved link %src not found in comment %comment. Manual fix required.', array('%comment' => $comment->cid, '%src' => $link->url), WATCHDOG_WARNING);
             }
           }
         }
