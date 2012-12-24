@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* Fixed some typos.
 * #1850210: Autorepair may run out of memory by loading all nodes/comments at once.
 * #1210606: Limited argument length in entity_load() and other functions.
 * Upgraded outdated HTTP user agents.

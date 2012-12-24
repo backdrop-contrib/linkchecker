@@ -28,7 +28,7 @@ Required:
    reported as broken and cannot verified as they should be.
 
    To make sure it always works - it's required to configure the $base_url in
-   the sites settings.php with your public sites URL. Better save than sorry!
+   the sites settings.php with your public sites URL. Better safe than sorry!
 
 
 Known issues:
