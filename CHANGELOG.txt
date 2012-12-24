@@ -21,7 +21,7 @@ linkchecker 7.x-dev, nightly
 * #1441574: Port D6 access bypass bugfixes to D7.
 * #1678812: Notice: Undefined property: stdClass::$module in _linkchecker_add_block_custom_links()
 * #1678812: Refactored blocks extraction/replacement
-* #1678812: Added linkchecker_block_custom_block_get() for a more consitent block_custom object.
+* #1678812: Added linkchecker_block_custom_block_get() for a more consistent block_custom object.
 * #1586022: linkchecker generating bad User-Agent string
 * Status code 500 on HEAD/GET does not increase fail_count
 * #1524732: Notice on blocks save / Blocks body cannot exists
