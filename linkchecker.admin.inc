@@ -139,7 +139,7 @@ function linkchecker_admin_settings_form($form_state) {
     '#default_value' => variable_get('linkchecker_check_library', 'core'),
     '#options' => array(
       'core' => t('Drupal core'),
-      'httprl' => t('HTTP Parallel Request Library'),
+      'httprl' => t('HTTP Parallel Request & Threading Library'),
     ),
   );
   $form['check']['linkchecker_check_connections_max'] = array(
