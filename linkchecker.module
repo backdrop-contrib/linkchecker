@@ -451,9 +451,20 @@ function _linkchecker_check_links() {
     $headers = array();
     $headers['User-Agent'] = $linkchecker_check_useragent;
 
-    // Range: Only request the first 1024 bytes from remote server. This is
-    // required to prevent timeouts on URLs that are large downloads.
-    if ($link->method == 'GET') { $headers['Range'] = 'bytes=0-1024'; }
+    $uri = @parse_url($link->url);
+
+    // URL contains a fragment.
+    if (in_array($link->method, array('HEAD', 'GET')) && !empty($uri['fragment'])) {
+      // We need the full content and not only the HEAD.
+      $link->method = 'GET';
+      // Request text content only (like Firefox/Chrome).
+      $headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+    }
+    elseif ($link->method == 'GET') {
+      // Range: Only request the first 1024 bytes from remote server. This is
+      // required to prevent timeouts on URLs that are large downloads.
+      $headers['Range'] = 'bytes=0-1024';
+    }
 
     // Add in the headers.
     $options = array(
@@ -488,7 +499,18 @@ function _linkchecker_check_links() {
       }
     }
     else {
+      // Drupal core
       $response = drupal_http_request($link->url, $options);
+
+      // Add 'redirect_code' property to core response object for consistency
+      // with HTTPRL object.
+      if ($response->code == 301 && !isset($response->redirect_code)) {
+        $response->redirect_code = $response->code;
+      }
+      // Add 'uri' property to core response object for 'fragment' check and
+      // consistency with HTTPRL object.
+      $response->uri = $uri;
+
       _linkchecker_status_handling($response, $link);
 
       if ((timer_read('page') / 1000) > ($max_execution_time / 2)) {
@@ -526,9 +548,15 @@ function _linkchecker_status_handling(&$response, $link) {
   $response->error = trim(drupal_convert_to_utf8($response->error, 'ISO-8859-1'));
   $response->status_message = trim(drupal_convert_to_utf8($response->status_message, 'ISO-8859-1'));
 
-  // Make core response object consistent with HTTPRL.
-  if ($response->code == 301 && !isset($response->redirect_code)) {
-    $response->redirect_code = $response->code;
+  // Destination anchors in HTML documents may be specified either by the A
+  // element (naming it with the name attribute), or by any other element
+  // (naming with the id attribute).
+  // See http://www.w3.org/TR/html401/struct/links.html
+  if ($response->code == 200 && !empty($response->uri['fragment']) && (!empty($response->data) && !preg_match('/(\s[^>]*(name|id)=["\'])('. preg_quote($response->uri['fragment'], '/') .')(["\'][^>]*>)/i', $response->data))) {
+    // Override status code 200 with status code 404 so it can be handled with
+    // default status code 404 logic and custom error text.
+    $response->code = 404;
+    $response->status_message = $response->error = 'URL fragment identifier not found in content';
   }
 
   switch ($response->code) {
