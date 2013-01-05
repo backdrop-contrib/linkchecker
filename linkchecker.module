@@ -596,7 +596,7 @@ function _linkchecker_status_handling(&$response, $link) {
           // updates will be made on the remaining nodes only.
           $node = node_load($row->nid);
           $node_original = clone $node;
-          $node = _linkchecker_replace_fields($node, $node->type, 'node', $link->url, $response->redirect_url);
+          $node = _linkchecker_replace_fields('node', $node->type, $node, $link->url, $response->redirect_url);
 
           if ($node_original != $node) {
             // Always use the default revision setting. For more information,
@@ -632,7 +632,7 @@ function _linkchecker_status_handling(&$response, $link) {
             _linkchecker_link_replace($comment->subject, $link->url, $response->redirect_url);
 
             // Replace links in fields.
-            $comment = _linkchecker_replace_fields($comment, $comment->node_type, 'comment', $link->url, $response->redirect_url);
+            $comment = _linkchecker_replace_fields('comment', $comment->node_type, $comment, $link->url, $response->redirect_url);
 
             // Save changed comment and update the comment link list.
             if ($comment_original != $comment) {
@@ -786,64 +786,6 @@ function _linkchecker_status_handling(&$response, $link) {
 
   // Free Memory.
   $response = new stdClass();
-}
-
-/**
- * Replace the old url by a new url on 301 status codes.
- *
- * @param object $entity
- *   The object we are working on, can be a $node, $comment.
- * @param string $entity_type
- *   The type of entity, like $node->type or $comment->node_type.
- * @param string $bundle
- *   The type of bundle like 'node' or 'comment'.
- * @param string $old_url
- *   The previous url.
- * @param string $new_url
- *   The new url to replace the old.
- */
-function _linkchecker_replace_fields($entity, $entity_type, $bundle, $old_url, $new_url) {
-  $field_list = field_info_fields();
-  foreach ($field_list as $name => $field) {
-    if (in_array($entity_type, $field['bundles'][$bundle])) {
-      // This is because of a php error.
-      $entity_field =& $entity->$name;
-
-      switch ($field['type']) {
-        // Core fields.
-        case 'text_with_summary':
-          foreach ($entity_field as $language_name => $language_value) {
-            foreach ($language_value as $item_name => $item_value) {
-              _linkchecker_link_replace($entity_field[$language_name][$item_name]['value'], $old_url, $new_url);
-              _linkchecker_link_replace($entity_field[$language_name][$item_name]['summary'], $old_url, $new_url);
-            }
-          }
-          break;
-
-        // Core fields.
-        case 'text_long':
-        case 'text':
-          foreach ($entity_field as $language_name => $language_value) {
-            foreach ($language_value as $item_name => $item_value) {
-              _linkchecker_link_replace($entity_field[$language_name][$item_name]['value'], $old_url, $new_url);
-            }
-          }
-          break;
-
-        // Link module field, http://drupal.org/project/link.
-        case 'link_field':
-          foreach ($entity_field as $language_name => $language_value) {
-            foreach ($language_value as $item_name => $item_value) {
-              _linkchecker_link_replace($entity_field[$language_name][$item_name]['url'], $old_url, $new_url);
-              _linkchecker_link_replace($entity_field[$language_name][$item_name]['title'], $old_url, $new_url);
-            }
-          }
-          break;
-      }
-    }
-  }
-
-  return $entity;
 }
 
 /**
@@ -1085,7 +1027,7 @@ function _linkchecker_extract_node_links($node, $return_field_names = FALSE) {
 
   // Add fields typically not used for urls to the bottom. This way a link may
   // found earlier while looping over $text_items_by_field below.
-  $text_items_by_field = array_merge($text_items_by_field, linkchecker_parse_fields('node', $node, $node->type, TRUE));
+  $text_items_by_field = array_merge($text_items_by_field, _linkchecker_parse_fields('node', $node->type, $node, TRUE));
   $text_items_by_field['title'][] = _filter_url($node->title, $filter);
   $text_items = _linkchecker_array_values_recursive($text_items_by_field);
 
@@ -1226,7 +1168,7 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
   // Create array of comment fields to scan.
   $text_items = array();
   $text_items[] = _filter_url($comment->subject, $filter);
-  $text_items = array_merge($text_items, linkchecker_parse_fields('comment', $comment, $comment->node_type));
+  $text_items = array_merge($text_items, _linkchecker_parse_fields('comment', $comment->node_type, $comment));
 
   // Get the absolute node path for extraction of relative links.
   $languages = language_list();
@@ -1549,12 +1491,12 @@ function _linkchecker_block_custom_links_missing($bid, $links) {
  * This function parse all fields from the entity and returns an array of
  * filtered field items.
  *
- * @param string $bundle
- *   The bundle type to parse. Examples types are 'node', 'comment'.
+ * @param string $entity_type
+ *   The type of entity; e.g. 'node' or 'comment'.
+ * @param string $bundle_name
+ *   The name of the bundle aka node type, e.g. 'article', 'page'.
  * @param object $entity
- *   The entity to parse, a node or a comment object.
- * @param string $type
- *   Content type name e.g. $node->type or $comment->node_type.
+ *   The entity to parse, a $node or a $comment object.
  * @param $return_field_names
  *   If set to TRUE, the returned array will contain the content as keys, and
  *   each element will be an array containing all field names in which the
@@ -1563,62 +1505,113 @@ function _linkchecker_block_custom_links_missing($bid, $links) {
  * @return array
  *   Array of field items with filters applied.
  */
-function linkchecker_parse_fields($bundle, $entity, $type, $return_field_names = FALSE) {
+function _linkchecker_parse_fields($entity_type, $bundle_name, $entity, $return_field_names = FALSE) {
   $text_items = array();
   $text_items_by_field = array();
-  $field_list = field_info_fields();
 
   // Create settings for _filter_url() function.
   $filter = new stdClass;
   $filter->settings['filter_url_length'] = 72;
 
-  foreach ($field_list as $name => $field) {
-    if (!empty($field['bundles'][$bundle]) && in_array($type, $field['bundles'][$bundle])) {
-      // @todo This is because of a php parse error.
-      if (empty($entity->$name)) {
-        continue;
-      }
-      $entity_field = $entity->$name;
+  // Collect the fields from this entity_type and bundle.
+  foreach (field_info_instances($entity_type, $bundle_name) as $field_name => $instance) {
+    $field = field_info_field($field_name);
+    $entity_field = $entity->$field['field_name'];
 
-      switch ($field['type']) {
-        // Core fields.
-        case 'text_with_summary':
-          foreach ($entity_field as $language) {
-            foreach ($language as $item) {
-              $format = isset($item['format']) ? $item['format'] : NULL;
-              $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, entity_language($bundle, $entity), TRUE);
-              $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['summary'], $format, entity_language($bundle, $entity), TRUE);
-            }
+    switch ($field['type']) {
+      // Core fields.
+      case 'text_with_summary':
+        foreach ($entity_field as $language) {
+          foreach ($language as $item) {
+            $format = isset($item['format']) ? $item['format'] : NULL;
+            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, entity_language($entity_type, $entity), TRUE);
+            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['summary'], $format, entity_language($entity_type, $entity), TRUE);
           }
-          break;
+        }
+        break;
 
-        // Core fields.
-        case 'text_long':
-        case 'text':
-          foreach ($entity_field as $language) {
-            foreach ($language as $item) {
-              $format = isset($item['format']) ? $item['format'] : NULL;
-              $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, entity_language($bundle, $entity), TRUE);
-            }
+      // Core fields.
+      case 'text_long':
+      case 'text':
+        foreach ($entity_field as $language) {
+          foreach ($language as $item) {
+            $format = isset($item['format']) ? $item['format'] : NULL;
+            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, entity_language($entity_type, $entity), TRUE);
           }
-          break;
+        }
+        break;
 
-        // Link module field, http://drupal.org/project/link.
-        case 'link_field':
-          foreach ($entity_field as $language) {
-            foreach ($language as $item) {
-              $options = drupal_parse_url($item['url']);
-              $title = !empty($item['title']) ? $item['title'] : '';
-              $text_items[] = $text_items_by_field[$field['field_name']][] = l($title, $options['path'], $options);
-              $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($title, NULL, entity_language($bundle, $entity), TRUE);
-            }
+      // Link module field, http://drupal.org/project/link.
+      case 'link_field':
+        foreach ($entity_field as $language) {
+          foreach ($language as $item) {
+            $options = drupal_parse_url($item['url']);
+            $title = !empty($item['title']) ? $item['title'] : '';
+            $text_items[] = $text_items_by_field[$field['field_name']][] = l($title, $options['path'], $options);
+            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($title, NULL, entity_language($entity_type, $entity), TRUE);
           }
-          break;
-      }
+        }
+        break;
     }
   }
 
   return ($return_field_names) ? $text_items_by_field : $text_items;
+}
+
+/**
+ * Replace the old url by a new url on 301 status codes.
+ *
+ * @param string $entity_type
+ *   The type of entity; e.g. 'node' or 'comment'.
+ * @param string $bundle_name
+ *   The name of the bundle aka node type, e.g. 'article', 'page'.
+ * @param object $entity
+ *   The entity to parse, a $node or a $comment object.
+ * @param string $old_url
+ *   The previous url.
+ * @param string $new_url
+ *   The new url to replace the old.
+ */
+function _linkchecker_replace_fields($entity_type, $bundle_name, $entity, $old_url, $new_url) {
+  // Collect the fields from this entity_type and bundle.
+  foreach (field_info_instances($entity_type, $bundle_name) as $field_name => $instance) {
+    $field = field_info_field($field_name);
+    $entity_field =& $entity->$field['field_name'];
+
+    switch ($field['type']) {
+      // Core fields.
+      case 'text_with_summary':
+        foreach ($entity_field as $language_name => $language_value) {
+          foreach ($language_value as $item_name => $item_value) {
+            _linkchecker_link_replace($entity_field[$language_name][$item_name]['value'], $old_url, $new_url);
+            _linkchecker_link_replace($entity_field[$language_name][$item_name]['summary'], $old_url, $new_url);
+          }
+        }
+        break;
+
+        // Core fields.
+      case 'text_long':
+      case 'text':
+        foreach ($entity_field as $language_name => $language_value) {
+          foreach ($language_value as $item_name => $item_value) {
+            _linkchecker_link_replace($entity_field[$language_name][$item_name]['value'], $old_url, $new_url);
+          }
+        }
+        break;
+
+        // Link module field, http://drupal.org/project/link.
+      case 'link_field':
+        foreach ($entity_field as $language_name => $language_value) {
+          foreach ($language_value as $item_name => $item_value) {
+            _linkchecker_link_replace($entity_field[$language_name][$item_name]['url'], $old_url, $new_url);
+            _linkchecker_link_replace($entity_field[$language_name][$item_name]['title'], $old_url, $new_url);
+          }
+        }
+        break;
+    }
+  }
+
+  return $entity;
 }
 
 /**
