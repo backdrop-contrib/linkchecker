@@ -182,11 +182,12 @@ EOT;
     $folder2 = $this->randomName(5);
 
     // Fill node array.
+    $langcode = LANGUAGE_NONE;
     $edit = array();
     $edit['title'] = $this->randomName(32);
-    $edit['body[und][0][value]'] = $body;
+    $edit["body[$langcode][0][value]"] = $body;
     $edit['path[alias]'] = $folder1 . '/' . $folder2;
-    $edit['body[und][0][format]'] = 'full_html';
+    $edit["body[$langcode][0][format]"] = 'full_html';
 
     // Extract only full qualified URLs.
     variable_set('linkchecker_check_links_types', 1);
