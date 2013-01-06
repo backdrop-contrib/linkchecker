@@ -822,6 +822,13 @@ function linkchecker_node_delete($node) {
  *   The node object that is being inserted.
  */
 function linkchecker_node_insert($node) {
+  // Every moderation module saving a forward revision needs to exit here.
+  // Please see _linkchecker_isDefaultRevision() for more details.
+  // @todo: Refactor this workaround under D8.
+  if (!_linkchecker_isDefaultRevision($node)) {
+    return;
+  }
+
   // The node is going to be published.
   if (_linkchecker_scan_nodetype($node->type) && $node->status == NODE_PUBLISHED) {
     _linkchecker_add_node_links($node);
@@ -835,6 +842,13 @@ function linkchecker_node_insert($node) {
  *   The node object that is being updated.
  */
 function linkchecker_node_update($node) {
+  // Every moderation module saving a forward revision needs to exit here.
+  // Please see _linkchecker_isDefaultRevision() for more details.
+  // @todo: Refactor this workaround under D8.
+  if (!_linkchecker_isDefaultRevision($node)) {
+    return;
+  }
+
   // The node is going to be published.
   if (_linkchecker_scan_nodetype($node->type) && $node->status == NODE_PUBLISHED) {
     _linkchecker_add_node_links($node);
@@ -2390,6 +2404,43 @@ function linkchecker_impersonate_user($new_user = NULL) {
  */
 function linkchecker_revert_user() {
   return linkchecker_impersonate_user();
+}
+
+/**
+ * Checks if this entity is the default revision (published).
+ *
+ * @param object $entity
+ *   The entity object, e.g. $node.
+ *
+ * @return bool
+ *   TRUE if the entity is the default revision, FALSE otherwise.
+ */
+function _linkchecker_isDefaultRevision($entity) {
+  // D7 "Forward revisioning" is complex and causes a node_save() with the
+  // future node in node table. This fires hook_node_update() twice and cause
+  // abnormal behaviour in linkchecker.
+  //
+  // The steps taken by Workbench Moderation is to save the forward revision
+  // first and overwrite this with the live version in a shutdown function in
+  // a second step. This will confuse linkchecker. D7 has no generic property
+  // in the node object, if the node that is updated is the 'published' version
+  // or only a draft of a future version.
+  //
+  // This behaviour will change in D8 where $node->isDefaultRevision has been
+  // introduced. See below links for more details.
+  // - http://drupal.org/node/1879482
+  // - http://drupal.org/node/218755
+  // - http://drupal.org/node/1522154
+  //
+  // Every moderation module saving a forward revision needs to return FALSE.
+  // @todo: Refactor this workaround under D8.
+
+  // Workbench Moderation module
+  if (module_exists('workbench_moderation') && workbench_moderation_node_type_moderated($entity->type) === TRUE && empty($entity->workbench_moderation['updating_live_revision'])) {
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 /**
