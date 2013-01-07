@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* #1850210 followup: _linkchecker_unpublish_nodes() may run out of memory by loading all nodes at once.
 * #1719174: Editing node throws "Undefined property" stdClass::$nid in hook_node_prepare().
 * #1879316: Support Workbench Moderation workflow (forward revisons handling)
 * Fixed a test to use LANGUAGE_NONE constant.
