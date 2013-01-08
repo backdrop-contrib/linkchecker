@@ -1538,8 +1538,8 @@ function _linkchecker_parse_fields($entity_type, $bundle_name, $entity, $return_
         foreach ($entity_field as $language) {
           foreach ($language as $item) {
             $format = isset($item['format']) ? $item['format'] : NULL;
-            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, entity_language($entity_type, $entity), TRUE);
-            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['summary'], $format, entity_language($entity_type, $entity), TRUE);
+            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, linkchecker_entity_language($entity_type, $entity), TRUE);
+            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['summary'], $format, linkchecker_entity_language($entity_type, $entity), TRUE);
           }
         }
         break;
@@ -1550,7 +1550,7 @@ function _linkchecker_parse_fields($entity_type, $bundle_name, $entity, $return_
         foreach ($entity_field as $language) {
           foreach ($language as $item) {
             $format = isset($item['format']) ? $item['format'] : NULL;
-            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, entity_language($entity_type, $entity), TRUE);
+            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, linkchecker_entity_language($entity_type, $entity), TRUE);
           }
         }
         break;
@@ -1562,7 +1562,7 @@ function _linkchecker_parse_fields($entity_type, $bundle_name, $entity, $return_
             $options = drupal_parse_url($item['url']);
             $title = !empty($item['title']) ? $item['title'] : '';
             $text_items[] = $text_items_by_field[$field['field_name']][] = l($title, $options['path'], $options);
-            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($title, NULL, entity_language($entity_type, $entity), TRUE);
+            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($title, NULL, linkchecker_entity_language($entity_type, $entity), TRUE);
           }
         }
         break;
@@ -2444,6 +2444,28 @@ function _linkchecker_isDefaultRevision($entity) {
   }
 
   return TRUE;
+}
+
+/**
+ * Returns the language code of the given entity.
+*
+* Backward compatibility layer to ensure that installations running an older
+* version of core where entity_language() is not avilable do not break.
+*
+* @param string $entity_type
+*   An entity type.
+* @param object $entity
+*   An entity object.
+*/
+function linkchecker_entity_language($entity_type, $entity) {
+  $langcode = NULL;
+  if (function_exists('entity_language')) {
+    $langcode = entity_language($entity_type, $entity);
+  }
+  elseif (!empty($entity->language)) {
+    $langcode = $entity->language;
+  }
+  return $langcode;
 }
 
 /**

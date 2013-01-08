@@ -4,4 +4,3 @@ configure = admin/config/content/linkchecker
 core = 7.x
 files[] = linkchecker.drush.inc
 files[] = linkchecker.test
-dependencies[] = system (>7.14)
