@@ -192,14 +192,11 @@ function _linkchecker_report_page($query, $account = NULL) {
     );
   }
 
-  if (empty($rows)) {
-    $rows[] = array(array('data' => t('No broken links have been found.'), 'colspan' => count($header)));
-  }
-
   $build['linkchecker_table'] = array(
     '#theme' => 'table',
     '#header' => $header,
     '#rows' => $rows,
+    '#empty' => t('No broken links have been found.'),
   );
   $build['linkchecker_pager'] = array('#theme' => 'pager');
 

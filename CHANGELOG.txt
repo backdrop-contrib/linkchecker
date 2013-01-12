@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* Use #empty in empty table.
 * #1882602: Compatible with Drupal <7.15
 * #1850210 followup: _linkchecker_unpublish_nodes() may run out of memory by loading all nodes at once.
 * #1719174: Editing node throws "Undefined property" stdClass::$nid in hook_node_prepare().
