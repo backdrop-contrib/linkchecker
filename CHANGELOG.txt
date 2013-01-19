@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* #1891900: Uninstall of variable 'linkchecker_check_connections_max' failed.
 * Use #empty in empty table.
 * #1882602: Compatible with Drupal <7.15
 * #1850210 followup: _linkchecker_unpublish_nodes() may run out of memory by loading all nodes at once.

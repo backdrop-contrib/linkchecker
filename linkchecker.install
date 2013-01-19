@@ -19,7 +19,7 @@ function linkchecker_install() {
 function linkchecker_uninstall() {
   variable_del('linkchecker_action_status_code_301');
   variable_del('linkchecker_action_status_code_404');
-  variable_get('linkchecker_check_connections_max');
+  variable_del('linkchecker_check_connections_max');
   variable_del('linkchecker_check_library');
   variable_del('linkchecker_check_links_interval');
   variable_del('linkchecker_check_links_types');
