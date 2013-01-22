@@ -13,8 +13,8 @@ function linkchecker_redirect_insert($redirect) {
 }
 
 /**
-* Implements hook_redirect_update().
-*/
+ * Implements hook_redirect_update().
+ */
 function linkchecker_redirect_update($redirect) {
   // It's unknown if this is a redirect for HTTP/HTTPS or the encoded urls.
   $url_http = url($redirect->source, array('absolute' => TRUE, $redirect->source_options));

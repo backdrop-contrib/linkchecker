@@ -133,8 +133,8 @@ function linkchecker_menu() {
 }
 
 /**
-* Implements hook_admin_paths().
-*/
+ * Implements hook_admin_paths().
+ */
 function linkchecker_admin_paths() {
   $paths = array(
     // This is marked as an administrative path so that if it is visited from
@@ -166,41 +166,41 @@ function _linkchecker_user_access_edit_link_settings($link) {
 }
 
 /**
-* Determines if the current user has access to view a link.
-*
-* Link URLs can contain private information (for example, usernames and
-* passwords). So this module should only display links to a user if the link
-* already appears in at least one place on the site where the user would
-* otherwise have access to see it.
-*/
+ * Determines if the current user has access to view a link.
+ *
+ * Link URLs can contain private information (for example, usernames and
+ * passwords). So this module should only display links to a user if the link
+ * already appears in at least one place on the site where the user would
+ * otherwise have access to see it.
+ */
 function _linkchecker_link_access($link) {
   $link = (object) $link;
   return _linkchecker_link_node_ids($link) || _linkchecker_link_comment_ids($link) || _linkchecker_link_block_ids($link);
 }
 
 /**
-* Returns IDs of nodes that contain a link which the current user may be allowed to view.
-*
-* Important note: For performance reasons, this function is not always
-* guaranteed to return the exact list of node IDs that the current user is
-* allowed to view. It will, however, always return an empty array if the user
-* does not have access to view *any* such nodes, thereby meeting the security
-* goals of _linkchecker_link_access() and other places that call it.
-*
-* In the case where a user has access to some of the nodes that contain the
-* link, this function may return some node IDs that the user does not have
-* access to. Therefore, use caution with its results.
-*
-* @param $link
-*   An object representing the link to check.
-* @param $node_author_account
-*   (optional) If a user account object is provided, the returned nodes will
-*   additionally be restricted to only those owned by this account. Otherwise,
-*   nodes owned by any user account may be returned.
-* @return
-*   An array of node IDs that contain the provided link and that the current
-*   user may be allowed to view.
-*/
+ * Returns IDs of nodes that contain a link which the current user may be allowed to view.
+ *
+ * Important note: For performance reasons, this function is not always
+ * guaranteed to return the exact list of node IDs that the current user is
+ * allowed to view. It will, however, always return an empty array if the user
+ * does not have access to view *any* such nodes, thereby meeting the security
+ * goals of _linkchecker_link_access() and other places that call it.
+ *
+ * In the case where a user has access to some of the nodes that contain the
+ * link, this function may return some node IDs that the user does not have
+ * access to. Therefore, use caution with its results.
+ *
+ * @param $link
+ *   An object representing the link to check.
+ * @param $node_author_account
+ *   (optional) If a user account object is provided, the returned nodes will
+ *   additionally be restricted to only those owned by this account. Otherwise,
+ *   nodes owned by any user account may be returned.
+ * @return
+ *   An array of node IDs that contain the provided link and that the current
+ *   user may be allowed to view.
+ */
 function _linkchecker_link_node_ids($link, $node_author_account = NULL) {
   static $fields_with_node_links = array();
 
@@ -2448,15 +2448,15 @@ function _linkchecker_isDefaultRevision($entity) {
 
 /**
  * Returns the language code of the given entity.
-*
-* Backward compatibility layer to ensure that installations running an older
-* version of core where entity_language() is not avilable do not break.
-*
-* @param string $entity_type
-*   An entity type.
-* @param object $entity
-*   An entity object.
-*/
+ *
+ * Backward compatibility layer to ensure that installations running an older
+ * version of core where entity_language() is not avilable do not break.
+ *
+ * @param string $entity_type
+ *   An entity type.
+ * @param object $entity
+ *   An entity object.
+ */
 function linkchecker_entity_language($entity_type, $entity) {
   $langcode = NULL;
   if (function_exists('entity_language')) {
