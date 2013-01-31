@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* No need to check comment/block enable variables in auto update.
 * Issue #1901018 by hass: ERROR - __clone method called on non-object.
 * Issue #1901014 by hass: ERROR - Cannot use object of type stdClass as array.
 * Code style: indent secondary line of comment one space
