@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* Issue #1901018 by hass: ERROR - __clone method called on non-object.
 * Issue #1901014 by hass: ERROR - Cannot use object of type stdClass as array.
 * Code style: indent secondary line of comment one space
 * #1891900: Uninstall of variable 'linkchecker_check_connections_max' failed.

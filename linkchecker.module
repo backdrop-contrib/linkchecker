@@ -595,25 +595,32 @@ function _linkchecker_status_handling(&$response, $link) {
           // nodes can be updated until an out of memory occurs and further
           // updates will be made on the remaining nodes only.
           $node = node_load($row->nid);
-          $node_original = clone $node;
-          $node = _linkchecker_replace_fields('node', $node->type, $node, $link->url, $response->redirect_url);
 
-          if ($node_original != $node) {
-            // Always use the default revision setting. For more information,
-            // see node_object_prepare().
-            $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
-            $node->revision = in_array('revision', $node_options);
+          // Has the node object loaded successfully?
+          if (is_object($node)) {
+            $node_original = clone $node;
+            $node = _linkchecker_replace_fields('node', $node->type, $node, $link->url, $response->redirect_url);
 
-            // Generate a log message for the node_revisions table, visible on
-            // the node's revisions tab.
-            $node->log = t('Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $node->nid), '%src' => $link->url, '%dst' => $response->redirect_url));
+            if ($node_original != $node) {
+              // Always use the default revision setting. For more information,
+              // see node_object_prepare().
+              $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
+              $node->revision = in_array('revision', $node_options);
 
-            // Save changed node and update the node link list.
-            node_save($node);
-            watchdog('linkchecker', 'Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $node->nid), '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+              // Generate a log message for the node_revisions table, visible on
+              // the node's revisions tab.
+              $node->log = t('Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $node->nid), '%src' => $link->url, '%dst' => $response->redirect_url));
+
+              // Save changed node and update the node link list.
+              node_save($node);
+              watchdog('linkchecker', 'Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $node->nid), '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+            }
+            else {
+              watchdog('linkchecker', 'Link update in node failed. Permanently moved link %src not found in node %node. Manual fix required.', array('%node' => url('node/' . $row->nid), '%src' => $link->url), WATCHDOG_WARNING);
+            }
           }
           else {
-            watchdog('linkchecker', 'Link update in node failed. Permanently moved link %src not found in node %node. Manual fix required.', array('%node' => url('node/' . $row->nid), '%src' => $link->url), WATCHDOG_WARNING);
+            watchdog('linkchecker', 'Loading node %node for update failed. Manual fix required.', array('%node' => $row->nid), WATCHDOG_ERROR);
           }
         }
 
@@ -626,21 +633,28 @@ function _linkchecker_status_handling(&$response, $link) {
             // comment can be updated until an out of memory occurs and further
             // updates will be made on the remaining comments only.
             $comment = comment_load($row->cid);
-            $comment_original = clone $comment;
 
-            // Replace links in subject.
-            _linkchecker_link_replace($comment->subject, $link->url, $response->redirect_url);
+            // Has the comment object loaded successfully?
+            if (is_object($comment)) {
+              $comment_original = clone $comment;
 
-            // Replace links in fields.
-            $comment = _linkchecker_replace_fields('comment', $comment->node_type, $comment, $link->url, $response->redirect_url);
+              // Replace links in subject.
+              _linkchecker_link_replace($comment->subject, $link->url, $response->redirect_url);
 
-            // Save changed comment and update the comment link list.
-            if ($comment_original != $comment) {
-              comment_save($comment);
-              watchdog('linkchecker', 'Changed permanently moved link in comment %comment from %src to %dst.', array('%comment' => $comment->cid, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+              // Replace links in fields.
+              $comment = _linkchecker_replace_fields('comment', $comment->node_type, $comment, $link->url, $response->redirect_url);
+
+              // Save changed comment and update the comment link list.
+              if ($comment_original != $comment) {
+                comment_save($comment);
+                watchdog('linkchecker', 'Changed permanently moved link in comment %comment from %src to %dst.', array('%comment' => $comment->cid, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+              }
+              else {
+                watchdog('linkchecker', 'Link update in comment failed. Permanently moved link %src not found in comment %comment. Manual fix required.', array('%comment' => $comment->cid, '%src' => $link->url), WATCHDOG_WARNING);
+              }
             }
             else {
-              watchdog('linkchecker', 'Link update in comment failed. Permanently moved link %src not found in comment %comment. Manual fix required.', array('%comment' => $comment->cid, '%src' => $link->url), WATCHDOG_WARNING);
+              watchdog('linkchecker', 'Loading comment %comment for update failed. Manual fix required.', array('%comment' => $comment->cid), WATCHDOG_ERROR);
             }
           }
         }
@@ -651,23 +665,30 @@ function _linkchecker_status_handling(&$response, $link) {
           $result = db_query('SELECT bid FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
           foreach ($result as $row) {
             $block_custom = linkchecker_block_custom_block_get($row->bid);
-            $block_custom_original = clone $block_custom;
 
-            // Now replace the outdated link with the permanently moved one in
-            // all custom block fields.
-            _linkchecker_link_replace($block_custom->info, $link->url, $response->redirect_url);
-            _linkchecker_link_replace($block_custom->body['value'], $link->url, $response->redirect_url);
+            // Has the custom block object loaded successfully?
+            if (is_object($block_custom)) {
+              $block_custom_original = clone $block_custom;
 
-            if ($block_custom_original != $block_custom) {
-              // Save changed block and update the block link list.
-              block_custom_block_save((array) $block_custom, $block_custom->delta);
-              // There is no hook that fires on block_custom_block_save(),
-              // therefore do link extraction programmatically.
-              _linkchecker_add_block_custom_links($block_custom, $block_custom->delta);
-              watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom->delta, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+              // Now replace the outdated link with the permanently moved one in
+              // all custom block fields.
+              _linkchecker_link_replace($block_custom->info, $link->url, $response->redirect_url);
+              _linkchecker_link_replace($block_custom->body['value'], $link->url, $response->redirect_url);
+
+              if ($block_custom_original != $block_custom) {
+                // Save changed block and update the block link list.
+                block_custom_block_save((array) $block_custom, $block_custom->delta);
+                // There is no hook that fires on block_custom_block_save(),
+                // therefore do link extraction programmatically.
+                _linkchecker_add_block_custom_links($block_custom, $block_custom->delta);
+                watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom->delta, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+              }
+              else {
+                watchdog('linkchecker', 'Link update in block failed. Permanently moved link %src not found in block %bid. Manual fix required.', array('%bid' => $block_custom->delta, '%src' => $link->url), WATCHDOG_WARNING);
+              }
             }
             else {
-              watchdog('linkchecker', 'Link update in block failed. Permanently moved link %src not found in block %bid. Manual fix required.', array('%bid' => $block_custom->delta, '%src' => $link->url), WATCHDOG_WARNING);
+              watchdog('linkchecker', 'Loading block %bid for update failed. Manual fix required.', array('%bid' => $block_custom->delta), WATCHDOG_ERROR);
             }
           }
         }
