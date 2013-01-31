@@ -660,7 +660,7 @@ function _linkchecker_status_handling(&$response, $link) {
 
             if ($block_custom_original != $block_custom) {
               // Save changed block and update the block link list.
-              block_custom_block_save($block_custom, $block_custom->delta);
+              block_custom_block_save((array) $block_custom, $block_custom->delta);
               // There is no hook that fires on block_custom_block_save(),
               // therefore do link extraction programmatically.
               _linkchecker_add_block_custom_links($block_custom, $block_custom->delta);
