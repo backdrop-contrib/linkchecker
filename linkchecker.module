@@ -191,13 +191,14 @@ function _linkchecker_link_access($link) {
  * link, this function may return some node IDs that the user does not have
  * access to. Therefore, use caution with its results.
  *
- * @param $link
+ * @param object $link
  *   An object representing the link to check.
- * @param $node_author_account
+ * @param object $node_author_account
  *   (optional) If a user account object is provided, the returned nodes will
  *   additionally be restricted to only those owned by this account. Otherwise,
  *   nodes owned by any user account may be returned.
- * @return
+ *
+ * @return array
  *   An array of node IDs that contain the provided link and that the current
  *   user may be allowed to view.
  */
@@ -296,13 +297,14 @@ function _linkchecker_link_node_ids($link, $node_author_account = NULL) {
 /**
  * Returns IDs of comments that contain a link which the current user is allowed to view.
  *
- * @param $link
+ * @param object $link
  *   An object representing the link to check.
- * @param $comment_author_account
+ * @param object $comment_author_account
  *   (optional) If a user account object is provided, the returned comments
  *   will additionally be restricted to only those owned by this account.
  *   Otherwise, comments owned by any user account may be returned.
- * @return
+ *
+ * @return array
  *   An array of comment IDs that contain the provided link and that the
  *   current user is allowed to view.
  */
@@ -342,9 +344,10 @@ function _linkchecker_link_comment_ids($link, $comment_author_account = NULL) {
 /**
  * Returns IDs of blocks that contain a link which the current user is allowed to view.
  *
- * @param $link
+ * @param object $link
  *   An object representing the link to check.
- * @return
+ *
+ * @return array
  *   An array of custom block IDs that contain the provided link and that the
  *   current user is allowed to view.
  */
@@ -487,7 +490,7 @@ function _linkchecker_check_links() {
             'function' => '_linkchecker_status_handling',
           ),
           $link, // This need to be passed or it's not send back to _linkchecker_status_handling()
-        )
+        ),
       );
       // Queue up the requests.
       httprl_request($link->url, $options);
@@ -499,7 +502,7 @@ function _linkchecker_check_links() {
       }
     }
     else {
-      // Drupal core
+      // Drupal core.
       $response = drupal_http_request($link->url, $options);
 
       // Add 'redirect_code' property to core response object for consistency
@@ -514,7 +517,8 @@ function _linkchecker_check_links() {
       _linkchecker_status_handling($response, $link);
 
       if ((timer_read('page') / 1000) > ($max_execution_time / 2)) {
-        break; // Stop once we have used over half of the maximum execution time.
+        // Stop once we have used over half of the maximum execution time.
+        break;
       }
     }
   }
@@ -543,8 +547,12 @@ function _linkchecker_status_handling(&$response, $link) {
   //   what results in a database UPDATE failure. For more information, see
   //   http://drupal.org/node/371495.
   //   Workaround: ISO-8859-1 as source encoding may be wrong, but WFM.
-  if (!isset($response->error)) { $response->error = ''; }
-  if (!isset($response->status_message)) { $response->status_message = ''; }
+  if (!isset($response->error)) {
+    $response->error = '';
+  }
+  if (!isset($response->status_message)) {
+    $response->status_message = '';
+  }
   $response->error = trim(drupal_convert_to_utf8($response->error, 'ISO-8859-1'));
   $response->status_message = trim(drupal_convert_to_utf8($response->status_message, 'ISO-8859-1'));
 
@@ -552,7 +560,7 @@ function _linkchecker_status_handling(&$response, $link) {
   // element (naming it with the name attribute), or by any other element
   // (naming with the id attribute).
   // See http://www.w3.org/TR/html401/struct/links.html
-  if ($response->code == 200 && !empty($response->uri['fragment']) && (!empty($response->data) && !preg_match('/(\s[^>]*(name|id)=["\'])('. preg_quote($response->uri['fragment'], '/') .')(["\'][^>]*>)/i', $response->data))) {
+  if ($response->code == 200 && !empty($response->uri['fragment']) && (!empty($response->data) && !preg_match('/(\s[^>]*(name|id)=["\'])(' . preg_quote($response->uri['fragment'], '/') . ')(["\'][^>]*>)/i', $response->data))) {
     // Override status code 200 with status code 404 so it can be handled with
     // default status code 404 logic and custom error text.
     $response->code = 404;
@@ -564,7 +572,7 @@ function _linkchecker_status_handling(&$response, $link) {
       // Skip these and try them again next cron run.
       break;
 
-    case  -2: // HTTPRL: maximum allowed redirects exhausted.
+    case -2: // HTTPRL: maximum allowed redirects exhausted.
     case 301:
       // Remote site send status code 301 and link needs an update.
       db_update('linkchecker_link')
@@ -573,7 +581,7 @@ function _linkchecker_status_handling(&$response, $link) {
           'code' => $response->redirect_code,
           'error' => $response->status_message,
           'fail_count' => 0,
-          'last_checked' => time()
+          'last_checked' => time(),
         ))
         ->expression('fail_count', 'fail_count + 1')
         ->execute();
@@ -583,7 +591,7 @@ function _linkchecker_status_handling(&$response, $link) {
       // link and if we trust this change we are able to replace the old link
       // with the new one without any hand work.
       $auto_repair_301 = variable_get('linkchecker_action_status_code_301', 0);
-      if ($auto_repair_301 && $auto_repair_301 <= ($link->fail_count+1) && valid_url($response->redirect_url, TRUE)) {
+      if ($auto_repair_301 && $auto_repair_301 <= ($link->fail_count + 1) && valid_url($response->redirect_url, TRUE)) {
         // Switch anonymous user to an admin.
         linkchecker_impersonate_user(user_load_by_name(variable_get('linkchecker_impersonate_user', '')));
 
@@ -704,7 +712,7 @@ function _linkchecker_status_handling(&$response, $link) {
           'code' => $response->code,
           'error' => $response->error,
           'fail_count' => 0,
-          'last_checked' => time()
+          'last_checked' => time(),
         ))
         ->expression('fail_count', 'fail_count + 1')
         ->execute();
@@ -712,7 +720,7 @@ function _linkchecker_status_handling(&$response, $link) {
 
       // If unpublishing limit is reached, unpublish all nodes having this link.
       $linkchecker_action_status_code_404 = variable_get('linkchecker_action_status_code_404', 0);
-      if ($linkchecker_action_status_code_404 && $linkchecker_action_status_code_404 <= ($link->fail_count+1)) {
+      if ($linkchecker_action_status_code_404 && $linkchecker_action_status_code_404 <= ($link->fail_count + 1)) {
         // Switch anonymous user to an admin.
         linkchecker_impersonate_user(user_load_by_name(variable_get('linkchecker_impersonate_user', '')));
         _linkchecker_unpublish_nodes($link->lid);
@@ -722,7 +730,7 @@ function _linkchecker_status_handling(&$response, $link) {
 
     case 405:
       // - 405: Special error handling if method is not allowed. Switch link
-      //        checking to GET method and try again.
+      //   checking to GET method and try again.
       db_update('linkchecker_link')
         ->condition('lid', $link->lid)
         ->fields(array(
@@ -730,7 +738,7 @@ function _linkchecker_status_handling(&$response, $link) {
           'code' => $response->code,
           'error' => $response->error,
           'fail_count' => 0,
-          'last_checked' => time()
+          'last_checked' => time(),
         ))
         ->expression('fail_count', 'fail_count + 1')
         ->execute();
@@ -748,7 +756,7 @@ function _linkchecker_status_handling(&$response, $link) {
           'code' => $response->code,
           'error' => $response->error,
           'fail_count' => 0,
-          'last_checked' => time()
+          'last_checked' => time(),
         ))
         ->expression('fail_count', 'fail_count + 1')
         ->execute();
@@ -763,7 +771,7 @@ function _linkchecker_status_handling(&$response, $link) {
           'code' => $response->code,
           'error' => $response->error,
           'fail_count' => 0,
-          'last_checked' => time()
+          'last_checked' => time(),
         ))
         ->expression('fail_count', 'fail_count + 1')
         ->execute();
@@ -793,7 +801,7 @@ function _linkchecker_status_handling(&$response, $link) {
             'code' => $response->code,
             'error' => $response->error,
             'fail_count' => 0,
-            'last_checked' => time()
+            'last_checked' => time(),
           ))
           ->expression('fail_count', 'fail_count + 1')
           ->execute();
@@ -824,9 +832,6 @@ function linkchecker_node_prepare($node) {
 
 /**
  * Implements hook_node_delete().
- *
- * @param object $node
- *   The node object that is being deleted.
  */
 function linkchecker_node_delete($node) {
   _linkchecker_delete_node_links($node->nid);
@@ -834,15 +839,12 @@ function linkchecker_node_delete($node) {
 
 /**
  * Implements hook_node_insert().
- *
- * @param object $node
- *   The node object that is being inserted.
  */
 function linkchecker_node_insert($node) {
   // Every moderation module saving a forward revision needs to exit here.
-  // Please see _linkchecker_isDefaultRevision() for more details.
+  // Please see _linkchecker_isdefaultrevision() for more details.
   // @todo: Refactor this workaround under D8.
-  if (!_linkchecker_isDefaultRevision($node)) {
+  if (!_linkchecker_isdefaultrevision($node)) {
     return;
   }
 
@@ -854,15 +856,12 @@ function linkchecker_node_insert($node) {
 
 /**
  * Implements hook_node_update().
- *
- * @param object $node
- *   The node object that is being updated.
  */
 function linkchecker_node_update($node) {
   // Every moderation module saving a forward revision needs to exit here.
-  // Please see _linkchecker_isDefaultRevision() for more details.
+  // Please see _linkchecker_isdefaultrevision() for more details.
   // @todo: Refactor this workaround under D8.
-  if (!_linkchecker_isDefaultRevision($node)) {
+  if (!_linkchecker_isdefaultrevision($node)) {
     return;
   }
 
@@ -878,9 +877,6 @@ function linkchecker_node_update($node) {
 
 /**
  * Implements hook_comment_delete().
- *
- * @param object $comment
- *   The comment object that is being deleted.
  */
 function linkchecker_comment_delete($comment) {
   _linkchecker_delete_comment_links($comment->cid);
@@ -888,9 +884,6 @@ function linkchecker_comment_delete($comment) {
 
 /**
  * Implements hook_comment_insert().
- *
- * @param object $comment
- *   The comment object that is being inserted.
  */
 function linkchecker_comment_insert($comment) {
   // The comment is going to be published.
@@ -902,9 +895,6 @@ function linkchecker_comment_insert($comment) {
 
 /**
  * Implements hook_comment_update().
- *
- * @param object $comment
- *   The comment object that is being updated.
  */
 function linkchecker_comment_update($comment) {
   // The node is going to be published.
@@ -1002,10 +992,10 @@ function linkchecker_block_custom_delete_form_submit($form, &$form_state) {
 /**
  * Returns information from database about a user-created (custom) block.
  *
- * @param $bid
+ * @param int $bid
  *   ID of the block to get information for.
  *
- * @return
+ * @return object
  *   Associative object of information stored in the database for this block.
  *   Object keys:
  *   - module: 'block' as the source of the custom blocks data.
@@ -1018,7 +1008,7 @@ function linkchecker_block_custom_block_get($bid) {
   $block_custom = block_custom_block_get($bid);
 
   if ($block_custom) {
-    $block = new stdClass;
+    $block = new stdClass();
     $block->module = 'block';
     $block->delta = $block_custom['bid'];
     $block->info = $block_custom['info'];
@@ -1036,20 +1026,21 @@ function linkchecker_block_custom_block_get($bid) {
 /**
  * Extracts links from a node.
  *
- * @param $node
+ * @param object $node
  *   The fully populated node object.
- * @param $return_field_names
+ * @param bool $return_field_names
  *   If set to TRUE, the returned array will contain the link URLs as keys, and
  *   each element will be an array containing all field names in which the URL
  *   is found. Otherwise, a simple array of URLs will be returned.
- * @return
- *    An array whose keys are fully qualified and unique URLs found in the node
- *    (as returned by _linkchecker_extract_links()), or a more complex
- *    structured array (see above) if $return_field_names is TRUE.
+ *
+ * @return array
+ *   An array whose keys are fully qualified and unique URLs found in the node
+ *   (as returned by _linkchecker_extract_links()), or a more complex
+ *   structured array (see above) if $return_field_names is TRUE.
  */
 function _linkchecker_extract_node_links($node, $return_field_names = FALSE) {
 
-  $filter = new stdClass;
+  $filter = new stdClass();
   $filter->settings['filter_url_length'] = 72;
 
   // Create array of node fields to scan.
@@ -1067,7 +1058,7 @@ function _linkchecker_extract_node_links($node, $return_field_names = FALSE) {
   // Note: An "undefined language" (value: 'und') isn't listed in the available
   // languages variable $languages.
   $url_options = (empty($node->language) || empty($languages[$node->language])) ? array('absolute' => TRUE) : array('language' => $languages[$node->language], 'absolute' => TRUE);
-  $path = url('node/'. $node->nid, $url_options);
+  $path = url('node/' . $node->nid, $url_options);
 
   // Extract all links in a node.
   $links = _linkchecker_extract_links(implode(' ', $text_items), $path);
@@ -1109,9 +1100,9 @@ function _linkchecker_extract_node_links($node, $return_field_names = FALSE) {
 /**
  * Add node links to database.
  *
- * @param $node
+ * @param object $node
  *   The fully populated node object.
- * @param $skip_missing_links_detection
+ * @param bool $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
  *   the need for content re-scans is detected by the number of missing links.
  */
@@ -1193,7 +1184,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
  */
 function _linkchecker_add_comment_links($comment, $skip_missing_links_detection = FALSE) {
 
-  $filter = new stdClass;
+  $filter = new stdClass();
   $filter->settings['filter_url_length'] = 72;
 
   // Create array of comment fields to scan.
@@ -1298,7 +1289,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
     return;
   }
 
-  $filter = new stdClass;
+  $filter = new stdClass();
   $filter->settings['filter_url_length'] = 72;
 
   // Create array of custom block fields to scan. All fields cannot exists.
@@ -1523,12 +1514,12 @@ function _linkchecker_block_custom_links_missing($bid, $links) {
  * filtered field items.
  *
  * @param string $entity_type
- *   The type of entity; e.g. 'node' or 'comment'.
+ *   The type of entity; e.g., 'node', 'comment'.
  * @param string $bundle_name
- *   The name of the bundle aka node type, e.g. 'article', 'page'.
+ *   The name of the bundle aka node type, e.g., 'article', 'page'.
  * @param object $entity
  *   The entity to parse, a $node or a $comment object.
- * @param $return_field_names
+ * @param bool $return_field_names
  *   If set to TRUE, the returned array will contain the content as keys, and
  *   each element will be an array containing all field names in which the
  *   content is found. Otherwise, a simple array with content will be returned.
@@ -1541,7 +1532,7 @@ function _linkchecker_parse_fields($entity_type, $bundle_name, $entity, $return_
   $text_items_by_field = array();
 
   // Create settings for _filter_url() function.
-  $filter = new stdClass;
+  $filter = new stdClass();
   $filter->settings['filter_url_length'] = 72;
 
   // Collect the fields from this entity_type and bundle.
@@ -1593,9 +1584,9 @@ function _linkchecker_parse_fields($entity_type, $bundle_name, $entity, $return_
  * Replace the old url by a new url on 301 status codes.
  *
  * @param string $entity_type
- *   The type of entity; e.g. 'node' or 'comment'.
+ *   The type of entity; e.g., 'node', 'comment'.
  * @param string $bundle_name
- *   The name of the bundle aka node type, e.g. 'article', 'page'.
+ *   The name of the bundle aka node type, e.g., 'article', 'page'.
  * @param object $entity
  *   The entity to parse, a $node or a $comment object.
  * @param string $old_url
@@ -1620,7 +1611,7 @@ function _linkchecker_replace_fields($entity_type, $bundle_name, $entity, $old_u
         }
         break;
 
-        // Core fields.
+      // Core fields.
       case 'text_long':
       case 'text':
         foreach ($entity_field as $language_name => $language_value) {
@@ -1630,7 +1621,7 @@ function _linkchecker_replace_fields($entity_type, $bundle_name, $entity, $old_u
         }
         break;
 
-        // Link module field, http://drupal.org/project/link.
+      // Link module field, http://drupal.org/project/link.
       case 'link_field':
         foreach ($entity_field as $language_name => $language_value) {
           foreach ($language_value as $item_name => $item_value) {
@@ -1709,16 +1700,16 @@ function _linkchecker_cleanup_links() {
  * Extract links from content.
  *
  * @param string $text
- *    The text to be scanned for links.
+ *   The text to be scanned for links.
  * @param string $content_path
- *    Path to the content that is currently scanned for links. This value is
- *    required to build full qualified links from relative links. Relative links
- *    are not extracted from content, if path is not provided.
+ *   Path to the content that is currently scanned for links. This value is
+ *   required to build full qualified links from relative links. Relative links
+ *   are not extracted from content, if path is not provided.
  *
  * @return array
- *    Array whose keys are fully qualified and unique URLs found in the
- *    content, and whose values are arrays of actual text (raw URLs or paths)
- *    corresponding to each fully qualified URL.
+ *   Array whose keys are fully qualified and unique URLs found in the
+ *   content, and whose values are arrays of actual text (raw URLs or paths)
+ *   corresponding to each fully qualified URL.
  */
 function _linkchecker_extract_links($text = '', $content_path = NULL) {
   global $base_root, $is_https;
@@ -1797,7 +1788,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
       foreach ($params as $param) {
         // @todo
         // - Try to extract links in unkown "flashvars" values
-        //   (e.g. file=http://, data=http://).
+        //   (e.g., file=http://, data=http://).
         $names = array('archive', 'filename', 'href', 'movie', 'src', 'url');
         if ($param->hasAttribute('name') && in_array($param->getAttribute('name'), $names)) {
           $urls[] = $param->getAttribute('value');
@@ -1887,7 +1878,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
         // normalization has completed to prevent hostname removal by the regex.
         // This logic intentionally does not implement all the rules definied in
         // RFC 3986, section 5.2.4 to show broken links and over-dot-segmented
-        // URIs; e.g. http://example.com/../../foo/bar.
+        // URIs; e.g., http://example.com/../../foo/bar.
         // For more information, see http://drupal.org/node/832388.
         $path = substr_replace($absolute_content_path . $url_decoded, '', 0, strlen($base_root));
 
@@ -1934,7 +1925,7 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
     // Remove protocols and hostname from local URLs.
     $base_roots = array(
       drupal_strtolower('http://' . $_SERVER['HTTP_HOST']),
-      drupal_strtolower('https://' . $_SERVER['HTTP_HOST'])
+      drupal_strtolower('https://' . $_SERVER['HTTP_HOST']),
     );
     $old_link = str_replace($base_roots, '', $old_link_fqdn);
     $new_link = str_replace($base_roots, '', $new_link_fqdn);
@@ -1968,7 +1959,7 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
       // ampersand "&amp;".
       $old_links = array_unique($old_links);
 
-      // Load HTML code into DOM
+      // Load HTML code into DOM.
       $html_dom = filter_dom_load($text);
 
       // Finds all hyperlinks in the content.
@@ -2073,7 +2064,7 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
           foreach ($params as $param) {
             // @todo
             // - Try to replace links in unkown "flashvars" values
-            //   (e.g. file=http://, data=http://).
+            //   (e.g., file=http://, data=http://).
             $names = array('archive', 'filename', 'href', 'movie', 'src', 'url');
             if ($param->hasAttribute('name') && in_array($param->getAttribute('name'), $names)) {
               if (in_array($param->getAttribute('value'), $old_links)) {
@@ -2183,7 +2174,7 @@ function _linkchecker_check_markup($text, $format_id = NULL, $langcode = '', $ca
   // Perform filtering.
   foreach ($filters as $name => $filter) {
     if (!in_array($name, $filters_blacklist)) {
-        if ($filter->status && isset($filter_info[$name]['process callback']) && function_exists($filter_info[$name]['process callback'])) {
+      if ($filter->status && isset($filter_info[$name]['process callback']) && function_exists($filter_info[$name]['process callback'])) {
         $function = $filter_info[$name]['process callback'];
         $text = $function($text, $filter, $format, $langcode, $cache, $cache_id);
       }
@@ -2368,17 +2359,17 @@ function linkchecker_link_load($lid) {
 }
 
 /**
- * Impersonates another user. http://drupal.org/node/287292#comment-3162350
+ * Impersonates another user, see http://drupal.org/node/287292#comment-3162350.
  *
  * Each time this function is called, the active user is saved and $new_user
  * becomes the active user. Multiple calls to this function can be nested,
  * and session saving will be disabled until all impersonation attempts have
  * been reverted using linkchecker_revert_user().
  *
- * @param $new_user
+ * @param int|object $new_user
  *   User to impersonate, either a UID or a user object.
  *
- * @return
+ * @return object
  *   Current user object.
  *
  * @see linkchecker_revert_user()
@@ -2417,7 +2408,7 @@ function linkchecker_impersonate_user($new_user = NULL) {
 /**
  * Reverts to the previous user after impersonating.
  *
- * @return
+ * @return object
  *   Current user.
  *
  * @see linkchecker_impersonate_user()
@@ -2430,12 +2421,12 @@ function linkchecker_revert_user() {
  * Checks if this entity is the default revision (published).
  *
  * @param object $entity
- *   The entity object, e.g. $node.
+ *   The entity object, e.g., $node.
  *
  * @return bool
  *   TRUE if the entity is the default revision, FALSE otherwise.
  */
-function _linkchecker_isDefaultRevision($entity) {
+function _linkchecker_isdefaultrevision($entity) {
   // D7 "Forward revisioning" is complex and causes a node_save() with the
   // future node in node table. This fires hook_node_update() twice and cause
   // abnormal behaviour in linkchecker.
@@ -2455,7 +2446,7 @@ function _linkchecker_isDefaultRevision($entity) {
   // Every moderation module saving a forward revision needs to return FALSE.
   // @todo: Refactor this workaround under D8.
 
-  // Workbench Moderation module
+  // Workbench Moderation module.
   if (module_exists('workbench_moderation') && workbench_moderation_node_type_moderated($entity->type) === TRUE && empty($entity->workbench_moderation['updating_live_revision'])) {
     return FALSE;
   }
@@ -2473,6 +2464,9 @@ function _linkchecker_isDefaultRevision($entity) {
  *   An entity type.
  * @param object $entity
  *   An entity object.
+ *
+ * @return string
+ *   The entity language code.
  */
 function linkchecker_entity_language($entity_type, $entity) {
   $langcode = NULL;
@@ -2488,7 +2482,7 @@ function linkchecker_entity_language($entity_type, $entity) {
 /**
  * Return all the values of one-dimensional and multidimensional arrays.
  *
- * @return
+ * @return array
  *   Returns all the values from the input array and indexes the array numerically.
  */
 function _linkchecker_array_values_recursive(array $array) {

@@ -4,6 +4,7 @@
  * @file
  * Test file for Link checker module.
  */
+
 class LinkCheckerLinkExtractionTest extends DrupalWebTestCase {
 
   public static function getInfo() {
@@ -199,11 +200,7 @@ EOT;
 
     // Save node.
     $this->drupalPost('node/add/page', $edit, t('Save'));
-
-    // @todo fix this test
-    // $this->assertText(t('@type %title has been created.', array('@type' => 'Basic page', '%title' => $edit['title'])), t('Node was created.'));
     $this->assertText(t('@type @title has been created.', array('@type' => 'Basic page', '@title' => $edit['title'])), t('Node was created.'));
-    //$this->assertText(t('has been created.'), t('Node was created.'));
 
     // Verify if the content links are extracted properly.
     $urls_fqdn = array(
@@ -304,7 +301,6 @@ EOT;
     $urls_expected_count = count($urls_fqdn + $urls_relative);
     $this->assertEqual($urls_in_database, $urls_expected_count, t('Found @urls_in_database URLs in database matches expected result of @urls_expected_count.', array('@urls_in_database' => $urls_in_database, '@urls_expected_count' => $urls_expected_count)));
 
-
     // Verify if link check has been enabled for normal URLs.
     $urls = array(
       'http://www.lagrandeepicerie.fr/#e-boutique/Les_produits_du_moment,2/coffret_vins_doux_naturels,149',
@@ -336,7 +332,6 @@ EOT;
     foreach ($urls as $url) {
       $this->assertTrue($this->getLinkcheckerLink($url)->status, t('Link check for %url is enabled.', array('%url' => $url)));
     }
-
 
     // Verify if link check has been disabled for example.com/net/org URLs.
     $documentation_urls = array(
@@ -397,26 +392,26 @@ class LinkCheckerInterfaceTest extends DrupalWebTestCase {
   public function setUp() {
     parent::setUp('block', 'linkchecker', 'path');
     // @todo: Add comment interface test.
-    //parent::setUp('block', 'comment', 'linkchecker', 'path');
+    // parent::setUp('block', 'comment', 'linkchecker', 'path');
 
     $full_html_format = filter_format_load('full_html');
     $permissions = array(
-        // Block permissions
-        'administer blocks',
-        // Comment permissions
-        'administer comments',
-        'access comments',
-        'post comments',
-        'skip comment approval',
-        'edit own comments',
-        // Node permissions
-        'create page content',
-        'edit own page content',
-        // Path aliase permissions
-        'administer url aliases',
-        'create url aliases',
-        // Content filter permissions
-        filter_permission_name($full_html_format),
+      // Block permissions.
+      'administer blocks',
+      // Comment permissions.
+      'administer comments',
+      'access comments',
+      'post comments',
+      'skip comment approval',
+      'edit own comments',
+      // Node permissions.
+      'create page content',
+      'edit own page content',
+      // Path aliase permissions.
+      'administer url aliases',
+      'create url aliases',
+      // Content filter permissions.
+      filter_permission_name($full_html_format),
     );
 
     $user = $this->drupalCreateUser($permissions);
