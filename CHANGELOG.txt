@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* Issue #1926558 by hass: Block extraction re-scans fail.
 
 linkchecker 7.x-1.1, February 14, 2012
 --------------------------------------
