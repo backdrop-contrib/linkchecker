@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* Updated README.TXT
 * Added Smiley module and Web Links modules to filter blacklist. 
 * Issue #1923328 by larowlan: Fragment check fails when source page contains spaces between attribute name, equals and value.
 * Issue #1923328 by hass: Notice: Undefined property: stdClass::$field_tags
