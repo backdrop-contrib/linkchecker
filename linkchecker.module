@@ -32,6 +32,15 @@ define('LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS', "example.com\nexample.net\n
  * - Insert view filter, http://drupal.org/project/insert_view
  *     name: insert_view
  *     tags: [view:my_view]
+ * - Smiley filter, http://drupal.org/project/smiley
+ *     name: smiley
+ *     tags: Depends on icon set, for e.g: ":) :-) :smile:"
+ * - Web Links Embed, http://drupal.org/project/weblinks
+ *     name: weblinks_embed
+ *     tags: [links-embed: id], [links-embed: name]
+ * - Web Links Filter, http://drupal.org/project/weblinks
+ *     name: weblinks_filter
+ *     tags: [link: title]
  *
  * @todo
  * - Smileys Filter, http://drupal.org/project/smileys
@@ -43,14 +52,8 @@ define('LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS', "example.com\nexample.net\n
  * - Weblink filter, http://drupal.org/project/links
  *     name: links_weblink/0
  *     tags: [weblink:node_id|text], [weblink:node_id/link_id], [weblink:http://weblink.example.com/]
- * - Web Links Embed, http://drupal.org/project/weblinks
- *     name: weblinks_embed/0
- *     tags: [links-embed: id], [links-embed: name]
- * - Web Links Filter, http://drupal.org/project/weblinks
- *     name: weblinks_filter/0
- *     tags: [link: title]
  */
-define('LINKCHECKER_DEFAULT_FILTER_BLACKLIST', 'filter_autop|insert_block|insert_node/0|insert_view|smileys|links_weblink/0|weblinks_embed/0|weblinks_filter/0');
+define('LINKCHECKER_DEFAULT_FILTER_BLACKLIST', 'filter_autop|insert_block|insert_view|smiley|smileys|weblinks_embed|weblinks_filter');
 
 /**
  * Implements hook_permission().
