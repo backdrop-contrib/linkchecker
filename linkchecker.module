@@ -563,7 +563,7 @@ function _linkchecker_status_handling(&$response, $link) {
   // element (naming it with the name attribute), or by any other element
   // (naming with the id attribute).
   // See http://www.w3.org/TR/html401/struct/links.html
-  if ($response->code == 200 && !empty($response->uri['fragment']) && (!empty($response->data) && !preg_match('/(\s[^>]*(name|id)(\s+)?=(\s+)?["\'])(' . preg_quote($response->uri['fragment'], '/') . ')(["\'][^>]*>)/i', $response->data))) {
+  if ($response->code == 200 && in_array($response->headers['content-type'], array('text/html', 'application/xhtml+xml', 'application/xml')) && !empty($response->uri['fragment']) && (!empty($response->data) && !preg_match('/(\s[^>]*(name|id)(\s+)?=(\s+)?["\'])(' . preg_quote($response->uri['fragment'], '/') . ')(["\'][^>]*>)/i', $response->data))) {
     // Override status code 200 with status code 404 so it can be handled with
     // default status code 404 logic and custom error text.
     $response->code = 404;
