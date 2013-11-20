@@ -1549,9 +1549,12 @@ function _linkchecker_parse_fields($entity_type, $bundle_name, $entity, $return_
       case 'text_with_summary':
         foreach ($entity_field as $language) {
           foreach ($language as $item) {
-            $format = isset($item['format']) ? $item['format'] : NULL;
-            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, linkchecker_entity_language($entity_type, $entity), TRUE);
-            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['summary'], $format, linkchecker_entity_language($entity_type, $entity), TRUE);
+            $item += array(
+              'format' => NULL,
+              'summary' => '',
+            );
+            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $item['format'], linkchecker_entity_language($entity_type, $entity), TRUE);
+            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['summary'], $item['format'], linkchecker_entity_language($entity_type, $entity), TRUE);
           }
         }
         break;
@@ -1561,7 +1564,9 @@ function _linkchecker_parse_fields($entity_type, $bundle_name, $entity, $return_
       case 'text':
         foreach ($entity_field as $language) {
           foreach ($language as $item) {
-            $format = isset($item['format']) ? $item['format'] : NULL;
+            $item += array(
+              'format' => NULL,
+            );
             $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['value'], $format, linkchecker_entity_language($entity_type, $entity), TRUE);
           }
         }
@@ -1571,10 +1576,12 @@ function _linkchecker_parse_fields($entity_type, $bundle_name, $entity, $return_
       case 'link_field':
         foreach ($entity_field as $language) {
           foreach ($language as $item) {
+            $item += array(
+              'title' => '',
+            );
             $options = drupal_parse_url(link_cleanup_url($item['url']));
-            $title = !empty($item['title']) ? $item['title'] : '';
-            $text_items[] = $text_items_by_field[$field['field_name']][] = l($title, $options['path'], $options);
-            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($title, NULL, linkchecker_entity_language($entity_type, $entity), TRUE);
+            $text_items[] = $text_items_by_field[$field['field_name']][] = l($item['title'], $options['path'], $options);
+            $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['title'], NULL, linkchecker_entity_language($entity_type, $entity), TRUE);
           }
         }
         break;

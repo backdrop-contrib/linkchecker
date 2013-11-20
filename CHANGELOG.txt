@@ -1,6 +1,7 @@
 linkchecker 7.x-dev, nightly
 ----------------------------
 
+* Issue #1334056 by Alan D., hass: Undefined indices in linkchecker_parse_fields() and _linkchecker_add_node_links()
 * Added Smiley module and Web Links modules to filter blacklist. 
 * Issue #1923328 by larowlan: Fragment check fails when source page contains spaces between attribute name, equals and value.
 * Issue #1923328 by hass: Notice: Undefined property: stdClass::$field_tags
