@@ -563,10 +563,14 @@ function _linkchecker_status_handling(&$response, $link) {
   // element (naming it with the name attribute), or by any other element
   // (naming with the id attribute).
   // See http://www.w3.org/TR/html401/struct/links.html
+  //
+  // Notes:
+  // - '#top' is a reserved fragment that must not exist in a page.
   if ($response->code == 200
     && !empty($response->data)
     && !empty($response->headers['content-type'])
     && !empty($response->uri['fragment'])
+    && !in_array($response->uri['fragment'], array('#top'))
     && in_array($response->headers['content-type'], array('text/html', 'application/xhtml+xml', 'application/xml'))
     && !preg_match('/(\s[^>]*(name|id)(\s+)?=(\s+)?["\'])(' . preg_quote($response->uri['fragment'], '/') . ')(["\'][^>]*>)/i', $response->data)
     ) {
