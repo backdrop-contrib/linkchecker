@@ -184,6 +184,19 @@ function linkchecker_admin_settings_form($form_state) {
     '#title' => t('Do not check the link status of links containing these URLs'),
     '#description' => t('By default this list contains the domain names reserved for use in documentation and not available for registration. See <a href="@rfc-2606">RFC 2606</a>, Section 3 for more information. URLs on this list are still extracted, but the link setting <em>Check link status</em> becomes automatically disabled to prevent false alarms. If you change this list you need to clear all link data and re-analyze your content. Otherwise this setting will only affect new links added after the configuration change.', array('@rfc-2606' => 'http://www.rfc-editor.org/rfc/rfc2606.txt')),
   );
+  $form['check']['linkchecker_log_level'] = array(
+    '#default_value' => variable_get('linkchecker_log_level', WATCHDOG_INFO),
+    '#type' => 'select',
+    '#title' => t('Log level'),
+    '#description' => t('Controls the severity of logging.'),
+    '#options' => array(
+      WATCHDOG_DEBUG => t('Debug messages'),
+      WATCHDOG_INFO => t('All messages (default)'),
+      WATCHDOG_NOTICE => t('Notices and errors'),
+      WATCHDOG_WARNING => t('Warnings and errors'),
+      WATCHDOG_ERROR => t('Errors only'),
+    ),
+  );
 
   $form['error'] = array(
     '#type' => 'fieldset',

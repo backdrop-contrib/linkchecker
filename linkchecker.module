@@ -150,6 +150,45 @@ function linkchecker_admin_paths() {
 }
 
 /**
+ * Conditionally logs a system message.
+ *
+ * @param $type
+ *   The category to which this message belongs. Can be any string, but the
+ *   general practice is to use the name of the module calling watchdog().
+ * @param $message
+ *   The message to store in the log. Keep $message translatable
+ *   by not concatenating dynamic values into it! Variables in the
+ *   message should be added by using placeholder strings alongside
+ *   the variables argument to declare the value of the placeholders.
+ *   See t() for documentation on how $message and $variables interact.
+ * @param $variables
+ *   Array of variables to replace in the message on display or
+ *   NULL if message is already translated or not possible to
+ *   translate.
+ * @param $severity
+ *   The severity of the message; one of the following values as defined in
+ *   @link http://www.faqs.org/rfcs/rfc3164.html RFC 3164: @endlink
+ *   - WATCHDOG_EMERGENCY: Emergency, system is unusable.
+ *   - WATCHDOG_ALERT: Alert, action must be taken immediately.
+ *   - WATCHDOG_CRITICAL: Critical conditions.
+ *   - WATCHDOG_ERROR: Error conditions.
+ *   - WATCHDOG_WARNING: Warning conditions.
+ *   - WATCHDOG_NOTICE: (default) Normal but significant conditions.
+ *   - WATCHDOG_INFO: Informational messages.
+ *   - WATCHDOG_DEBUG: Debug-level messages.
+ * @param $link
+ *   A link to associate with the message.
+ *
+ * @see watchdog_severity_levels()
+ * @see watchdog()
+ */
+function linkchecker_watchdog_log($type, $message, $variables = array(), $severity = WATCHDOG_NOTICE, $link = NULL) {
+  if ($severity <= variable_get('linkchecker_log_level', WATCHDOG_INFO)) {
+    watchdog($type, $message, $variables, $severity, $link);
+  }
+}
+
+/**
  * Access callback for user/%user/linkchecker.
  *
  * @param object $account
@@ -442,7 +481,7 @@ function _linkchecker_check_links() {
 
   // Make sure this is the only process trying to run this function.
   if (!lock_acquire(__FUNCTION__, $max_execution_time)) {
-    watchdog('linkchecker', 'Attempted to re-run link checks while they are already running.', array(), WATCHDOG_WARNING);
+    linkchecker_watchdog_log('linkchecker', 'Attempted to re-run link checks while they are already running.', array(), WATCHDOG_WARNING);
     return FALSE;
   }
 
@@ -544,8 +583,8 @@ function _linkchecker_check_links() {
 
   // Release the lock.
   lock_release(__FUNCTION__);
-  watchdog('linkchecker', 'Link checks completed.', array(), WATCHDOG_INFO);
-  watchdog('linkchecker', 'Memory usage: @memory_get_usage, Peak memory usage: @memory_get_peak_usage.', array('@memory_get_peak_usage' => format_size(memory_get_peak_usage()), '@memory_get_usage' => format_size(memory_get_usage())), WATCHDOG_DEBUG);
+  linkchecker_watchdog_log('linkchecker', 'Link checks completed.', array(), WATCHDOG_INFO);
+  linkchecker_watchdog_log('linkchecker', 'Memory usage: @memory_get_usage, Peak memory usage: @memory_get_peak_usage.', array('@memory_get_peak_usage' => format_size(memory_get_peak_usage()), '@memory_get_usage' => format_size(memory_get_usage())), WATCHDOG_DEBUG);
   return TRUE;
 }
 
@@ -650,14 +689,14 @@ function _linkchecker_status_handling(&$response, $link) {
 
               // Save changed node and update the node link list.
               node_save($node);
-              watchdog('linkchecker', 'Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $node->nid), '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+              linkchecker_watchdog_log('linkchecker', 'Changed permanently moved link in %node from %src to %dst.', array('%node' => url('node/' . $node->nid), '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
             }
             else {
-              watchdog('linkchecker', 'Link update in node failed. Permanently moved link %src not found in node %node. Manual fix required.', array('%node' => url('node/' . $row->nid), '%src' => $link->url), WATCHDOG_WARNING);
+              linkchecker_watchdog_log('linkchecker', 'Link update in node failed. Permanently moved link %src not found in node %node. Manual fix required.', array('%node' => url('node/' . $row->nid), '%src' => $link->url), WATCHDOG_WARNING);
             }
           }
           else {
-            watchdog('linkchecker', 'Loading node %node for update failed. Manual fix required.', array('%node' => $row->nid), WATCHDOG_ERROR);
+            linkchecker_watchdog_log('linkchecker', 'Loading node %node for update failed. Manual fix required.', array('%node' => $row->nid), WATCHDOG_ERROR);
           }
         }
 
@@ -683,14 +722,14 @@ function _linkchecker_status_handling(&$response, $link) {
             // Save changed comment and update the comment link list.
             if ($comment_original != $comment) {
               comment_save($comment);
-              watchdog('linkchecker', 'Changed permanently moved link in comment %comment from %src to %dst.', array('%comment' => $comment->cid, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+              linkchecker_watchdog_log('linkchecker', 'Changed permanently moved link in comment %comment from %src to %dst.', array('%comment' => $comment->cid, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
             }
             else {
-              watchdog('linkchecker', 'Link update in comment failed. Permanently moved link %src not found in comment %comment. Manual fix required.', array('%comment' => $comment->cid, '%src' => $link->url), WATCHDOG_WARNING);
+              linkchecker_watchdog_log('linkchecker', 'Link update in comment failed. Permanently moved link %src not found in comment %comment. Manual fix required.', array('%comment' => $comment->cid, '%src' => $link->url), WATCHDOG_WARNING);
             }
           }
           else {
-            watchdog('linkchecker', 'Loading comment %comment for update failed. Manual fix required.', array('%comment' => $comment->cid), WATCHDOG_ERROR);
+            linkchecker_watchdog_log('linkchecker', 'Loading comment %comment for update failed. Manual fix required.', array('%comment' => $comment->cid), WATCHDOG_ERROR);
           }
         }
 
@@ -715,14 +754,14 @@ function _linkchecker_status_handling(&$response, $link) {
               // There is no hook that fires on block_custom_block_save(),
               // therefore do link extraction programmatically.
               _linkchecker_add_block_custom_links($block_custom, $block_custom->delta);
-              watchdog('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom->delta, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+              linkchecker_watchdog_log('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom->delta, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
             }
             else {
-              watchdog('linkchecker', 'Link update in block failed. Permanently moved link %src not found in block %bid. Manual fix required.', array('%bid' => $block_custom->delta, '%src' => $link->url), WATCHDOG_WARNING);
+              linkchecker_watchdog_log('linkchecker', 'Link update in block failed. Permanently moved link %src not found in block %bid. Manual fix required.', array('%bid' => $block_custom->delta, '%src' => $link->url), WATCHDOG_WARNING);
             }
           }
           else {
-            watchdog('linkchecker', 'Loading block %bid for update failed. Manual fix required.', array('%bid' => $block_custom->delta), WATCHDOG_ERROR);
+            linkchecker_watchdog_log('linkchecker', 'Loading block %bid for update failed. Manual fix required.', array('%bid' => $block_custom->delta), WATCHDOG_ERROR);
           }
         }
 
@@ -730,7 +769,7 @@ function _linkchecker_status_handling(&$response, $link) {
         linkchecker_revert_user();
       }
       else {
-        watchdog('linkchecker', 'Link %link has changed and needs to be updated.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
+        linkchecker_watchdog_log('linkchecker', 'Link %link has changed and needs to be updated.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
       break;
 
@@ -745,7 +784,7 @@ function _linkchecker_status_handling(&$response, $link) {
         ))
         ->expression('fail_count', 'fail_count + 1')
         ->execute();
-      watchdog('linkchecker', 'Broken link %link has been found.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
+      linkchecker_watchdog_log('linkchecker', 'Broken link %link has been found.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
 
       // If unpublishing limit is reached, unpublish all nodes having this link.
       $linkchecker_action_status_code_404 = variable_get('linkchecker_action_status_code_404', 0);
@@ -772,7 +811,7 @@ function _linkchecker_status_handling(&$response, $link) {
         ->expression('fail_count', 'fail_count + 1')
         ->execute();
 
-      watchdog('linkchecker', 'Method HEAD is not allowed for link %link. Method has been changed to GET.', array('%link' => $link->url), WATCHDOG_INFO, l(t('Broken links'), 'admin/reports/linkchecker'));
+      linkchecker_watchdog_log('linkchecker', 'Method HEAD is not allowed for link %link. Method has been changed to GET.', array('%link' => $link->url), WATCHDOG_INFO, l(t('Broken links'), 'admin/reports/linkchecker'));
       break;
 
     case 500:
@@ -790,7 +829,7 @@ function _linkchecker_status_handling(&$response, $link) {
         ->expression('fail_count', 'fail_count + 1')
         ->execute();
 
-        watchdog('linkchecker', 'Broken link %link has been found.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
+        linkchecker_watchdog_log('linkchecker', 'Broken link %link has been found.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
       else {
         db_update('linkchecker_link')
@@ -805,7 +844,7 @@ function _linkchecker_status_handling(&$response, $link) {
         ->expression('fail_count', 'fail_count + 1')
         ->execute();
 
-        watchdog('linkchecker', 'Internal server error for link %link. Method has been changed to GET.', array('%link' => $link->url), WATCHDOG_INFO, l(t('Broken links'), 'admin/reports/linkchecker'));
+        linkchecker_watchdog_log('linkchecker', 'Internal server error for link %link. Method has been changed to GET.', array('%link' => $link->url), WATCHDOG_INFO, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
       break;
 
@@ -821,7 +860,7 @@ function _linkchecker_status_handling(&$response, $link) {
             'last_checked' => time(),
           ))
           ->execute();
-        // watchdog('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
+        // linkchecker_watchdog_log('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
       else {
         db_update('linkchecker_link')
@@ -834,7 +873,7 @@ function _linkchecker_status_handling(&$response, $link) {
           ))
           ->expression('fail_count', 'fail_count + 1')
           ->execute();
-        // watchdog('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
+        // linkchecker_watchdog_log('linkchecker', 'Unhandled link error %link has been found.', array('%link' => $link->url), WATCHDOG_ERROR, l(t('Broken links'), 'admin/reports/linkchecker'));
       }
   }
 
@@ -2219,7 +2258,7 @@ function _linkchecker_check_markup($text, $format_id = NULL, $langcode = '', $ca
   }
   // If the requested text format does not exist, the text cannot be filtered.
   if (!$format = filter_format_load($format_id)) {
-    watchdog('filter', 'Missing text format: %format.', array('%format' => $format_id), WATCHDOG_ALERT);
+    linkchecker_watchdog_log('filter', 'Missing text format: %format.', array('%format' => $format_id), WATCHDOG_ALERT);
     return '';
   }
 
@@ -2435,7 +2474,7 @@ function _linkchecker_unpublish_nodes($lid) {
     $node = node_load($row->nid);
     $node->status = NODE_NOT_PUBLISHED;
     node_save($node);
-    watchdog('linkchecker', 'Set @type %title to unpublished.', array('@type' => $node->type, '%title' => $node->title));
+    linkchecker_watchdog_log('linkchecker', 'Set @type %title to unpublished.', array('@type' => $node->type, '%title' => $node->title));
   }
 }
 
