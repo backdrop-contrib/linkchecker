@@ -491,14 +491,14 @@ function _linkchecker_check_links() {
   // run and guess that 2 links can be checked per second with 1 thread, what is
   // nevertheless uncommon. The max_execution_time can be used to calculate
   // a useful value that is higher, but not totally out of scope and limits the
-  // query resultset to a resonable size.
+  // query result set to a reasonable size.
   $linkchecker_check_connections_max = variable_get('linkchecker_check_connections_max', 8);
   $check_links_max_per_cron_run = ($has_httprl) ? ($linkchecker_check_connections_max * $max_execution_time) : $max_execution_time;
 
   $linkchecker_check_links_interval = variable_get('linkchecker_check_links_interval', 2419200);
   $linkchecker_check_useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
 
-  // Connection limit can be overriden via settings.php. Two connections is the
+  // Connection limit can be overridden via settings.php. Two connections is the
   // limit defined in RFC http://www.ietf.org/rfc/rfc2616.txt. Modern browsers
   // are typically using 6-8 connections and no more. Never use more and keep
   // in mind that you can overload other people servers.
