@@ -35,7 +35,7 @@ class LinkCheckerLinkExtractionTest extends DrupalWebTestCase {
   public function testLinkCheckerCreateNodeWithLinks() {
 
     // Enable all node type page for link extraction.
-    variable_set('linkchecker_scan_nodetypes', array('page'));
+    variable_set('linkchecker_scan_node_page', TRUE);
     variable_set('linkchecker_scan_blocks', 1);
 
     // Core enables the URL filter for "Full HTML" by default.
@@ -427,7 +427,7 @@ class LinkCheckerInterfaceTest extends DrupalWebTestCase {
 
   public function testLinkCheckerCreateNodeWithBrokenLinks() {
     // Enable all node type page for link extraction.
-    variable_set('linkchecker_scan_nodetypes', array('page'));
+    variable_set('linkchecker_scan_node_page', TRUE);
 
     // Core enables the URL filter for "Full HTML" by default.
     // -> Blacklist / Disable URL filter for testing.
