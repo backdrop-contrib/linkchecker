@@ -614,17 +614,20 @@ function _linkchecker_status_handling(&$response, $link) {
   $response->error = trim(drupal_convert_to_utf8($response->error, 'ISO-8859-1'));
   $response->status_message = trim(drupal_convert_to_utf8($response->status_message, 'ISO-8859-1'));
 
-  // Destination anchors in HTML documents may be specified either by the A
-  // element (naming it with the name attribute), or by any other element
-  // (naming with the id attribute).
+  // Destination anchors in HTML documents may be specified either by:
+  // - the A element (naming it with the name attribute)
+  // - or by any other element (naming with the id attribute)
+  // - and must not contain a key/value pair as these type of hash fragments are
+  //   typically used by AJAX applications to prevent additionally HTTP requests
+  //   e.g. http://www.example.com/ajax.html#key1=value1&key2=value2
+  // - and must not contain '/' or ',' as this are not normal anchors.
+  // - and '#top' is a reserved fragment that must not exist in a page.
   // See http://www.w3.org/TR/html401/struct/links.html
-  //
-  // Notes:
-  // - '#top' is a reserved fragment that must not exist in a page.
   if ($response->code == 200
     && !empty($response->data)
     && !empty($response->headers['content-type'])
     && !empty($response->uri['fragment'])
+    && preg_match('/=|\/|,/', $response->uri['fragment']) == FALSE
     && !in_array($response->uri['fragment'], array('#top'))
     && in_array($response->headers['content-type'], array('text/html', 'application/xhtml+xml', 'application/xml'))
     && !preg_match('/(\s[^>]*(name|id)(\s+)?=(\s+)?["\'])(' . preg_quote($response->uri['fragment'], '/') . ')(["\'][^>]*>)/i', $response->data)
