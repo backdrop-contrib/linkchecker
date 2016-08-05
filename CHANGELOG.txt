@@ -1,5 +1,5 @@
-linkchecker 7.x-dev, nightly
-----------------------------
+linkchecker 7.x-1.3, August 6, 2016
+-----------------------------------
 
 * Issue #2060243 by hswong3i, hass: Split linkchecker_scan_nodetypes as content type specific.
 * Issue #2651180 by hass: Ignore fragment used for ajax requests
