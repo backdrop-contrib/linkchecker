@@ -37,7 +37,6 @@ function linkchecker_uninstall() {
   variable_del('linkchecker_ignore_response_codes');
   variable_del('linkchecker_impersonate_user');
   variable_del('linkchecker_scan_blocks');
-  variable_del('linkchecker_scan_comments');
   variable_del('linkchecker_log_level');
 
   foreach (node_type_get_names() as $type => $name) {
