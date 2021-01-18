@@ -1,11 +1,19 @@
 Link Checker
 ============
 
-Installation:
+The Link checker module extracts links from your content when saved and
+periodically tries to detect broken hypertext links by checking the remote
+sites and evaluating the HTTP response codes. It shows all broken links in the
+reports/logs section and on the content edit page, if a link check has been failed.
+An author specific broken links report is also available in "My Account".
+
+Installation
+------------
 
 1. Install linkchecker via Modules page.
 2. Go to Modules and enable the "Link checker" module.
-3. Go to Configuration -> Content authoring -> Link checker and enable the node types to scan.
+3. Go to Configuration -> Content authoring -> Link checker and enable the
+   content types to scan.
 4. Under "Link extraction" check all HTML tags that should be scanned.
 5. Adjust the other settings if the defaults don't suit your needs.
 6. Save configuration
@@ -17,20 +25,21 @@ If not, make sure cron is configured and running properly on your Backdrop
 installation. The Link checker module also logs somewhat useful info about it's
 activity under Reports -> Recent log messages.
 
-Required:
+Required
+--------
 
 1. For internal URL extraction you need to make sure that Cron always get called
-   with your real public site URL (for e.g. https://example.com/cron.php). Make
-   sure it's never executed with https://localhost/cron.php or any other
+   with your real public site URL (for e.g. <https://example.com/cron.php>). Make
+   sure it's never executed with <https://localhost/cron.php> or any other
    hostnames or ports, not available from public. Otherwise all links may be
    reported as broken and cannot verified as they should be.
 
-   To make sure it always works - it's required to configure the $base_url in
-   the sites settings.php with your public sites URL. Better safe than sorry!
+   To make sure it always works - it's required to configure the `$base_url` in
+   the `settings.php` with your public sites URL. Better safe than sorry!
 
 Known issues:
 
-There are a lot of known issues in backdrop_http_request(). These have been solved
+There are a lot of known issues in `backdrop_http_request()`. These have been solved
 in HTTPRL. As a workaround it's recommended to use HTTPRL in linkchecker.
 
 Issues

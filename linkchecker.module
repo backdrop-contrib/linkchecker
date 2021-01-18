@@ -2,7 +2,7 @@
 
 /**
  * @file
- * This module periodically check links in given node types, blocks etc.
+ * This module periodically check links in given content types, blocks etc.
  *
  * Developed by Alexander Hass, https://www.yaml-for-drupal.com/.
  */
@@ -264,7 +264,7 @@ function _linkchecker_link_access($link) {
 function _linkchecker_link_node_ids($link, $node_author_account = NULL) {
   static $fields_with_node_links = array();
 
-  // Exit if all node types are disabled or if the user cannot access content,
+  // Exit if all content types are disabled or if the user cannot access content,
   // there is no need to check further.
   $linkchecker_scan_nodetypes = linkchecker_scan_node_types();
   if (empty($linkchecker_scan_nodetypes) || !user_access('access content')) {
@@ -1865,7 +1865,7 @@ function _linkchecker_replace_fields($entity_type, $bundle_name, $entity, $old_u
  * as they may be reused by other new content.
  */
 function _linkchecker_cleanup_links() {
-  // Remove disabled node types no longer in use.
+  // Remove disabled content types no longer in use.
   $node_types = linkchecker_scan_node_types();
   if (!empty($node_types)) {
     $subquery1 = db_select('node', 'n')
@@ -2381,7 +2381,7 @@ function _linkchecker_check_markup($text, $format_id = NULL, $langcode = '', $ca
   $filter_info = filter_get_filters();
 
   // Do not run placeholder or special tag filters used as references to nodes
-  // like 'weblink' or 'weblinks' node types. If the original link node is
+  // like 'weblink' or 'weblinks' content types. If the original link node is
   // updated, all links are automatically up-to-date and there is no need to
   // notify about the broken link on all nodes having a link reference in
   // content. This would only confuse the authors as they may also not be able

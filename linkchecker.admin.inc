@@ -308,7 +308,7 @@ function linkchecker_admin_settings_form_submit($form, &$form_state) {
 /**
  * Submit callback.
  *
- * Analyze fields in all node types, comments, custom blocks.
+ * Analyze fields in all content types, comments, custom blocks.
  */
 function linkchecker_analyze_links_submit($form, &$form_state) {
   // Exclude unnecessary elements.
