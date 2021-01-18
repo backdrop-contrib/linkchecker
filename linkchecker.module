@@ -91,17 +91,6 @@ function linkchecker_permission() {
 }
 
 /**
- * Implements hook_help().
- * @todo move to the admin form.
- */
-function linkchecker_help($path, $arg) {
-  switch ($path) {
-    case 'admin/help#linkchecker':
-      return '<p>' . t('This module provides an aid to finding broken links on your site. It periodically checks contents of all public nodes, tries to find any html links and check for their validity. It reports broken links through the admin interface. For more information about status codes see <a href="@rfc">Status Code Definitions</a>.', array('@rfc' => 'https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html')) . '</p>';
-  }
-}
-
-/**
  * Implements hook_menu().
  */
 function linkchecker_menu() {
@@ -1060,7 +1049,7 @@ function linkchecker_form_node_type_form_alter(&$form, $form_state) {
       '#collapsed' => TRUE,
       '#group' => 'additional_settings',
       '#attached' => array(
-        'js' => array(backdrop_get_path('module', 'linkchecker') . '/linkchecker-node-form.js'),
+        'js' => array(backdrop_get_path('module', 'linkchecker') . '/js/linkchecker-node-form.js'),
       ),
       //'#access' => user_access(''),
     );
@@ -1103,7 +1092,7 @@ function linkchecker_node_type_form_submit($form, $form_state) {
 
   if (!$original_linkchecker_state && $values['linkchecker_scan_node']) {
     // We need to scan this node-type now.
-    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
     batch_set(_linkchecker_batch_import_nodes(array($node_type)));
     $loaded = TRUE;
   }
@@ -1112,7 +1101,7 @@ function linkchecker_node_type_form_submit($form, $form_state) {
   if (!$original_linkchecker_comment_state && !empty($values['linkchecker_scan_comment'])) {
     // We need to scan comments for this node-type now.
     if (!$loaded) {
-      module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+      module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
     }
     batch_set(_linkchecker_batch_import_comments(array($node_type)));
   }
@@ -1330,7 +1319,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
     // that it is running a batch job and the number of required re-scan rounds.
     $missing_links_count = count($missing_links) - LINKCHECKER_SCAN_MAX_LINKS_PER_RUN;
     if (!$skip_missing_links_detection && $missing_links_count > 0) {
-      module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+      module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
       batch_set(_linkchecker_batch_import_single_node($node->nid, $missing_links_count));
 
       // If batches were set in the submit handlers, we process them now,
@@ -1422,7 +1411,7 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
     // that it is running a batch job and the number of required re-scan rounds.
     $missing_links_count = count($missing_links) - LINKCHECKER_SCAN_MAX_LINKS_PER_RUN;
     if (!$skip_missing_links_detection && $missing_links_count > 0) {
-      module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+      module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
       batch_set(_linkchecker_batch_import_single_comment($comment->cid, $missing_links_count));
 
       // If batches were set in the submit handlers, we process them now,
@@ -1526,7 +1515,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
     // that it is running a batch job and the number of required re-scan rounds.
     $missing_links_count = count($missing_links) - LINKCHECKER_SCAN_MAX_LINKS_PER_RUN;
     if (!$skip_missing_links_detection && $missing_links_count > 0) {
-      module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+      module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
       batch_set(_linkchecker_batch_import_single_block_custom($bid, $missing_links_count));
 
       // If batches were set in the submit handlers, we process them now,

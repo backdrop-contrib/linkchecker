@@ -12,6 +12,10 @@ function linkchecker_admin_settings_form($form_state) {
   $config = config('linkchecker.settings');
 
   $form['#config'] = 'linkchecker.settings';
+  $form['help'] = array(
+    '#type' => 'help',
+    '#markup' => t('This module provides an aid to finding broken links on your site. It periodically checks contents of all public nodes, tries to find any html links and check for their validity. It reports broken links through the admin interface. For more information about status codes see <a href="@rfc">Status Code Definitions</a>.', array('@rfc' => 'https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html')),
+  );
   $form['settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('General settings'),
@@ -296,7 +300,7 @@ function linkchecker_admin_settings_form_submit($form, &$form_state) {
 
   // If block scanning has been selected.
   if ($form_state['values']['linkchecker_scan_blocks'] > $form['settings']['linkchecker_scan_blocks']['#default_value']) {
-    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
     batch_set(_linkchecker_batch_import_block_custom());
   }
 }
@@ -316,18 +320,18 @@ function linkchecker_analyze_links_submit($form, &$form_state) {
   // Start batch and analyze all nodes.
   $node_types = linkchecker_scan_node_types();
   if (!empty($node_types)) {
-    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
     batch_set(_linkchecker_batch_import_nodes($node_types));
   }
 
   $comment_types = linkchecker_scan_comment_types();
   if (!empty($comment_types)) {
-    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
     batch_set(_linkchecker_batch_import_comments($comment_types));
   }
 
   if (config_get('linkchecker.settings', 'linkchecker_scan_blocks')) {
-    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
     batch_set(_linkchecker_batch_import_block_custom());
   }
 }
@@ -353,18 +357,18 @@ function linkchecker_clear_analyze_links_submit($form, &$form_state) {
   // Start batch and analyze all nodes.
   $node_types = linkchecker_scan_node_types();
   if (!empty($node_types)) {
-    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
     batch_set(_linkchecker_batch_import_nodes($node_types));
   }
 
   $comment_types = linkchecker_scan_comment_types();
   if (!empty($comment_types)) {
-    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
     batch_set(_linkchecker_batch_import_comments($comment_types));
   }
 
   if (config_get('linkchecker.settings', 'linkchecker_scan_blocks')) {
-    module_load_include('inc', 'linkchecker', 'linkchecker.batch');
+    module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
     batch_set(_linkchecker_batch_import_block_custom());
   }
 }
