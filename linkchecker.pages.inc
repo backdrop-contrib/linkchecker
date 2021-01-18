@@ -13,7 +13,7 @@
  */
 function linkchecker_admin_report_page() {
 
-  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
+  $ignore_response_codes = preg_split('/(\r\n?|\n)/', config_get('linkchecker.settings', 'linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
 
   // Search for broken links in nodes and comments and blocks of all users.
   // @todo Try to make UNION'ed subselect resultset smaller.
@@ -53,9 +53,9 @@ function linkchecker_admin_report_page() {
  *   Themed report page.
  */
 function linkchecker_user_report_page($account) {
-  drupal_set_title($account->name);
+  backdrop_set_title($account->name);
 
-  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
+  $ignore_response_codes = preg_split('/(\r\n?|\n)/', config_get('linkchecker.settings', 'linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
 
   // Build query for broken links in nodes of the current user.
   $subquery2 = db_select('node', 'n');
@@ -120,7 +120,7 @@ function _linkchecker_report_page($query, $account = NULL) {
   $links_unchecked = db_query('SELECT COUNT(1) FROM {linkchecker_link} WHERE last_checked = :last_checked AND status = :status', array(':last_checked' => 0, ':status' => 1))->fetchField();
   if ($links_unchecked > 0) {
     $links_all = db_query('SELECT COUNT(1) FROM {linkchecker_link} WHERE status = :status', array(':status' => 1))->fetchField();
-    drupal_set_message(format_plural($links_unchecked,
+    backdrop_set_message(format_plural($links_unchecked,
       'There is 1 unchecked link of about @links_all links in the database. Please be patient until all links have been checked via cron.',
       'There are @count unchecked links of about @links_all links in the database. Please be patient until all links have been checked via cron.',
       array('@links_all' => $links_all)), 'warning');
@@ -164,32 +164,32 @@ function _linkchecker_report_page($query, $account = NULL) {
 
     // Show links to link settings.
     if ($access_edit_link_settings) {
-      $links[] = l(t('Edit link settings'), 'linkchecker/' . $link->lid . '/edit', array('query' => drupal_get_destination()));
+      $links[] = l(t('Edit link settings'), 'linkchecker/' . $link->lid . '/edit', array('query' => backdrop_get_destination()));
     }
 
     // Show link to nodes having this broken link.
     foreach ($nids as $nid) {
-      $links[] = l(t('Edit node @node', array('@node' => $nid)), 'node/' . $nid . '/edit', array('query' => drupal_get_destination()));
+      $links[] = l(t('Edit node @node', array('@node' => $nid)), 'node/' . $nid . '/edit', array('query' => backdrop_get_destination()));
     }
 
     // Show link to comments having this broken link.
     $comment_types = linkchecker_scan_comment_types();
     if (module_exists('comment') && !empty($comment_types)) {
       foreach ($cids as $cid) {
-        $links[] = l(t('Edit comment @comment', array('@comment' => $cid)), 'comment/' . $cid . '/edit', array('query' => drupal_get_destination()));
+        $links[] = l(t('Edit comment @comment', array('@comment' => $cid)), 'comment/' . $cid . '/edit', array('query' => backdrop_get_destination()));
       }
     }
 
     // Show link to blocks having this broken link.
     if ($access_administer_blocks) {
       foreach ($bids as $bid) {
-        $links[] = l(t('Edit block @block', array('@block' => $bid)), 'admin/structure/block/manage/block/' . $bid . '/configure', array('query' => drupal_get_destination()));
+        $links[] = l(t('Edit block @block', array('@block' => $bid)), 'admin/structure/block/manage/block/' . $bid . '/configure', array('query' => backdrop_get_destination()));
       }
     }
 
     // Show link to redirect this broken internal link.
     if (module_exists('redirect') && $access_administer_redirects && _linkchecker_is_internal_url($link)) {
-      $links[] = l(t('Create redirection'), 'admin/config/search/redirect/add', array('query' => array('source' => $link->internal, drupal_get_destination())));
+      $links[] = l(t('Create redirection'), 'admin/config/search/redirect/add', array('query' => array('source' => $link->internal, backdrop_get_destination())));
     }
 
     // Create table data for output.
@@ -257,7 +257,7 @@ function linkchecker_link_edit_form($form, &$form_state, $link) {
     '#default_value' => 0,
     '#type' => 'checkbox',
     '#title' => t('Re-check link status on next cron run'),
-    '#description' => t('Enable this checkbox if you want to re-check the link during the next cron job rather than wait for the next scheduled check on @date.', array('@date' => format_date($link->last_checked + variable_get('linkchecker_check_links_interval', 2419200)))),
+    '#description' => t('Enable this checkbox if you want to re-check the link during the next cron job rather than wait for the next scheduled check on @date.', array('@date' => format_date($link->last_checked + config_get('linkchecker.settings', 'linkchecker_check_links_interval', 2419200)))),
   );
 
   $form['buttons']['submit'] = array('#type' => 'submit', '#value' => t('Save configuration'));
@@ -276,7 +276,7 @@ function linkchecker_link_edit_form_submit($form, &$form_state) {
       ->condition('lid', $form_state['values']['lid'])
       ->fields(array('last_checked' => 0))
       ->execute();
-    drupal_set_message(t('The link %url will be checked again on the next cron run.', array('%url' => $form_state['values']['url'])));
+    backdrop_set_message(t('The link %url will be checked again on the next cron run.', array('%url' => $form_state['values']['url'])));
   }
 
   if ($form_state['values']['method'] != $form['settings']['method']['#default_value']) {
@@ -290,7 +290,7 @@ function linkchecker_link_edit_form_submit($form, &$form_state) {
         'status' => $form_state['values']['status'],
       ))
       ->execute();
-    drupal_set_message(t('The link settings for %url have been saved and the fail counter has been reset.', array('%url' => $form_state['values']['url'])));
+    backdrop_set_message(t('The link settings for %url have been saved and the fail counter has been reset.', array('%url' => $form_state['values']['url'])));
   }
   else {
     // Update setting only.
@@ -301,7 +301,7 @@ function linkchecker_link_edit_form_submit($form, &$form_state) {
         'status' => $form_state['values']['status'],
       ))
       ->execute();
-    drupal_set_message(t('The link settings for %url have been saved.', array('%url' => $form_state['values']['url'])));
+    backdrop_set_message(t('The link settings for %url have been saved.', array('%url' => $form_state['values']['url'])));
   }
 }
 

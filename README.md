@@ -1,6 +1,5 @@
-
 Link Checker
-------------
+============
 
 Installation:
 
@@ -14,10 +13,9 @@ Installation:
 
 If links are broken they appear under Reports -> Broken links.
 
-If not, make sure cron is configured and running properly on your Drupal
+If not, make sure cron is configured and running properly on your Backdrop
 installation. The Link checker module also logs somewhat useful info about it's
 activity under Reports -> Recent log messages.
-
 
 Required:
 
@@ -30,22 +28,30 @@ Required:
    To make sure it always works - it's required to configure the $base_url in
    the sites settings.php with your public sites URL. Better safe than sorry!
 
-
 Known issues:
 
-There are a lot of known issues in drupal_http_request(). These have been solved
+There are a lot of known issues in backdrop_http_request(). These have been solved
 in HTTPRL. As a workaround it's recommended to use HTTPRL in linkchecker.
 
-Issues list:
- 
-* #997648: drupal_http_request() always calls fread() one more time than necessary
-* #164365-12: drupal_http_request() does handle (invalid) non-absolute redirects
-* #205969-11: drupal_http_request() assumes presence of Reason-Phrase in response Status-Line
-* #371495: Error message from drupal_http_request() not UTF8 encoded
-* #193073-11: drupal_http_request - socket not initialized
-* #106506-8: drupal_http_request() does not handle 'chunked' responses - Make it support HTTP 1.1
-* #1096890-15: drupal_http_request should return error if reaches max allowed redirects
-* #875342-21: drupal_http_request() should pick up X-Drupal-Assertion-* HTTP headers
-* #965078-31: HTTP request checking is unreliable and should be removed in favor of watchdog() calls
-* #336367: HTTP client should protect commas when folding (compatibility with legacy HTTP/1.0)
-* #45338: log fsockopen errors to watchdog
+Issues
+------
+
+Bugs and Feature requests should be reported in the Issue Queue:
+<https://github.com/backdrop-contrib/linkchecker/issues>
+
+Current Maintainers
+-------------------
+
+- Herb v/d Dool <https://github.com/herbdool>
+
+Credits
+-------
+
+- Ported to Backdrop by Herb v/d Dool <https://github.com/herbdool>
+- Originally developed for Drupal by joelstein <https://www.drupal.org/u/joelstein>.
+
+License
+-------
+
+This project is GPL v2 software. See the LICENSE.txt file in this directory for
+complete text.

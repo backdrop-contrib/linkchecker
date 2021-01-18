@@ -9,7 +9,9 @@
  * Implements hook_admin_settings_form().
  */
 function linkchecker_admin_settings_form($form_state) {
+  $config = config('linkchecker.settings');
 
+  $form['#config'] = 'linkchecker.settings';
   $form['settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('General settings'),
@@ -22,7 +24,7 @@ function linkchecker_admin_settings_form($form_state) {
   $block_custom_dependencies .= '</div>';
 
   $form['settings']['linkchecker_scan_blocks'] = array(
-    '#default_value' => variable_get('linkchecker_scan_blocks', 0),
+    '#default_value' => $config->get('linkchecker_scan_blocks'),
     '#type' => 'checkbox',
     '#title' => t('Scan blocks for links'),
     '#description' => t('Enable this checkbox if links in blocks should be checked.') . $block_custom_dependencies,
@@ -32,7 +34,7 @@ function linkchecker_admin_settings_form($form_state) {
     '#type' => 'select',
     '#title' => t('What type of links should be checked?'),
     '#description' => t('A full qualified link (http://example.com/foo/bar) to a page is considered external, whereas an absolute (/foo/bar) or relative link (node/123) without a domain is considered internal.'),
-    '#default_value' => variable_get('linkchecker_check_links_types', 1),
+    '#default_value' => $config->get('linkchecker_check_links_types'),
     '#options' => array(
       '0' => t('Internal and external'),
       '1' => t('External only (http://example.com/foo/bar)'),
@@ -46,43 +48,43 @@ function linkchecker_admin_settings_form($form_state) {
     '#collapsible' => FALSE,
   );
   $form['tag']['linkchecker_extract_from_a'] = array(
-    '#default_value' => variable_get('linkchecker_extract_from_a', 1),
+    '#default_value' => $config->get('linkchecker_extract_from_a'),
     '#type' => 'checkbox',
     '#title' => t('Extract links in <code>&lt;a&gt;</code> and <code>&lt;area&gt;</code> tags'),
     '#description' => t('Enable this checkbox if normal hyperlinks should be extracted. The anchor element defines a hyperlink, the named target destination for a hyperlink, or both. The area element defines a hot-spot region on an image, and associates it with a hypertext link.'),
   );
   $form['tag']['linkchecker_extract_from_audio'] = array(
-    '#default_value' => variable_get('linkchecker_extract_from_audio', 0),
+    '#default_value' => $config->get('linkchecker_extract_from_audio'),
     '#type' => 'checkbox',
     '#title' => t('Extract links in <code>&lt;audio&gt;</code> tags including their <code>&lt;source&gt;</code> and <code>&lt;track&gt;</code> tags'),
     '#description' => t('Enable this checkbox if links in audio tags should be extracted. The audio element is used to embed audio content.'),
   );
   $form['tag']['linkchecker_extract_from_embed'] = array(
-    '#default_value' => variable_get('linkchecker_extract_from_embed', 0),
+    '#default_value' => $config->get('linkchecker_extract_from_embed'),
     '#type' => 'checkbox',
     '#title' => t('Extract links in <code>&lt;embed&gt;</code> tags'),
     '#description' => t('Enable this checkbox if links in embed tags should be extracted. This is an obsolete and non-standard element that was used for embedding plugins in past and should no longer used in modern websites.'),
   );
   $form['tag']['linkchecker_extract_from_iframe'] = array(
-    '#default_value' => variable_get('linkchecker_extract_from_iframe', 0),
+    '#default_value' => $config->get('linkchecker_extract_from_iframe'),
     '#type' => 'checkbox',
     '#title' => t('Extract links in <code>&lt;iframe&gt;</code> tags'),
     '#description' => t('Enable this checkbox if links in iframe tags should be extracted. The iframe element is used to embed another HTML page into a page.'),
   );
   $form['tag']['linkchecker_extract_from_img'] = array(
-    '#default_value' => variable_get('linkchecker_extract_from_img', 0),
+    '#default_value' => $config->get('linkchecker_extract_from_img'),
     '#type' => 'checkbox',
     '#title' => t('Extract links in <code>&lt;img&gt;</code> tags'),
     '#description' => t('Enable this checkbox if links in image tags should be extracted. The img element is used to add images to the content.'),
   );
   $form['tag']['linkchecker_extract_from_object'] = array(
-    '#default_value' => variable_get('linkchecker_extract_from_object', 0),
+    '#default_value' => $config->get('linkchecker_extract_from_object'),
     '#type' => 'checkbox',
     '#title' => t('Extract links in <code>&lt;object&gt;</code> and <code>&lt;param&gt;</code> tags'),
     '#description' => t('Enable this checkbox if multimedia and other links in object and their param tags should be extracted. The object tag is used for flash, java, quicktime and other applets.'),
   );
   $form['tag']['linkchecker_extract_from_video'] = array(
-    '#default_value' => variable_get('linkchecker_extract_from_video', 0),
+    '#default_value' => $config->get('linkchecker_extract_from_video'),
     '#type' => 'checkbox',
     '#title' => t('Extract links in <code>&lt;video&gt;</code> tags including their <code>&lt;source&gt;</code> and <code>&lt;track&gt;</code> tags'),
     '#description' => t('Enable this checkbox if links in video tags should be extracted. The video element is used to embed video content.'),
@@ -102,7 +104,7 @@ function linkchecker_admin_settings_form($form_state) {
   $form['tag']['linkchecker_filter_blacklist'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Filters disabled for link extraction'),
-    '#default_value' => variable_get('linkchecker_filter_blacklist', explode('|', LINKCHECKER_DEFAULT_FILTER_BLACKLIST)),
+    '#default_value' => $config->get('linkchecker_filter_blacklist'),
     '#options' => $filter_options,
     '#description' => t('If a filter has been enabled for an input format it runs first and afterwards the link extraction. This helps the link checker module to find all links normally created by custom filters (e.g. Markdown filter, Bbcode). All filters used as inline references (e.g. Weblink filter <code>[link: id]</code>) to other content and filters only wasting processing time (e.g. Line break converter) should be disabled. This setting does not have any effect on how content is shown on a page. This feature optimizes the internal link extraction process for link checker and prevents false alarms about broken links in content not having the real data of a link.'),
   );
@@ -119,9 +121,9 @@ function linkchecker_admin_settings_form($form_state) {
     '#type' => 'select',
     '#title' => t('Check library'),
     '#description' => t('Defines the library that is used for checking links.'),
-    '#default_value' => variable_get('linkchecker_check_library', 'core'),
+    '#default_value' => $config->get('linkchecker_check_library'),
     '#options' => array(
-      'core' => t('Drupal core'),
+      'core' => t('Backdrop core'),
       'httprl' => t('HTTP Parallel Request & Threading Library'),
     ),
   );
@@ -129,10 +131,10 @@ function linkchecker_admin_settings_form($form_state) {
     '#type' => 'select',
     '#title' => t('Number of simultaneous connections'),
     '#description' => t('Defines the maximum number of simultaneous connections that can be opened by the server. <em>HTTP Parallel Request & Threading Library</em> make sure that a single domain is not overloaded beyond RFC limits. For small hosting plans with very limited CPU and RAM it may be required to reduce the default limit.'),
-    '#default_value' => variable_get('linkchecker_check_connections_max', 8),
-    '#options' => drupal_map_assoc(array(2, 4, 8, 16, 24, 32, 48, 64, 96, 128)),
+    '#default_value' => $config->get('linkchecker_check_connections_max'),
+    '#options' => backdrop_map_assoc(array(2, 4, 8, 16, 24, 32, 48, 64, 96, 128)),
     '#states' => array(
-      // Hide the setting when Drupal core check library is selected.
+      // Hide the setting when Backdrop core check library is selected.
       'invisible' => array(
         ':input[name="linkchecker_check_library"]' => array('value' => 'core'),
       ),
@@ -141,10 +143,10 @@ function linkchecker_admin_settings_form($form_state) {
   $form['check']['linkchecker_check_useragent'] = array(
     '#type' => 'select',
     '#title' => t('User-Agent'),
-    '#description' => t('Defines the user agent that will be used for checking links on remote sites. If someone blocks the standard Drupal user agent you can try with a more common browser.'),
-    '#default_value' => variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)'),
+    '#description' => t('Defines the user agent that will be used for checking links on remote sites. If someone blocks the standard Backdrop user agent you can try with a more common browser.'),
+    '#default_value' => $config->get('linkchecker_check_useragent'),
     '#options' => array(
-      'Drupal (+http://drupal.org/)' => 'Drupal (+http://drupal.org/)',
+      'Backdrop CMS (+https://backdropcms.org/)' => 'Backdrop CMS (+https://backdropcms.org/)',
       'Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; rv:11.0) like Gecko' => 'Windows 8.1 (x64), Internet Explorer 11.0',
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2486.0 Safari/537.36 Edge/13.10586' => 'Windows 10 (x64), Edge',
       'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0' => 'Windows 8.1 (x64), Mozilla Firefox 47.0',
@@ -155,17 +157,17 @@ function linkchecker_admin_settings_form($form_state) {
     '#type' => 'select',
     '#title' => t('Check interval for links'),
     '#description' => t('This interval setting defines how often cron will re-check the status of links.'),
-    '#default_value' => variable_get('linkchecker_check_links_interval', 2419200),
-    '#options' => drupal_map_assoc(array(86400, 172800, 259200, 604800, 1209600, 2419200, 4838400, 7776000), 'format_interval'),
+    '#default_value' => $config->get('linkchecker_check_links_interval'),
+    '#options' => backdrop_map_assoc(array(86400, 172800, 259200, 604800, 1209600, 2419200, 4838400, 7776000), 'format_interval'),
   );
   $form['check']['linkchecker_disable_link_check_for_urls'] = array(
-    '#default_value' => variable_get('linkchecker_disable_link_check_for_urls', LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS),
+    '#default_value' => $config->get('linkchecker_disable_link_check_for_urls'),
     '#type' => 'textarea',
     '#title' => t('Do not check the link status of links containing these URLs'),
     '#description' => t('By default this list contains the domain names reserved for use in documentation and not available for registration. See <a href="@rfc-2606">RFC 2606</a>, Section 3 for more information. URLs on this list are still extracted, but the link setting <em>Check link status</em> becomes automatically disabled to prevent false alarms. If you change this list you need to clear all link data and re-analyze your content. Otherwise this setting will only affect new links added after the configuration change.', array('@rfc-2606' => 'https://www.rfc-editor.org/rfc/rfc2606.txt')),
   );
   $form['check']['linkchecker_log_level'] = array(
-    '#default_value' => variable_get('linkchecker_log_level', WATCHDOG_INFO),
+    '#default_value' => $config->get('linkchecker_log_level'),
     '#type' => 'select',
     '#title' => t('Log level'),
     '#description' => t('Controls the severity of logging.'),
@@ -192,13 +194,13 @@ function linkchecker_admin_settings_form($form_state) {
     '#size' => 30,
     '#maxlength' => 60,
     '#autocomplete_path' => 'user/autocomplete',
-    '#default_value' => variable_get('linkchecker_impersonate_user', ''),
+    '#default_value' => $config->get('linkchecker_impersonate_user'),
   );
   $form['error']['linkchecker_action_status_code_301'] = array(
     '#title' => t('Update permanently moved links'),
     '#description' => t('If enabled, outdated links in content providing a status <em>Moved Permanently</em> (status code 301) are automatically updated to the most recent URL. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily change. This feature trust sites to provide a valid permanent redirect. A new content revision is automatically created on link updates if <em>create new revision</em> is enabled in the <a href="@content_types">content types</a> publishing options. It is recommended to create new revisions for all link checker enabled content types. Link updates are nevertheless always logged in <a href="@dblog">recent log entries</a>.', array('@dblog' => url('admin/reports/dblog'), '@content_types' => url('admin/structure/types'))),
     '#type' => 'select',
-    '#default_value' => variable_get('linkchecker_action_status_code_301', 0),
+    '#default_value' => $config->get('linkchecker_action_status_code_301'),
     '#options' => array(
       0 => t('Disabled'),
       1 => t('After one failed check'),
@@ -212,7 +214,7 @@ function linkchecker_admin_settings_form($form_state) {
     '#title' => t('Unpublish content on file not found error'),
     '#description' => t('If enabled, content with one or more broken links (status code 404) will be unpublished and moved to moderation queue for review after the number of specified checks failed. If used, it is recommended to use a value of <em>three</em> to make sure this is not only a temporarily error.'),
     '#type' => 'select',
-    '#default_value' => variable_get('linkchecker_action_status_code_404', 0),
+    '#default_value' => $config->get('linkchecker_action_status_code_404'),
     '#options' => array(
       0 => t('Disabled'),
       1 => t('After one file not found error'),
@@ -223,7 +225,7 @@ function linkchecker_admin_settings_form($form_state) {
     ),
   );
   $form['error']['linkchecker_ignore_response_codes'] = array(
-    '#default_value' => variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"),
+    '#default_value' => $config->get('linkchecker_ignore_response_codes'),
     '#type' => 'textarea',
     '#title' => t("Don't treat these response codes as errors"),
     '#description' => t('One HTTP status code per line, e.g. 403.'),
@@ -324,7 +326,7 @@ function linkchecker_analyze_links_submit($form, &$form_state) {
     batch_set(_linkchecker_batch_import_comments($comment_types));
   }
 
-  if (variable_get('linkchecker_scan_blocks', 0)) {
+  if (config_get('linkchecker.settings', 'linkchecker_scan_blocks')) {
     module_load_include('inc', 'linkchecker', 'linkchecker.batch');
     batch_set(_linkchecker_batch_import_block_custom());
   }
@@ -361,7 +363,7 @@ function linkchecker_clear_analyze_links_submit($form, &$form_state) {
     batch_set(_linkchecker_batch_import_comments($comment_types));
   }
 
-  if (variable_get('linkchecker_scan_blocks', 0)) {
+  if (config_get('linkchecker.settings', 'linkchecker_scan_blocks')) {
     module_load_include('inc', 'linkchecker', 'linkchecker.batch');
     batch_set(_linkchecker_batch_import_block_custom());
   }

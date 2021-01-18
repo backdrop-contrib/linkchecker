@@ -20,6 +20,17 @@ define('LINKCHECKER_SCAN_MAX_LINKS_PER_RUN', '100');
 define('LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS', "example.com\nexample.net\nexample.org");
 
 /**
+ * Implements hook_config_info().
+ */
+function linkchecker_config_info() {
+  $prefixes['linkchecker.settings'] = array(
+    'label' => t('Linkchecker settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
+
+/**
  * A list of blacklisted filters the modules do not need to run for the link
  * extraction process. This filters only eat processing time or holds references
  * to other nodes.
@@ -81,6 +92,7 @@ function linkchecker_permission() {
 
 /**
  * Implements hook_help().
+ * @todo move to the admin form.
  */
 function linkchecker_help($path, $arg) {
   switch ($path) {
@@ -98,7 +110,7 @@ function linkchecker_menu() {
     'access arguments' => array('administer linkchecker'),
     'description' => 'Configure the content types that should be checked for broken links and how the hypertext links will be checked and reported and repaired.',
     'file' => 'linkchecker.admin.inc',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('linkchecker_admin_settings_form'),
     'title' => 'Link checker',
   );
@@ -126,7 +138,7 @@ function linkchecker_menu() {
     'access callback' => '_linkchecker_user_access_edit_link_settings',
     'access arguments' => array(1),
     'file' => 'linkchecker.pages.inc',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('linkchecker_link_edit_form', 1),
     'title' => 'Edit link settings',
     'type' => MENU_CALLBACK,
@@ -183,7 +195,7 @@ function linkchecker_admin_paths() {
  * @see watchdog()
  */
 function linkchecker_watchdog_log($type, $message, $variables = array(), $severity = WATCHDOG_NOTICE, $link = NULL) {
-  if ($severity <= variable_get('linkchecker_log_level', WATCHDOG_INFO)) {
+  if ($severity <= config_get('linkchecker.settings', 'linkchecker_log_level', WATCHDOG_INFO)) {
     watchdog($type, $message, $variables, $severity, $link);
   }
 }
@@ -412,7 +424,7 @@ function _linkchecker_link_comment_ids($link, $comment_author_account = NULL) {
  */
 function _linkchecker_link_block_ids($link) {
   // Exit if blocks are disabled.
-  if (!variable_get('linkchecker_scan_blocks', 0)) {
+  if (!config_get('linkchecker.settings', 'linkchecker_scan_blocks', 0)) {
     return array();
   }
 
@@ -428,7 +440,7 @@ function _linkchecker_link_block_ids($link) {
   // access to.
   global $user;
   $rids = array_keys($user->roles);
-  $rids[] = DRUPAL_ANONYMOUS_RID;
+  $rids[] = BACKDROP_ANONYMOUS_ROLE;
 
   $query = db_select('block', 'b');
   $query->leftJoin('block_role', 'r', 'b.module = r.module AND b.delta = r.delta');
@@ -449,13 +461,13 @@ function _linkchecker_link_block_ids($link) {
  */
 function linkchecker_cron() {
   // Remove outdated links no longer in use once per day.
-  if (REQUEST_TIME - variable_get('linkchecker_cleanup_links_last', 0) >= 86400) {
+  if (REQUEST_TIME - state_get('linkchecker_cleanup_links_last', 0) >= 86400) {
     _linkchecker_cleanup_links();
-    variable_set('linkchecker_cleanup_links_last', REQUEST_TIME);
+    state_set('linkchecker_cleanup_links_last', REQUEST_TIME);
   }
 
   // Run link checker in a new process, independent of cron.
-  if (module_exists('httprl') && variable_get('linkchecker_check_library', 'core') == 'httprl') {
+  if (module_exists('httprl') && config_get('linkchecker.settings', 'linkchecker_check_library', 'core') == 'httprl') {
     // Setup callback options array; call _linkchecker_check_links() in the
     // background.
     $callback_options = array(array('function' => '_linkchecker_check_links'));
@@ -475,10 +487,12 @@ function linkchecker_cron() {
  * Run link checks.
  */
 function _linkchecker_check_links() {
+  $config = config('linkchecker.settings');
+
   // Get max_execution_time from configuration, override 0 with 240 seconds.
   $max_execution_time = ini_get('max_execution_time') == 0 ? 240 : ini_get('max_execution_time');
   // Make sure we have enough time to validate all of the links.
-  drupal_set_time_limit($max_execution_time);
+  backdrop_set_time_limit($max_execution_time);
 
   // Make sure this is the only process trying to run this function.
   if (!lock_acquire(__FUNCTION__, $max_execution_time)) {
@@ -486,24 +500,25 @@ function _linkchecker_check_links() {
     return FALSE;
   }
 
-  $has_httprl = (module_exists('httprl') && variable_get('linkchecker_check_library', 'core') == 'httprl');
+  $has_httprl = (module_exists('httprl') && $config->get('linkchecker_check_library') == 'httprl');
 
   // Do not confuse admins with a setting of maximum checkable links per cron
   // run and guess that 2 links can be checked per second with 1 thread, what is
   // nevertheless uncommon. The max_execution_time can be used to calculate
   // a useful value that is higher, but not totally out of scope and limits the
   // query result set to a reasonable size.
-  $linkchecker_check_connections_max = variable_get('linkchecker_check_connections_max', 8);
+  $linkchecker_check_connections_max = $config->get('linkchecker_check_connections_max');
   $check_links_max_per_cron_run = ($has_httprl) ? ($linkchecker_check_connections_max * $max_execution_time) : $max_execution_time;
 
-  $linkchecker_check_links_interval = variable_get('linkchecker_check_links_interval', 2419200);
-  $linkchecker_check_useragent = variable_get('linkchecker_check_useragent', 'Drupal (+http://drupal.org/)');
+  $linkchecker_check_links_interval = $config->get('linkchecker_check_links_interval');
+  $linkchecker_check_links_interval = 0;
+  $linkchecker_check_useragent = $config->get('linkchecker_check_useragent');
 
   // Connection limit can be overridden via settings.php. Two connections is the
   // limit defined in RFC https://www.ietf.org/rfc/rfc2616.txt. Modern browsers
   // are typically using 6-8 connections and no more. Never use more and keep
   // in mind that you can overload other people servers.
-  $linkchecker_check_domain_connections = variable_get('linkchecker_check_domain_connections', 2);
+  $linkchecker_check_domain_connections = $config->get('linkchecker_check_domain_connections');
 
   // Get URLs for checking.
   $links = db_query_range('SELECT * FROM {linkchecker_link} WHERE last_checked < :last_checked AND status = :status ORDER BY last_checked, lid ASC', 0, $check_links_max_per_cron_run, array(':last_checked' => REQUEST_TIME - $linkchecker_check_links_interval, ':status' => 1));
@@ -561,8 +576,8 @@ function _linkchecker_check_links() {
       }
     }
     else {
-      // Drupal core.
-      $response = drupal_http_request($link->url, $options);
+      // Backdrop core.
+      $response = backdrop_http_request($link->url, $options);
 
       // Add 'redirect_code' property to core response object for consistency
       // with HTTPRL object.
@@ -599,10 +614,12 @@ function _linkchecker_check_links() {
  *   An object containing the url, lid and fail_count.
  */
 function _linkchecker_status_handling(&$response, $link) {
-  $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
+  $config = config('linkchecker.settings');
+
+  $ignore_response_codes = preg_split('/(\r\n?|\n)/', $config->get('linkchecker_ignore_response_codes'));
 
   // - Prevent E_ALL warnings in DB updates for non-existing $response->error.
-  // - @todo drupal_http_request() may not provide an UTF8 encoded error message
+  // - @todo backdrop_http_request() may not provide an UTF8 encoded error message
   //   what results in a database UPDATE failure. For more information, see
   //   https://drupal.org/node/371495.
   //   Workaround: ISO-8859-1 as source encoding may be wrong, but WFM.
@@ -612,8 +629,8 @@ function _linkchecker_status_handling(&$response, $link) {
   if (!isset($response->status_message)) {
     $response->status_message = '';
   }
-  $response->error = trim(drupal_convert_to_utf8($response->error, 'ISO-8859-1'));
-  $response->status_message = trim(drupal_convert_to_utf8($response->status_message, 'ISO-8859-1'));
+  $response->error = trim(backdrop_convert_to_utf8($response->error, 'ISO-8859-1'));
+  $response->status_message = trim(backdrop_convert_to_utf8($response->status_message, 'ISO-8859-1'));
 
   // Destination anchors in HTML documents may be specified either by:
   // - the A element (naming it with the name attribute)
@@ -662,10 +679,10 @@ function _linkchecker_status_handling(&$response, $link) {
       // a new link. The remote site owner was so kind to provide us the new
       // link and if we trust this change we are able to replace the old link
       // with the new one without any hand work.
-      $auto_repair_301 = variable_get('linkchecker_action_status_code_301', 0);
+      $auto_repair_301 = $config->get('linkchecker_action_status_code_301');
       if ($auto_repair_301 && $auto_repair_301 <= ($link->fail_count + 1) && valid_url($response->redirect_url, TRUE)) {
         // Switch anonymous user to an admin.
-        linkchecker_impersonate_user(user_load_by_name(variable_get('linkchecker_impersonate_user', '')));
+        linkchecker_impersonate_user(user_load_by_name($config->get('linkchecker_impersonate_user')));
 
         // NODES: Autorepair all nodes having this outdated link.
         $result = db_query('SELECT nid FROM {linkchecker_node} WHERE lid = :lid', array(':lid' => $link->lid));
@@ -684,7 +701,8 @@ function _linkchecker_status_handling(&$response, $link) {
             if ($node_original != $node) {
               // Always use the default revision setting. For more information,
               // see node_object_prepare().
-              $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
+              // @todo fix
+              $node_options = config_get('linkchecker.settings', 'node_options_' . $node->type, array('status', 'promote'));
               $node->revision = in_array('revision', $node_options);
 
               // Generate a log message for the node_revisions table, visible on
@@ -791,10 +809,10 @@ function _linkchecker_status_handling(&$response, $link) {
       linkchecker_watchdog_log('linkchecker', 'Broken link %link has been found.', array('%link' => $link->url), WATCHDOG_NOTICE, l(t('Broken links'), 'admin/reports/linkchecker'));
 
       // If unpublishing limit is reached, unpublish all nodes having this link.
-      $linkchecker_action_status_code_404 = variable_get('linkchecker_action_status_code_404', 0);
+      $linkchecker_action_status_code_404 = $config->get('linkchecker_action_status_code_404');
       if ($linkchecker_action_status_code_404 && $linkchecker_action_status_code_404 <= ($link->fail_count + 1)) {
         // Switch anonymous user to an admin.
-        linkchecker_impersonate_user(user_load_by_name(variable_get('linkchecker_impersonate_user', '')));
+        linkchecker_impersonate_user(user_load_by_name($config->get('linkchecker_impersonate_user')));
         _linkchecker_unpublish_nodes($link->lid);
         linkchecker_revert_user();
       }
@@ -889,8 +907,10 @@ function _linkchecker_status_handling(&$response, $link) {
  * Implements hook_node_type_delete().
  */
 function linkchecker_node_type_delete($info) {
-  variable_del('linkchecker_scan_node_' . $info->type);
-  variable_del('linkchecker_scan_comment_' . $info->type);
+  $config = config('linkchecker.settings');
+  $config->clear('linkchecker_scan_node_' . $info->type);
+  $config->clear('linkchecker_scan_comment_' . $info->type);
+  $config->save();
 }
 
 /**
@@ -900,11 +920,11 @@ function linkchecker_node_prepare($node) {
   // Node edit tab is viewed.
   if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'edit' && isset($node->nid)) {
     // Show a message on node edit page if a link check failed once or more.
-    $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
+    $ignore_response_codes = preg_split('/(\r\n?|\n)/', config_get('linkchecker.settings', 'linkchecker_ignore_response_codes'));
     $links = db_query('SELECT ll.* FROM {linkchecker_node} ln INNER JOIN {linkchecker_link} ll ON ln.lid = ll.lid WHERE ln.nid = :nid AND ll.fail_count > :fail_count AND ll.status = :status AND ll.code NOT IN (:codes)', array(':nid' => $node->nid, ':fail_count' => 0, ':status' => 1, ':codes' => $ignore_response_codes));
     foreach ($links as $link) {
       if (_linkchecker_link_access($link)) {
-        drupal_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
+        backdrop_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
       }
     }
   }
@@ -929,7 +949,7 @@ function linkchecker_node_insert($node) {
   }
 
   // The node is going to be published.
-  if (variable_get('linkchecker_scan_node_' . $node->type, FALSE) && $node->status == NODE_PUBLISHED) {
+  if (config_get('linkchecker.settings', 'linkchecker_scan_node_' . $node->type, FALSE) && $node->status == NODE_PUBLISHED) {
     _linkchecker_add_node_links($node);
   }
 }
@@ -946,7 +966,7 @@ function linkchecker_node_update($node) {
   }
 
   // The node is going to be published.
-  if (variable_get('linkchecker_scan_node_' . $node->type, FALSE) && $node->status == NODE_PUBLISHED) {
+  if (config_get('linkchecker.settings', 'linkchecker_scan_node_' . $node->type, FALSE) && $node->status == NODE_PUBLISHED) {
     _linkchecker_add_node_links($node);
   }
   else {
@@ -968,7 +988,7 @@ function linkchecker_comment_delete($comment) {
 function linkchecker_comment_insert($comment) {
   // The comment is going to be published.
   $node_type = db_query('SELECT type FROM {node} WHERE nid = :nid', array(':nid' => $comment->nid))->fetchField();
-  if (variable_get('linkchecker_scan_comment_' . $node_type, FALSE) && $comment->status == COMMENT_PUBLISHED) {
+  if (config_get('linkchecker.settings', 'linkchecker_scan_comment_' . $node_type, FALSE) && $comment->status == COMMENT_PUBLISHED) {
     _linkchecker_add_comment_links($comment);
   }
 }
@@ -979,7 +999,7 @@ function linkchecker_comment_insert($comment) {
 function linkchecker_comment_update($comment) {
   // The node is going to be published.
   $node_type = db_query('SELECT type FROM {node} WHERE nid = :nid', array(':nid' => $comment->nid))->fetchField();
-  if (variable_get('linkchecker_scan_comment_' . $node_type, FALSE) && $comment->status == COMMENT_PUBLISHED) {
+  if (config_get('linkchecker.settings', 'linkchecker_scan_comment_' . $node_type, FALSE) && $comment->status == COMMENT_PUBLISHED) {
     _linkchecker_add_comment_links($comment);
   }
   else {
@@ -1004,11 +1024,11 @@ function linkchecker_form_alter(&$form, &$form_state, $form_id) {
       if (empty($form_state['input']) && is_numeric(arg(5))) {
         // Show a message on custom block edit page if a link check failed once
         // or more often.
-        $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
+        $ignore_response_codes = preg_split('/(\r\n?|\n)/', config_get('linkchecker.settings', 'linkchecker_ignore_response_codes'));
         $links = db_query('SELECT ll.* FROM {linkchecker_block_custom} lb INNER JOIN {linkchecker_link} ll ON lb.lid = ll.lid WHERE lb.bid = :bid AND ll.fail_count > :fail_count AND ll.status = :status AND ll.code NOT IN (:codes)', array(':bid' => arg(5), ':fail_count' => 0, ':status' => 1, ':codes' => $ignore_response_codes));
         foreach ($links as $link) {
           if (_linkchecker_link_access($link)) {
-            drupal_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
+            backdrop_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
           }
         }
       }
@@ -1028,7 +1048,10 @@ function linkchecker_form_alter(&$form, &$form_state, $form_id) {
  * Implements hook_form_BASE_FORM_ID_alter().
  */
 function linkchecker_form_node_type_form_alter(&$form, $form_state) {
+  $config = config('linkchecker.settings');
+
   if (isset($form['type'])) {
+    $type = $form['type']['#default_value'];
     $form['#submit'][] = 'linkchecker_node_type_form_submit';
     $form['linkchecker'] = array(
       '#title' => t('Link checker'),
@@ -1037,21 +1060,22 @@ function linkchecker_form_node_type_form_alter(&$form, $form_state) {
       '#collapsed' => TRUE,
       '#group' => 'additional_settings',
       '#attached' => array(
-        'js' => array(drupal_get_path('module', 'linkchecker') . '/linkchecker-node-form.js'),
+        'js' => array(backdrop_get_path('module', 'linkchecker') . '/linkchecker-node-form.js'),
       ),
+      //'#access' => user_access(''),
     );
     $form['linkchecker']['linkchecker_scan_node'] = array(
       '#type' => 'checkbox',
       '#title' => t('Scan content'),
       '#description' => t('Enables link checking for this content type.'),
-      '#default_value' => variable_get('linkchecker_scan_node_' . $form['#node_type']->type, FALSE),
+      '#default_value' => $config->get('linkchecker_scan_node_' . $type),
     );
     if (module_exists('comment')) {
       $form['linkchecker']['linkchecker_scan_comment'] = array(
         '#type' => 'checkbox',
         '#title' => t('Scan comments'),
         '#description' => t('Enables link checking for comments.'),
-        '#default_value' => variable_get('linkchecker_scan_comment_' . $form['#node_type']->type, FALSE),
+        '#default_value' => $config->get('linkchecker_scan_comment_' . $type),
       );
     }
   }
@@ -1061,6 +1085,8 @@ function linkchecker_form_node_type_form_alter(&$form, $form_state) {
  * Submit handler for linkchecker_form_node_type_form_alter().
  */
 function linkchecker_node_type_form_submit($form, $form_state) {
+  $config = config('linkchecker.settings');
+
   $original_linkchecker_state = $form['linkchecker']['linkchecker_scan_node']['#default_value'];
   // Default to TRUE if comment module isn't enabled, we don't care.
   $original_linkchecker_comment_state = TRUE;
@@ -1070,6 +1096,11 @@ function linkchecker_node_type_form_submit($form, $form_state) {
   $values = $form_state['values'];
   $loaded = FALSE;
   $node_type = $form['#node_type']->type;
+
+  $config->set('linkchecker_scan_node_' . $node_type, $form_state['values']['linkchecker_scan_node']);
+  $config->set('linkchecker_scan_comment_' . $node_type, $form_state['values']['linkchecker_scan_comment']);
+  $config->save();
+
   if (!$original_linkchecker_state && $values['linkchecker_scan_node']) {
     // We need to scan this node-type now.
     module_load_include('inc', 'linkchecker', 'linkchecker.batch');
@@ -1096,11 +1127,11 @@ function linkchecker_form_comment_form_alter(&$form, &$form_state, $form_id) {
   if ((empty($form_state['input']) || (isset($form_state['input']['op']) && $form_state['input']['op'] == t('Preview'))) && arg(0) == 'comment' && is_numeric(arg(1)) && arg(2) == 'edit') {
     // Show a message on comment edit page if a link check failed once or
     // more often.
-    $ignore_response_codes = preg_split('/(\r\n?|\n)/', variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
+    $ignore_response_codes = preg_split('/(\r\n?|\n)/', config_get('linkchecker.settings', 'linkchecker_ignore_response_codes'));
     $links = db_query('SELECT ll.* FROM {linkchecker_comment} lc INNER JOIN {linkchecker_link} ll ON lc.lid = ll.lid WHERE lc.cid = :cid AND ll.fail_count > :fail_count AND ll.status = :status AND ll.code NOT IN (:codes)', array(':cid' => arg(1), ':fail_count' => 0, ':status' => 1, ':codes' => $ignore_response_codes));
     foreach ($links as $link) {
       if (_linkchecker_link_access($link)) {
-        drupal_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
+        backdrop_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
       }
     }
   }
@@ -1110,7 +1141,7 @@ function linkchecker_form_comment_form_alter(&$form, &$form_state, $form_id) {
  * Custom submit handler for block add page.
  */
 function linkchecker_block_custom_add_form_submit($form, &$form_state) {
-  if (variable_get('linkchecker_scan_blocks', 0)) {
+  if (config_get('linkchecker.settings', 'linkchecker_scan_blocks', 0)) {
     $bid = db_query('SELECT MAX(bid) FROM {block_custom}')->fetchField();
     _linkchecker_add_block_custom_links($form_state['values'], $bid);
   }
@@ -1120,7 +1151,7 @@ function linkchecker_block_custom_add_form_submit($form, &$form_state) {
  * Custom submit handler for block configure page.
  */
 function linkchecker_block_custom_configure_form_submit($form, &$form_state) {
-  if (variable_get('linkchecker_scan_blocks', 0)) {
+  if (config_get('linkchecker.settings', 'linkchecker_scan_blocks', 0)) {
     _linkchecker_add_block_custom_links($form_state['values'], $form_state['values']['delta']);
   }
 }
@@ -1261,14 +1292,14 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
     // Only add links to database that do not exists.
     $i = 0;
     foreach ($missing_links as $url) {
-      $urlhash = drupal_hash_base64($url);
+      $urlhash = backdrop_hash_base64($url);
       $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash))->fetchObject();
       if (!$link) {
         $link = new stdClass();
         $link->urlhash = $urlhash;
         $link->url = $url;
         $link->status = _linkchecker_link_check_status_filter($url);
-        drupal_write_record('linkchecker_link', $link);
+        backdrop_write_record('linkchecker_link', $link);
       }
       db_insert('linkchecker_node')
         ->fields(array(
@@ -1305,7 +1336,7 @@ function _linkchecker_add_node_links($node, $skip_missing_links_detection = FALS
       // If batches were set in the submit handlers, we process them now,
       // possibly ending execution. We make sure we do not react to the batch
       // that is already being processed (if a batch operation performs a
-      // drupal_execute).
+      // backdrop_execute).
       if ($batch = &batch_get() && !isset($batch['current_set'])) {
         batch_process('node/' . $node->nid);
       }
@@ -1353,14 +1384,14 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
     // Only add unique links to database that do not exist.
     $i = 0;
     foreach ($missing_links as $url) {
-      $urlhash = drupal_hash_base64($url);
+      $urlhash = backdrop_hash_base64($url);
       $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash))->fetchObject();
       if (!$link) {
         $link = new stdClass();
         $link->urlhash = $urlhash;
         $link->url = $url;
         $link->status = _linkchecker_link_check_status_filter($url);
-        drupal_write_record('linkchecker_link', $link);
+        backdrop_write_record('linkchecker_link', $link);
       }
       db_insert('linkchecker_comment')
         ->fields(array(
@@ -1397,7 +1428,7 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
       // If batches were set in the submit handlers, we process them now,
       // possibly ending execution. We make sure we do not react to the batch
       // that is already being processed (if a batch operation performs a
-      // drupal_execute).
+      // backdrop_execute).
       if ($batch = &batch_get() && !isset($batch['current_set'])) {
         batch_process('node/' . $comment->nid);
       }
@@ -1457,14 +1488,14 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
     // Only add unique links to database that do not exist.
     $i = 0;
     foreach ($missing_links as $url) {
-      $urlhash = drupal_hash_base64($url);
+      $urlhash = backdrop_hash_base64($url);
       $link = db_query('SELECT lid FROM {linkchecker_link} WHERE urlhash = :urlhash', array(':urlhash' => $urlhash))->fetchObject();
       if (!$link) {
         $link = new stdClass();
         $link->urlhash = $urlhash;
         $link->url = $url;
         $link->status = _linkchecker_link_check_status_filter($url);
-        drupal_write_record('linkchecker_link', $link);
+        backdrop_write_record('linkchecker_link', $link);
       }
       db_insert('linkchecker_block_custom')
         ->fields(array(
@@ -1501,7 +1532,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
       // If batches were set in the submit handlers, we process them now,
       // possibly ending execution. We make sure we do not react to the batch
       // that is already being processed (if a batch operation performs a
-      // drupal_execute).
+      // backdrop_execute).
       if ($batch = &batch_get() && !isset($batch['current_set'])) {
         batch_process('admin/structure/block');
       }
@@ -1569,7 +1600,7 @@ function _linkchecker_cleanup_node_references($nid = 0, $links = array()) {
     // linkchecker_node reference table.
     $subquery = db_select('linkchecker_link')
       ->fields('linkchecker_link', array('lid'))
-      ->condition('urlhash', array_map('drupal_hash_base64', $links), 'IN');
+      ->condition('urlhash', array_map('backdrop_hash_base64', $links), 'IN');
 
     db_delete('linkchecker_node')
       ->condition('nid', $nid)
@@ -1598,7 +1629,7 @@ function _linkchecker_cleanup_comment_references($cid = 0, $links = array()) {
     // linkchecker_comment reference table.
     $subquery = db_select('linkchecker_link', 'll')
       ->fields('ll', array('lid'))
-      ->condition('ll.urlhash', array_map('drupal_hash_base64', $links), 'IN');
+      ->condition('ll.urlhash', array_map('backdrop_hash_base64', $links), 'IN');
 
     db_delete('linkchecker_comment')
       ->condition('cid', $cid)
@@ -1627,7 +1658,7 @@ function _linkchecker_cleanup_block_custom_references($bid = 0, $links = array()
     // linkchecker_block_custom reference table.
     $subquery = db_select('linkchecker_link')
       ->fields('linkchecker_link', array('lid'))
-      ->condition('urlhash', array_map('drupal_hash_base64', $links), 'IN');
+      ->condition('urlhash', array_map('backdrop_hash_base64', $links), 'IN');
 
     db_delete('linkchecker_block_custom')
       ->condition('bid', $bid)
@@ -1648,7 +1679,7 @@ function _linkchecker_cleanup_block_custom_references($bid = 0, $links = array()
  *   An array of node references missing in the linkchecker_node table.
  */
 function _linkchecker_node_links_missing($nid, $links) {
-  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_node} ln ON ln.lid = ll.lid WHERE ln.nid = :nid AND ll.urlhash IN (:urlhashes)', array(':nid' => $nid, ':urlhashes' => array_map('drupal_hash_base64', $links)));
+  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_node} ln ON ln.lid = ll.lid WHERE ln.nid = :nid AND ll.urlhash IN (:urlhashes)', array(':nid' => $nid, ':urlhashes' => array_map('backdrop_hash_base64', $links)));
   $links_in_database = array();
   foreach ($result as $row) {
     $links_in_database[] = $row->url;
@@ -1668,7 +1699,7 @@ function _linkchecker_node_links_missing($nid, $links) {
  *   An array of comment references missing in the linkchecker_comment table.
  */
 function _linkchecker_comment_links_missing($cid, $links) {
-  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_comment} lc ON lc.lid = ll.lid WHERE lc.cid = :cid AND ll.urlhash IN (:urlhashes)', array(':cid' => $cid, ':urlhashes' => array_map('drupal_hash_base64', $links)));
+  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_comment} lc ON lc.lid = ll.lid WHERE lc.cid = :cid AND ll.urlhash IN (:urlhashes)', array(':cid' => $cid, ':urlhashes' => array_map('backdrop_hash_base64', $links)));
   $links_in_database = array();
   foreach ($result as $row) {
     $links_in_database[] = $row->url;
@@ -1689,7 +1720,7 @@ function _linkchecker_comment_links_missing($cid, $links) {
  *   table.
  */
 function _linkchecker_block_custom_links_missing($bid, $links) {
-  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_block_custom} lb ON lb.lid = ll.lid WHERE lb.bid = :bid AND ll.urlhash IN (:urlhashes)', array(':bid' => $bid, ':urlhashes' => array_map('drupal_hash_base64', $links)));
+  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_block_custom} lb ON lb.lid = ll.lid WHERE lb.bid = :bid AND ll.urlhash IN (:urlhashes)', array(':bid' => $bid, ':urlhashes' => array_map('backdrop_hash_base64', $links)));
   $links_in_database = array();
   foreach ($result as $row) {
     $links_in_database[] = $row->url;
@@ -1768,7 +1799,7 @@ function _linkchecker_parse_fields($entity_type, $bundle_name, $entity, $return_
             $item += array(
               'title' => '',
             );
-            $options = drupal_parse_url(link_cleanup_url($item['url']));
+            $options = backdrop_parse_url(link_cleanup_url($item['url']));
             $text_items[] = $text_items_by_field[$field['field_name']][] = l($item['title'], $options['path'], $options);
             $text_items[] = $text_items_by_field[$field['field_name']][] = _linkchecker_check_markup($item['title'], NULL, linkchecker_entity_language($entity_type, $entity), TRUE);
           }
@@ -1873,7 +1904,7 @@ function _linkchecker_cleanup_links() {
   }
 
   // Remove block link references if block scanning is disabled.
-  if (variable_get('linkchecker_scan_blocks', 0) == 0) {
+  if (config_get('linkchecker.settings', 'linkchecker_scan_blocks') == 0) {
     db_truncate('linkchecker_block_custom')->execute();
   }
 
@@ -1917,11 +1948,13 @@ function _linkchecker_cleanup_links() {
 function _linkchecker_extract_links($text = '', $content_path = NULL) {
   global $base_root, $is_https;
 
+  $config = config('linkchecker.settings');
+
   $html_dom = filter_dom_load($text);
   $urls = array();
 
   // Finds all hyperlinks in the content.
-  if (variable_get('linkchecker_extract_from_a', 1) == 1) {
+  if ($config->get('linkchecker_extract_from_a') == 1) {
     $links = $html_dom->getElementsByTagName('a');
     foreach ($links as $link) {
       $urls[] = $link->getAttribute('href');
@@ -1934,7 +1967,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
   }
 
   // Finds all audio links in the content.
-  if (variable_get('linkchecker_extract_from_audio', 0) == 1) {
+  if ($config->get('linkchecker_extract_from_audio') == 1) {
     $audios = $html_dom->getElementsByTagName('audio');
     foreach ($audios as $audio) {
       $urls[] = $audio->getAttribute('src');
@@ -1953,7 +1986,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
   }
 
   // Finds embed tags with links in the content.
-  if (variable_get('linkchecker_extract_from_embed', 0) == 1) {
+  if ($config->get('linkchecker_extract_from_embed') == 1) {
     $embeds = $html_dom->getElementsByTagName('embed');
     foreach ($embeds as $embed) {
       $urls[] = $embed->getAttribute('src');
@@ -1963,7 +1996,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
   }
 
   // Finds iframe tags with links in the content.
-  if (variable_get('linkchecker_extract_from_iframe', 0) == 1) {
+  if ($config->get('linkchecker_extract_from_iframe') == 1) {
     $iframes = $html_dom->getElementsByTagName('iframe');
     foreach ($iframes as $iframe) {
       $urls[] = $iframe->getAttribute('src');
@@ -1971,7 +2004,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
   }
 
   // Finds img tags with links in the content.
-  if (variable_get('linkchecker_extract_from_img', 0) == 1) {
+  if ($config->get('linkchecker_extract_from_img') == 1) {
     $imgs = $html_dom->getElementsByTagName('img');
     foreach ($imgs as $img) {
       $urls[] = $img->getAttribute('src');
@@ -1980,7 +2013,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
   }
 
   // Finds object/param tags with links in the content.
-  if (variable_get('linkchecker_extract_from_object', 0) == 1) {
+  if ($config->get('linkchecker_extract_from_object') == 1) {
     $objects = $html_dom->getElementsByTagName('object');
     foreach ($objects as $object) {
       $urls[] = $object->getAttribute('data');
@@ -2006,7 +2039,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
   }
 
   // Finds video tags with links in the content.
-  if (variable_get('linkchecker_extract_from_video', 0) == 1) {
+  if ($config->get('linkchecker_extract_from_video') == 1) {
     $videos = $html_dom->getElementsByTagName('video');
     foreach ($videos as $video) {
       $urls[] = $video->getAttribute('poster');
@@ -2031,7 +2064,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
   $urls = array_unique($urls);
 
   // What type of links should be checked?
-  $linkchecker_check_links_types = variable_get('linkchecker_check_links_types', 1);
+  $linkchecker_check_links_types = $config->get('linkchecker_check_links_types');
 
   $links = array();
   foreach ($urls as $url) {
@@ -2089,7 +2122,7 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
         $path = str_replace('/./', '/', $path);
 
         // Remove '../' segments where possible. Loop until all segments are
-        // removed. Taken over from _drupal_build_css_path() in common.inc.
+        // removed. Taken over from _backdrop_build_css_path() in common.inc.
         $last = '';
         while ($path != $last) {
           $last = $path;
@@ -2123,12 +2156,14 @@ function _linkchecker_extract_links($text = '', $content_path = NULL) {
  *   The old link should be overwritten with this new link.
  */
 function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn = '') {
+  $config = config('linkchecker.settings');
+
   // Don't do any string replacement if one of the values is empty.
   if (!empty($text) && !empty($old_link_fqdn) && !empty($new_link_fqdn)) {
     // Remove protocols and hostname from local URLs.
     $base_roots = array(
-      drupal_strtolower('http://' . $_SERVER['HTTP_HOST']),
-      drupal_strtolower('https://' . $_SERVER['HTTP_HOST']),
+      backdrop_strtolower('http://' . $_SERVER['HTTP_HOST']),
+      backdrop_strtolower('https://' . $_SERVER['HTTP_HOST']),
     );
     $old_link = str_replace($base_roots, '', $old_link_fqdn);
     $new_link = str_replace($base_roots, '', $new_link_fqdn);
@@ -2166,7 +2201,7 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
       $html_dom = filter_dom_load($text);
 
       // Finds all hyperlinks in the content.
-      if (variable_get('linkchecker_extract_from_a', 1) == 1) {
+      if ($config->get('linkchecker_extract_from_a') == 1) {
         $links = $html_dom->getElementsByTagName('a');
         foreach ($links as $link) {
           if (in_array($link->getAttribute('href'), $old_links)) {
@@ -2188,7 +2223,7 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
       }
 
       // Finds all audio links in the content.
-      if (variable_get('linkchecker_extract_from_audio', 0) == 1) {
+      if ($config->get('linkchecker_extract_from_audio') == 1) {
         $audios = $html_dom->getElementsByTagName('audio');
         foreach ($audios as $audio) {
           if (in_array($audio->getAttribute('src'), $old_links)) {
@@ -2213,7 +2248,7 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
       }
 
       // Finds embed tags with links in the content.
-      if (variable_get('linkchecker_extract_from_embed', 0) == 1) {
+      if ($config->get('linkchecker_extract_from_embed') == 1) {
         $embeds = $html_dom->getElementsByTagName('embed');
         foreach ($embeds as $embed) {
           if (in_array($embed->getAttribute('src'), $old_links)) {
@@ -2229,7 +2264,7 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
       }
 
       // Finds iframe tags with links in the content.
-      if (variable_get('linkchecker_extract_from_iframe', 0) == 1) {
+      if ($config->get('linkchecker_extract_from_iframe') == 1) {
         $iframes = $html_dom->getElementsByTagName('iframe');
         foreach ($iframes as $iframe) {
           if (in_array($iframe->getAttribute('src'), $old_links)) {
@@ -2239,7 +2274,7 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
       }
 
       // Finds img tags with links in the content.
-      if (variable_get('linkchecker_extract_from_img', 0) == 1) {
+      if ($config->get('linkchecker_extract_from_img') == 1) {
         $imgs = $html_dom->getElementsByTagName('img');
         foreach ($imgs as $img) {
           if (in_array($img->getAttribute('src'), $old_links)) {
@@ -2252,7 +2287,7 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
       }
 
       // Finds object/param tags with links in the content.
-      if (variable_get('linkchecker_extract_from_object', 0) == 1) {
+      if ($config->get('linkchecker_extract_from_object') == 1) {
         $objects = $html_dom->getElementsByTagName('object');
         foreach ($objects as $object) {
           if (in_array($object->getAttribute('data'), $old_links)) {
@@ -2286,7 +2321,7 @@ function _linkchecker_link_replace(&$text, $old_link_fqdn = '', $new_link_fqdn =
       }
 
       // Finds video tags with links in the content.
-      if (variable_get('linkchecker_extract_from_video', 0) == 1) {
+      if ($config->get('linkchecker_extract_from_video') == 1) {
         $videos = $html_dom->getElementsByTagName('video');
         foreach ($videos as $video) {
           if (in_array($video->getAttribute('poster'), $old_links)) {
@@ -2362,7 +2397,7 @@ function _linkchecker_check_markup($text, $format_id = NULL, $langcode = '', $ca
   // notify about the broken link on all nodes having a link reference in
   // content. This would only confuse the authors as they may also not be able
   // to fix the source node of the reference.
-  $filters_blacklist = array_keys(array_filter(variable_get('linkchecker_filter_blacklist', explode('|', LINKCHECKER_DEFAULT_FILTER_BLACKLIST))));
+  $filters_blacklist = array_keys(array_filter(config_get('linkchecker.settings', 'linkchecker_filter_blacklist')));
 
   // Give filters the chance to escape HTML-like data such as code or formulas.
   foreach ($filters as $name => $filter) {
@@ -2430,7 +2465,7 @@ function _linkchecker_absolute_content_path($url) {
 
   // Find the last slash and remove all after the last slash to get the path.
   $last_slash = strrpos($absolute_url, '/');
-  $absolute_content_url = drupal_substr($absolute_url, 0, $last_slash + 1);
+  $absolute_content_url = backdrop_substr($absolute_url, 0, $last_slash + 1);
 
   return $absolute_content_url;
 }
@@ -2442,7 +2477,7 @@ function _linkchecker_link_check_status_filter($url) {
   $status = TRUE;
 
   // Is url in domain blacklist?
-  $urls = variable_get('linkchecker_disable_link_check_for_urls', LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS);
+  $urls = config_get('linkchecker.settings', 'linkchecker_disable_link_check_for_urls');
   if (!empty($urls) && preg_match('/' . implode('|', array_map(function ($links) { return preg_quote($links, '/'); }, preg_split('/(\r\n?|\n)/', $urls))) . '/', $url)) {
     $status = FALSE;
   }
@@ -2521,7 +2556,7 @@ function _linkchecker_isvalid_response_code($code) {
 function linkchecker_scan_node_types() {
   $types = array();
   foreach (node_type_get_names() as $type => $name) {
-    if (variable_get('linkchecker_scan_node_' . $type, FALSE)) {
+    if (config_get('linkchecker.settings', 'linkchecker_scan_node_' . $type)) {
       $types[$type] = $type;
     }
   }
@@ -2537,7 +2572,7 @@ function linkchecker_scan_node_types() {
 function linkchecker_scan_comment_types() {
   $types = array();
   foreach (node_type_get_names() as $type => $name) {
-    if (variable_get('linkchecker_scan_comment_' . $type, FALSE)) {
+    if (config_get('linkchecker.settings', 'linkchecker_scan_comment_' . $type)) {
       $types[$type] = $type;
     }
   }
@@ -2594,7 +2629,7 @@ function linkchecker_link_load($lid) {
  */
 function linkchecker_impersonate_user($new_user = NULL) {
   global $user;
-  $user_original = &drupal_static(__FUNCTION__);
+  $user_original = &backdrop_static(__FUNCTION__);
 
   if (!isset($new_user)) {
     if (isset($user_original) && !empty($user_original)) {
@@ -2603,14 +2638,14 @@ function linkchecker_impersonate_user($new_user = NULL) {
 
       // Re-enable session saving if we are no longer impersonating a user.
       if (empty($user_original)) {
-        drupal_save_session(TRUE);
+        backdrop_save_session(TRUE);
       }
     }
   }
   else {
     // Push the original user onto the stack and prevent session saving.
     $user_original[] = $user;
-    drupal_save_session(FALSE);
+    backdrop_save_session(FALSE);
 
     if (is_numeric($new_user)) {
       $user = user_load($new_user);
@@ -2676,7 +2711,7 @@ function _linkchecker_isdefaultrevision($entity) {
  * Returns the language code of the given entity.
  *
  * Backward compatibility layer to ensure that installations running an older
- * version of core where entity_language() is not avilable do not break.
+ * version of core where entity_language() is not available do not break.
  *
  * @param string $entity_type
  *   An entity type.

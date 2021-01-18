@@ -17,7 +17,7 @@ function _linkchecker_batch_import_nodes($node_types = array()) {
     $operations[] = array('_linkchecker_batch_node_import_op', array($row->nid));
   }
   $batch = array(
-    'file' => drupal_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
+    'file' => backdrop_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_node_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -56,7 +56,7 @@ function _linkchecker_batch_node_import_finished($success, $results, $operations
   else {
     $message = t('Scanning for links in content has failed with an error.');
   }
-  drupal_set_message($message);
+  backdrop_set_message($message);
 }
 
 /**
@@ -71,7 +71,7 @@ function _linkchecker_batch_import_comments($node_types = array()) {
     $operations[] = array('_linkchecker_batch_comments_import_op', array($row->cid));
   }
   $batch = array(
-    'file' => drupal_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
+    'file' => backdrop_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_comments_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -110,7 +110,7 @@ function _linkchecker_batch_comments_import_finished($success, $results, $operat
   else {
     $message = t('Scanning for links in comments have failed with an error.');
   }
-  drupal_set_message($message);
+  backdrop_set_message($message);
 }
 
 /**
@@ -125,7 +125,7 @@ function _linkchecker_batch_import_block_custom() {
     $operations[] = array('_linkchecker_batch_import_block_custom_op', array($row->bid));
   }
   $batch = array(
-    'file' => drupal_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
+    'file' => backdrop_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_block_custom_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -164,7 +164,7 @@ function _linkchecker_batch_block_custom_import_finished($success, $results, $op
   else {
     $message = t('Scanning for links in blocks have failed with an error.');
   }
-  drupal_set_message($message);
+  backdrop_set_message($message);
 }
 
 /**
@@ -185,7 +185,7 @@ function _linkchecker_batch_import_single_node($nid, $missing_links_count) {
     $operations[] = array('_linkchecker_batch_single_node_import_op', array($nid));
   }
   $batch = array(
-    'file' => drupal_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
+    'file' => backdrop_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_single_node_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -230,7 +230,7 @@ function _linkchecker_batch_single_node_import_finished($success, $results, $ope
   else {
     $message = t('Recurring scanning for links in node @nid has failed with an error.', array('@nid' => $results[0]));
   }
-  drupal_set_message($message);
+  backdrop_set_message($message);
 }
 
 /**
@@ -251,7 +251,7 @@ function _linkchecker_batch_import_single_comment($cid, $missing_links_count) {
     $operations[] = array('_linkchecker_batch_single_comment_import_op', array($cid));
   }
   $batch = array(
-    'file' => drupal_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
+    'file' => backdrop_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_single_comment_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -295,7 +295,7 @@ function _linkchecker_batch_single_comment_import_finished($success, $results, $
   else {
     $message = t('Recurring scanning for links in comment @cid has failed with an error.', array('@cid' => $results[0]));
   }
-  drupal_set_message($message);
+  backdrop_set_message($message);
 }
 
 /**
@@ -316,7 +316,7 @@ function _linkchecker_batch_import_single_block_custom($bid, $missing_links_coun
     $operations[] = array('_linkchecker_batch_single_block_custom_import_op', array($bid));
   }
   $batch = array(
-    'file' => drupal_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
+    'file' => backdrop_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_single_block_custom_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -361,5 +361,5 @@ function _linkchecker_batch_single_block_custom_import_finished($success, $resul
   else {
     $message = t('Recurring scanning for links in block @bid has failed with an error.', array('@bid' => $results[0]));
   }
-  drupal_set_message($message);
+  backdrop_set_message($message);
 }

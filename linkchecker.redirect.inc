@@ -40,13 +40,13 @@ function _linkchecker_redirect_reset($urls = array()) {
   $urls = array_unique($urls);
 
   $num_updated = db_update('linkchecker_link')
-    ->condition('urlhash', array_map('drupal_hash_base64', $urls))
+    ->condition('urlhash', array_map('backdrop_hash_base64', $urls))
     ->condition('fail_count', 0, '>')
     ->condition('status', 1)
     ->fields(array('last_checked' => 0))
     ->execute();
 
   if ($num_updated) {
-    drupal_set_message(t('The link %url will be checked again on the next cron run.', array('%url' => $urls[0])));
+    backdrop_set_message(t('The link %url will be checked again on the next cron run.', array('%url' => $urls[0])));
   }
 }

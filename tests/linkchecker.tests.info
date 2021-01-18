@@ -1,0 +1,17 @@
+[LinkCheckerLinkExtractionTest]
+name = Link Checker link extraction tests
+description = Test Link checker module link extraction functionality.
+group = Link Checker
+file = linkchecker.test
+
+[LinkCheckerInterfaceTest]
+name = Link checker interface tests
+description = Test the interface functionality.
+group = Link Checker
+file = linkchecker.test
+
+[LinkCheckerImpersonatingUserTestCase]
+name = Link checker impersonate users
+description = Temporarily impersonate another user, and then restore the original user.
+group = Link Checker
+file = linkchecker.test
