@@ -198,7 +198,7 @@ EOT;
 
     // Save node.
     $this->backdropPost('node/add/page', $edit, t('Save'));
-    $this->assertText(t('@type @title has been created.', array('@type' => 'Basic page', '@title' => $edit['title'])), 'Node was created.');
+    $this->assertText(t('@type @title has been created.', array('@type' => 'Page', '@title' => $edit['title'])), 'Node was created.');
 
     // Verify if the content links are extracted properly.
     $urls_fqdn = array(
@@ -255,7 +255,7 @@ EOT;
     $node = $this->backdropGetNodeByTitle($edit['title']);
     $this->assertTrue($node, 'Node found in database.');
     $this->backdropPost('node/' . $node->nid . '/edit', $edit, t('Save'));
-    $this->assertRaw(t('@type %title has been updated.', array('@type' => 'Basic page', '%title' => $edit['title'])));
+    $this->assertRaw(t('@type %title has been updated.', array('@type' => 'Page', '%title' => $edit['title'])));
 
     // @todo Path alias seems not saved!???
     // $this->assertIdentical($node->path, $edit['path'], format_string('URL alias "@node-path" matches path "@edit-path".', array('@node-path' => $node->path, '@edit-path' => $edit['path'])));

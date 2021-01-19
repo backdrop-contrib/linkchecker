@@ -1,3 +1,7 @@
+/**
+ * @file
+ * Attaches behaviors for the Link Checker module.
+ */
 (function ($) {
 
 Backdrop.behaviors.linkcheckerFieldsetSummaries = {

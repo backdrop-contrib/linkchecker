@@ -746,7 +746,7 @@ function _linkchecker_status_handling(&$response, $link) {
               block_custom_block_save((array) $block_custom, $block_custom->delta);
               // There is no hook that fires on block_custom_block_save(),
               // therefore do link extraction programmatically.
-              _linkchecker_add_block_custom_links($block_custom, $block_custom->delta);
+              _linkchecker_add_block_custom_links($block_custom);
               linkchecker_watchdog_log('linkchecker', 'Changed permanently moved link in custom block %delta from %src to %dst.', array('%delta' => $block_custom->delta, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
             }
             else {
@@ -1122,7 +1122,8 @@ function linkchecker_block_custom_add_form_submit($form, &$form_state) {
  */
 function linkchecker_block_custom_configure_form_submit($form, &$form_state) {
   if (config_get('linkchecker.settings', 'linkchecker_scan_blocks')) {
-    _linkchecker_add_block_custom_links($form_state['values'], $form_state['values']['delta']);
+    debug($form_state['values']);
+    _linkchecker_add_block_custom_links($form_state['values']);
   }
 }
 
@@ -1416,24 +1417,18 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
  *
  * @param array|object $block_custom
  *   The fully populated custom block object.
- * @param int $delta
- *   Block delta
  * @param bool $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
  *   the need for content re-scans is detected by the number of missing links.
  */
-function _linkchecker_add_block_custom_links($block_custom, $delta, $skip_missing_links_detection = FALSE) {
+function _linkchecker_add_block_custom_links($block_custom, $skip_missing_links_detection = FALSE) {
+  if (empty($block_custom)) {
+    return;
+  }
+
   // Convert custom block array to object.
   // @todo: Are we able to remove this global conversion?
   $block_custom = (object) $block_custom;
-
-  // Custom blocks really suxxx as it's very inconsistent core logic (values are
-  // integers or strings) and there are no usable hooks. Try to workaround this
-  // bad logic as good as possible to prevent warnings/errors.
-  // NOTE: Only custom blocks from block.module are supported. Skip all others.
-  if ($block_custom->module != 'block' || $block_custom->delta != $delta) {
-    return;
-  }
 
   $filter = new stdClass();
   $filter->settings['filter_url_length'] = 72;
@@ -1455,7 +1450,7 @@ function _linkchecker_add_block_custom_links($block_custom, $delta, $skip_missin
   if (!empty($links)) {
     // Remove all links from the links array already in the database and only
     // add missing links to database.
-    $missing_links = _linkchecker_block_custom_links_missing($delta, $links);
+    $missing_links = _linkchecker_block_custom_links_missing($block_custom->delta, $links);
 
     // Only add unique links to database that do not exist.
     $i = 0;
@@ -1471,7 +1466,7 @@ function _linkchecker_add_block_custom_links($block_custom, $delta, $skip_missin
       }
       db_insert('linkchecker_block_custom')
         ->fields(array(
-          'block_delta' => $delta,
+          'block_delta' => $block_custom->delta,
           'lid' => $link->lid,
         ))
         ->execute();
@@ -1499,7 +1494,7 @@ function _linkchecker_add_block_custom_links($block_custom, $delta, $skip_missin
     $missing_links_count = count($missing_links) - LINKCHECKER_SCAN_MAX_LINKS_PER_RUN;
     if (!$skip_missing_links_detection && $missing_links_count > 0) {
       module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
-      batch_set(_linkchecker_batch_import_single_block_custom($delta, $missing_links_count));
+      batch_set(_linkchecker_batch_import_single_block_custom($block_custom->delta, $missing_links_count));
 
       // If batches were set in the submit handlers, we process them now,
       // possibly ending execution. We make sure we do not react to the batch
@@ -1512,7 +1507,7 @@ function _linkchecker_add_block_custom_links($block_custom, $delta, $skip_missin
   }
 
   // Remove dead link references for cleanup reasons as very last step.
-  _linkchecker_cleanup_block_custom_references($delta, $links);
+  _linkchecker_cleanup_block_custom_references($block_custom->delta, $links);
 }
 
 /**
