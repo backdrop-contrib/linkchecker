@@ -17,7 +17,7 @@ function _linkchecker_batch_import_nodes($node_types = array()) {
     $operations[] = array('_linkchecker_batch_node_import_op', array($row->nid));
   }
   $batch = array(
-    'file' => backdrop_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
+    'file' => backdrop_get_path('module', 'linkchecker') . '/includes/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_node_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -71,7 +71,7 @@ function _linkchecker_batch_import_comments($node_types = array()) {
     $operations[] = array('_linkchecker_batch_comments_import_op', array($row->cid));
   }
   $batch = array(
-    'file' => backdrop_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
+    'file' => backdrop_get_path('module', 'linkchecker') . '/includes/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_comments_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -117,15 +117,16 @@ function _linkchecker_batch_comments_import_finished($success, $results, $operat
  * Batch: Scan blocks for links.
  */
 function _linkchecker_batch_import_block_custom() {
-  // Get all {block_custom}.bid's as block module suxxx and has no usable hooks.
-  $result = db_query('SELECT bid FROM {block_custom} ORDER BY bid');
+  // Get all custom block deltas.
+  $config_names = config_get_names_with_prefix('block.custom.');
 
   $operations = array();
-  foreach ($result as $row) {
-    $operations[] = array('_linkchecker_batch_import_block_custom_op', array($row->bid));
+  foreach ($config_names as $config_name) {
+    $block = config_get($config_name);
+    $operations[] = array('_linkchecker_batch_import_block_custom_op', array($block['delta']));
   }
   $batch = array(
-    'file' => backdrop_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
+    'file' => backdrop_get_path('module', 'linkchecker') . '/includes/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_block_custom_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -137,9 +138,9 @@ function _linkchecker_batch_import_block_custom() {
 /**
  * Batch operation: Scan one by one block for links.
  */
-function _linkchecker_batch_import_block_custom_op($bid, &$context) {
+function _linkchecker_batch_import_block_custom_op($delta, &$context) {
   // Load the custom block and scan for links.
-  $block_custom = linkchecker_block_custom_block_get($bid);
+  $block_custom = linkchecker_block_custom_block_get($delta);
   _linkchecker_add_block_custom_links($block_custom, $block_custom->delta);
 
   // Store some result for post-processing in the finished callback.
@@ -185,7 +186,7 @@ function _linkchecker_batch_import_single_node($nid, $missing_links_count) {
     $operations[] = array('_linkchecker_batch_single_node_import_op', array($nid));
   }
   $batch = array(
-    'file' => backdrop_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
+    'file' => backdrop_get_path('module', 'linkchecker') . '/includes/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_single_node_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -251,7 +252,7 @@ function _linkchecker_batch_import_single_comment($cid, $missing_links_count) {
     $operations[] = array('_linkchecker_batch_single_comment_import_op', array($cid));
   }
   $batch = array(
-    'file' => backdrop_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
+    'file' => backdrop_get_path('module', 'linkchecker') . '/includes/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_single_comment_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -301,7 +302,7 @@ function _linkchecker_batch_single_comment_import_finished($success, $results, $
 /**
  * Recurring scans of a single block via batch API.
  *
- * @param int $bid
+ * @param int $delta
  *   The unique block id to scan for links.
  * @param int $missing_links_count
  *   The number of links not yet added to linkchecker_links table. By this
@@ -310,13 +311,13 @@ function _linkchecker_batch_single_comment_import_finished($success, $results, $
  * @return array
  *   The batch task definition.
  */
-function _linkchecker_batch_import_single_block_custom($bid, $missing_links_count) {
+function _linkchecker_batch_import_single_block_custom($delta, $missing_links_count) {
   $operations = array();
   for ($i = 0; $i <= $missing_links_count; $i = $i + LINKCHECKER_SCAN_MAX_LINKS_PER_RUN) {
-    $operations[] = array('_linkchecker_batch_single_block_custom_import_op', array($bid));
+    $operations[] = array('_linkchecker_batch_single_block_custom_import_op', array($delta));
   }
   $batch = array(
-    'file' => backdrop_get_path('module', 'linkchecker') . '/linkchecker.batch.inc',
+    'file' => backdrop_get_path('module', 'linkchecker') . '/includes/linkchecker.batch.inc',
     'finished' => '_linkchecker_batch_single_block_custom_import_finished',
     'operations' => $operations,
     'title' => t('Scanning for links'),
@@ -329,14 +330,14 @@ function _linkchecker_batch_import_single_block_custom($bid, $missing_links_coun
 /**
  * Run single block link extraction.
  *
- * @param int $bid
- *   Node ID.
+ * @param int $delta
+ *   Block delta.
  * @param array $context
  *   Batch context array.
  */
-function _linkchecker_batch_single_block_custom_import_op($bid, &$context) {
+function _linkchecker_batch_single_block_custom_import_op($delta, &$context) {
   // Load the custom block and scan for links.
-  $block_custom = linkchecker_block_custom_block_get($bid);
+  $block_custom = linkchecker_block_custom_block_get($delta);
   _linkchecker_add_block_custom_links($block_custom, $block_custom->delta, TRUE);
 
   // Store some result for post-processing in the finished callback.
@@ -356,10 +357,10 @@ function _linkchecker_batch_single_block_custom_import_op($bid, &$context) {
  */
 function _linkchecker_batch_single_block_custom_import_finished($success, $results, $operations) {
   if ($success) {
-    $message = format_plural(count($results), 'Block @bid has been re-scanned once to collect all links.', 'Block @bid has been re-scanned @count times to collect all links.', array('@bid' => $results[0]));
+    $message = format_plural(count($results), 'Block @delta has been re-scanned once to collect all links.', 'Block @delta has been re-scanned @count times to collect all links.', array('@delta' => $results[0]));
   }
   else {
-    $message = t('Recurring scanning for links in block @bid has failed with an error.', array('@bid' => $results[0]));
+    $message = t('Recurring scanning for links in block @delta has failed with an error.', array('@delta' => $results[0]));
   }
   backdrop_set_message($message);
 }

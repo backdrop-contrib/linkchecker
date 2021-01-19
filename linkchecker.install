@@ -21,14 +21,14 @@ function linkchecker_install() {
  */
 function linkchecker_schema() {
 
-  // @todo change bid to varchar maybe.
   $schema['linkchecker_block_custom'] = array(
     'description' => 'Stores all link references for custom blocks.',
     'fields' => array(
-      'bid'  => array(
-        'type' => 'int',
+      'block_delta'  => array(
+        'type' => 'varchar',
+        'length' => 255,
         'not null' => TRUE,
-        'description' => 'Primary Key: Unique {block_custom}.bid.',
+        'description' => 'The machine_name of the custom block.',
       ),
       'lid' => array(
         'type' => 'int',
@@ -36,12 +36,8 @@ function linkchecker_schema() {
         'description' => 'Primary Key: Unique {linkchecker_link}.lid.',
       ),
     ),
-    'primary key' => array('bid', 'lid'),
+    'primary key' => array('block_delta', 'lid'),
     'foreign keys' => array(
-      'bid' => array(
-        'table' => 'block_custom',
-        'columns' => array('bid' => 'bid'),
-      ),
       'lid' => array(
         'table' => 'linkchecker_link',
         'columns' => array('lid' => 'lid'),
@@ -208,7 +204,7 @@ function linkchecker_update_last_removed() {
 /**
  * Move Link Checker settings from variables to config.
  */
-function linkchecker_update_1001() {
+function linkchecker_update_1000() {
   // Migrate variables to config.
   $config = config('linkchecker.settings');
   $config->set('linkchecker_action_status_code_301', update_variable_get('linkchecker.settings', 'linkchecker_action_status_code_301', 0));
@@ -274,4 +270,27 @@ function linkchecker_update_1001() {
     update_variable_del('linkchecker_scan_node_' . $type);
     update_variable_del('linkchecker_scan_comment_' . $type);
   }
+}
+
+/**
+ * Update linkchecker_block_custom table to work with custom blocks in Backdrop.
+ */
+function linkchecker_update_1002() {
+  // should be 1001
+  if (!db_field_exists('linkchecker_block_custom', 'bid')) {
+    return;
+  }
+
+  db_drop_primary_key('linkchecker_block_custom');
+  db_change_field('linkchecker_block_custom', 'bid', 'block_delta',
+    array(
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'description' => 'The machine_name of the custom block.'
+    ),
+    array(
+      'primary key' => array('block_delta', 'lid'),
+    ),
+  );
 }

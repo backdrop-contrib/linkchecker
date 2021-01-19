@@ -23,6 +23,7 @@ function linkchecker_admin_settings_form($form_state) {
     '#collapsible' => FALSE,
   );
 
+  // @todo fix BLOCKS! Herb
   $block_custom_dependencies = '<div class="admin-requirements">';
   $block_custom_dependencies .= t('Requires: !module-list', array('!module-list' => (module_exists('block') ? t('@module (<span class="admin-enabled">enabled</span>)', array('@module' => 'Block')) : t('@module (<span class="admin-disabled">disabled</span>)', array('@module' => 'Block')))));
   $block_custom_dependencies .= '</div>';

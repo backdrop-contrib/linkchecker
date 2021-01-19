@@ -234,7 +234,7 @@ function _linkchecker_user_access_edit_link_settings($link) {
  */
 function _linkchecker_link_access($link) {
   $link = (object) $link;
-  return _linkchecker_link_node_ids($link) || _linkchecker_link_comment_ids($link) || _linkchecker_link_block_ids($link);
+  return _linkchecker_link_node_ids($link) || _linkchecker_link_comment_ids($link) || _linkchecker_link_block_deltas($link);
 }
 
 /**
@@ -411,38 +411,21 @@ function _linkchecker_link_comment_ids($link, $comment_author_account = NULL) {
  *   An array of custom block IDs that contain the provided link and that the
  *   current user is allowed to view.
  */
-function _linkchecker_link_block_ids($link) {
+function _linkchecker_link_block_deltas($link) {
   // Exit if blocks are disabled.
-  if (!config_get('linkchecker.settings', 'linkchecker_scan_blocks', 0)) {
+  if (!config_get('linkchecker.settings', 'linkchecker_scan_blocks')) {
     return array();
   }
 
   // Get the initial list of block IDs.
-  $bids = db_query('SELECT bid FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid))->fetchCol();
+  $deltas = db_query('SELECT block_delta FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid))->fetchCol();
 
   // If the user can administer blocks, they're able to see all block content.
   if (user_access('administer blocks')) {
-    return $bids;
+    return $deltas;
   }
 
-  // Otherwise, only return blocks that this user (or anonymous users) have
-  // access to.
-  global $user;
-  $rids = array_keys($user->roles);
-  $rids[] = BACKDROP_ANONYMOUS_ROLE;
-
-  $query = db_select('block', 'b');
-  $query->leftJoin('block_role', 'r', 'b.module = r.module AND b.delta = r.delta');
-  $query->condition('b.module', 'block');
-  $query->condition(db_or()
-    ->condition('r.rid', $rids, 'IN')
-    ->isNull('r.rid')
-  );
-  $query->fields('b', array('delta'));
-  $query->distinct();
-  $allowed_bids = $query->execute()->fetchCol();
-
-  return array_intersect($bids, $allowed_bids);
+  return array();
 }
 
 /**
@@ -456,7 +439,7 @@ function linkchecker_cron() {
   }
 
   // Run link checker in a new process, independent of cron.
-  if (module_exists('httprl') && config_get('linkchecker.settings', 'linkchecker_check_library', 'core') == 'httprl') {
+  if (module_exists('httprl') && config_get('linkchecker.settings', 'linkchecker_check_library') == 'httprl') {
     // Setup callback options array; call _linkchecker_check_links() in the
     // background.
     $callback_options = array(array('function' => '_linkchecker_check_links'));
@@ -746,9 +729,9 @@ function _linkchecker_status_handling(&$response, $link) {
 
         // CUSTOM BLOCKS: Autorepair all custom blocks having this outdated
         // link.
-        $result = db_query('SELECT bid FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
+        $result = db_query('SELECT block_delta FROM {linkchecker_block_custom} WHERE lid = :lid', array(':lid' => $link->lid));
         foreach ($result as $row) {
-          $block_custom = linkchecker_block_custom_block_get($row->bid);
+          $block_custom = linkchecker_block_custom_block_get($row->block_delta);
 
           // Has the custom block object loaded successfully?
           if (is_object($block_custom)) {
@@ -765,14 +748,14 @@ function _linkchecker_status_handling(&$response, $link) {
               // There is no hook that fires on block_custom_block_save(),
               // therefore do link extraction programmatically.
               _linkchecker_add_block_custom_links($block_custom, $block_custom->delta);
-              linkchecker_watchdog_log('linkchecker', 'Changed permanently moved link in custom block %bid from %src to %dst.', array('%bid' => $block_custom->delta, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
+              linkchecker_watchdog_log('linkchecker', 'Changed permanently moved link in custom block %delta from %src to %dst.', array('%delta' => $block_custom->delta, '%src' => $link->url, '%dst' => $response->redirect_url), WATCHDOG_INFO);
             }
             else {
-              linkchecker_watchdog_log('linkchecker', 'Link update in block failed. Permanently moved link %src not found in block %bid. Manual fix required.', array('%bid' => $block_custom->delta, '%src' => $link->url), WATCHDOG_WARNING);
+              linkchecker_watchdog_log('linkchecker', 'Link update in block failed. Permanently moved link %src not found in block %delta. Manual fix required.', array('%delta' => $block_custom->delta, '%src' => $link->url), WATCHDOG_WARNING);
             }
           }
           else {
-            linkchecker_watchdog_log('linkchecker', 'Loading block %bid for update failed. Manual fix required.', array('%bid' => $block_custom->delta), WATCHDOG_ERROR);
+            linkchecker_watchdog_log('linkchecker', 'Loading block %delta for update failed. Manual fix required.', array('%delta' => $block_custom->delta), WATCHDOG_ERROR);
           }
         }
 
@@ -1014,7 +997,7 @@ function linkchecker_form_alter(&$form, &$form_state, $form_id) {
         // Show a message on custom block edit page if a link check failed once
         // or more often.
         $ignore_response_codes = preg_split('/(\r\n?|\n)/', config_get('linkchecker.settings', 'linkchecker_ignore_response_codes'));
-        $links = db_query('SELECT ll.* FROM {linkchecker_block_custom} lb INNER JOIN {linkchecker_link} ll ON lb.lid = ll.lid WHERE lb.bid = :bid AND ll.fail_count > :fail_count AND ll.status = :status AND ll.code NOT IN (:codes)', array(':bid' => arg(5), ':fail_count' => 0, ':status' => 1, ':codes' => $ignore_response_codes));
+        $links = db_query('SELECT ll.* FROM {linkchecker_block_custom} lb INNER JOIN {linkchecker_link} ll ON lb.lid = ll.lid WHERE lb.block_delta = :delta AND ll.fail_count > :fail_count AND ll.status = :status AND ll.code NOT IN (:codes)', array(':delta' => arg(5), ':fail_count' => 0, ':status' => 1, ':codes' => $ignore_response_codes));
         foreach ($links as $link) {
           if (_linkchecker_link_access($link)) {
             backdrop_set_message(format_plural($link->fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $link->url, '@code' => $link->code)), 'warning', FALSE);
@@ -1130,9 +1113,8 @@ function linkchecker_form_comment_form_alter(&$form, &$form_state, $form_id) {
  * Custom submit handler for block add page.
  */
 function linkchecker_block_custom_add_form_submit($form, &$form_state) {
-  if (config_get('linkchecker.settings', 'linkchecker_scan_blocks', 0)) {
-    $bid = db_query('SELECT MAX(bid) FROM {block_custom}')->fetchField();
-    _linkchecker_add_block_custom_links($form_state['values'], $bid);
+  if (config_get('linkchecker.settings', 'linkchecker_scan_blocks')) {
+    _linkchecker_add_block_custom_links($form_state['values']);
   }
 }
 
@@ -1140,7 +1122,7 @@ function linkchecker_block_custom_add_form_submit($form, &$form_state) {
  * Custom submit handler for block configure page.
  */
 function linkchecker_block_custom_configure_form_submit($form, &$form_state) {
-  if (config_get('linkchecker.settings', 'linkchecker_scan_blocks', 0)) {
+  if (config_get('linkchecker.settings', 'linkchecker_scan_blocks')) {
     _linkchecker_add_block_custom_links($form_state['values'], $form_state['values']['delta']);
   }
 }
@@ -1149,13 +1131,14 @@ function linkchecker_block_custom_configure_form_submit($form, &$form_state) {
  * Custom submit handler for block delete page.
  */
 function linkchecker_block_custom_delete_form_submit($form, &$form_state) {
-  _linkchecker_delete_block_custom_links($form_state['values']['bid']);
+  debug($form_state['values']);
+  _linkchecker_delete_block_custom_links($form_state['values']['delta']);
 }
 
 /**
  * Returns information from database about a user-created (custom) block.
  *
- * @param int $bid
+ * @param int $delta
  *   ID of the block to get information for.
  *
  * @return object
@@ -1167,20 +1150,21 @@ function linkchecker_block_custom_delete_form_submit($form, &$form_state) {
  *   - body['value']: Block contents.
  *   - body['format']: Filter ID of the filter format for the body.
  */
-function linkchecker_block_custom_block_get($bid) {
-  $block_custom = block_custom_block_get($bid);
+function linkchecker_block_custom_block_get($delta) {
+  $block_custom = block_custom_block_load($delta);
+  $block_custom = config_get('block.custom.' . $delta);
+  if (!$block_custom) {
+    return FALSE;
+  }
 
   if ($block_custom) {
     $block = new stdClass();
     $block->module = 'block';
-    $block->delta = $block_custom['bid'];
+    $block->delta = $block_custom['delta'];
     $block->info = $block_custom['info'];
     $block->body = array();
-    $block->body['value'] = $block_custom['body'];
-    $block->body['format'] = $block_custom['format'];
-  }
-  else {
-    $block = FALSE;
+    $block->body['value'] = $block_custom['body']['value'];
+    $block->body['format'] = $block_custom['body']['format'];
   }
 
   return $block;
@@ -1433,13 +1417,13 @@ function _linkchecker_add_comment_links($comment, $skip_missing_links_detection 
  *
  * @param array|object $block_custom
  *   The fully populated custom block object.
- * @param int $bid
- *   Block id from table {block}.bid.
+ * @param int $delta
+ *   Block delta
  * @param bool $skip_missing_links_detection
  *   To prevent endless batch loops the value need to be TRUE. With FALSE
  *   the need for content re-scans is detected by the number of missing links.
  */
-function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_links_detection = FALSE) {
+function _linkchecker_add_block_custom_links($block_custom, $delta, $skip_missing_links_detection = FALSE) {
   // Convert custom block array to object.
   // @todo: Are we able to remove this global conversion?
   $block_custom = (object) $block_custom;
@@ -1448,7 +1432,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
   // integers or strings) and there are no usable hooks. Try to workaround this
   // bad logic as good as possible to prevent warnings/errors.
   // NOTE: Only custom blocks from block.module are supported. Skip all others.
-  if ($block_custom->module != 'block' || !is_numeric($block_custom->delta) || !is_numeric($bid) || $block_custom->delta != $bid) {
+  if ($block_custom->module != 'block' || $block_custom->delta != $delta) {
     return;
   }
 
@@ -1472,7 +1456,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
   if (!empty($links)) {
     // Remove all links from the links array already in the database and only
     // add missing links to database.
-    $missing_links = _linkchecker_block_custom_links_missing($bid, $links);
+    $missing_links = _linkchecker_block_custom_links_missing($delta, $links);
 
     // Only add unique links to database that do not exist.
     $i = 0;
@@ -1488,7 +1472,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
       }
       db_insert('linkchecker_block_custom')
         ->fields(array(
-          'bid' => $bid,
+          'block_delta' => $delta,
           'lid' => $link->lid,
         ))
         ->execute();
@@ -1516,7 +1500,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
     $missing_links_count = count($missing_links) - LINKCHECKER_SCAN_MAX_LINKS_PER_RUN;
     if (!$skip_missing_links_detection && $missing_links_count > 0) {
       module_load_include('inc', 'linkchecker', 'includes/linkchecker.batch');
-      batch_set(_linkchecker_batch_import_single_block_custom($bid, $missing_links_count));
+      batch_set(_linkchecker_batch_import_single_block_custom($delta, $missing_links_count));
 
       // If batches were set in the submit handlers, we process them now,
       // possibly ending execution. We make sure we do not react to the batch
@@ -1529,7 +1513,7 @@ function _linkchecker_add_block_custom_links($block_custom, $bid, $skip_missing_
   }
 
   // Remove dead link references for cleanup reasons as very last step.
-  _linkchecker_cleanup_block_custom_references($bid, $links);
+  _linkchecker_cleanup_block_custom_references($delta, $links);
 }
 
 /**
@@ -1559,13 +1543,13 @@ function _linkchecker_delete_comment_links($cid) {
 /**
  * Remove all block references to links in the linkchecker_block_custom table.
  *
- * @param int $bid
- *   The block ID.
+ * @param string $delta
+ *   The block delta.
  *
  */
-function _linkchecker_delete_block_custom_links($bid) {
+function _linkchecker_delete_block_custom_links($delta) {
   db_delete('linkchecker_block_custom')
-    ->condition('bid', $bid)
+    ->condition('block_delta', $delta)
     ->execute();
 }
 
@@ -1630,15 +1614,15 @@ function _linkchecker_cleanup_comment_references($cid = 0, $links = array()) {
 /**
  * Cleanup no longer used custom block references to links in the linkchecker_block_custom table.
  *
- * @param int $bid
- *   The block ID.
+ * @param int $delta
+ *   The block delta.
  * @param array $links
  */
-function _linkchecker_cleanup_block_custom_references($bid = 0, $links = array()) {
+function _linkchecker_cleanup_block_custom_references($delta = '', $links = array()) {
   if (empty($links)) {
     // Block do not have links. Delete all references if exists.
     db_delete('linkchecker_block_custom')
-      ->condition('bid', $bid)
+      ->condition('block_delta', $delta)
       ->execute();
   }
   else {
@@ -1650,7 +1634,7 @@ function _linkchecker_cleanup_block_custom_references($bid = 0, $links = array()
       ->condition('urlhash', array_map('backdrop_hash_base64', $links), 'IN');
 
     db_delete('linkchecker_block_custom')
-      ->condition('bid', $bid)
+      ->condition('block_delta', $delta)
       ->condition('lid', $subquery, 'NOT IN')
       ->execute();
   }
@@ -1699,8 +1683,8 @@ function _linkchecker_comment_links_missing($cid, $links) {
 /**
  * Returns an array of custom block references missing in the linkchecker_block_custom table.
  *
- * @param int $bid
- *   The block ID.
+ * @param int $delta
+ *   The block delta.
  * @param array $links
  *   An array of links.
  *
@@ -1708,8 +1692,8 @@ function _linkchecker_comment_links_missing($cid, $links) {
  *   An array of custom block references missing in the linkchecker_block_custom
  *   table.
  */
-function _linkchecker_block_custom_links_missing($bid, $links) {
-  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_block_custom} lb ON lb.lid = ll.lid WHERE lb.bid = :bid AND ll.urlhash IN (:urlhashes)', array(':bid' => $bid, ':urlhashes' => array_map('backdrop_hash_base64', $links)));
+function _linkchecker_block_custom_links_missing($delta, $links) {
+  $result = db_query('SELECT ll.url FROM {linkchecker_link} ll INNER JOIN {linkchecker_block_custom} lb ON lb.lid = ll.lid WHERE lb.block_delta = :delta AND ll.urlhash IN (:urlhashes)', array(':delta' => $delta, ':urlhashes' => array_map('backdrop_hash_base64', $links)));
   $links_in_database = array();
   foreach ($result as $row) {
     $links_in_database[] = $row->url;

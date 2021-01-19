@@ -503,17 +503,19 @@ class LinkCheckerInterfaceTest extends BackdropWebTestCase {
 
     // Add a new custom block by filling out the input form on the admin/structure/block/add page.
     $custom_block = array();
+    $custom_block['delta'] = $this->randomName(8);
     $custom_block['info'] = $this->randomName(8);
     $custom_block['title'] = $this->randomName(8);
     $custom_block['body[value]'] = $body;
     $custom_block['body[format]'] = 'full_html';
     $this->backdropPost('admin/structure/block/add', $custom_block, t('Save block'));
 
-    // Confirm that the custom block has been created, and then query the created bid.
+    // Confirm that the custom block has been created.
     $this->assertText(t('The block has been created.'), 'Custom block successfully created.');
-    $bid = db_query("SELECT bid FROM {block_custom} WHERE info = :info", array(':info' => $custom_block['info']))->fetchField();
+    $config = config('block.custom.' . $custom_block['delta']);
 
     // Check to see if the custom block was created by checking that it's in the database.
+    $bid = $config->get('delta');
     $this->assertNotNull($bid, 'Custom block found in database');
 
     // Verify if the content link is extracted properly.
@@ -529,14 +531,14 @@ class LinkCheckerInterfaceTest extends BackdropWebTestCase {
     $fail_count = 1;
     $status = '301';
     $this->setLinkAsBroken($url1, $status, $fail_count);
-    $this->backdropGet('admin/structure/block/manage/block/' . $bid . '/configure');
+    $this->backdropGet('admin/structure/block/manage/' . $bid . '/configure');
     $this->assertRaw(format_plural($fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $url1, '@code' => $status)), 'Link check failed once found.');
 
     // Set link as failed multiple times.
     $fail_count = 4;
     $status = '404';
     $this->setLinkAsBroken($url1, $status, $fail_count);
-    $this->backdropGet('admin/structure/block/manage/block/' . $bid . '/configure');
+    $this->backdropGet('admin/structure/block/manage/' . $bid . '/configure');
     $this->assertRaw(format_plural($fail_count, 'Link check of <a href="@url">@url</a> failed once (status code: @code).', 'Link check of <a href="@url">@url</a> failed @count times (status code: @code).', array('@url' => $url1, '@code' => $status)), 'Link check failed multiple times found.');
   }
 

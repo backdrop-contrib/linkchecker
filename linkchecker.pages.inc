@@ -149,13 +149,13 @@ function _linkchecker_report_page($query, $account = NULL) {
     // that the current user has access to.
     $nids = _linkchecker_link_node_ids($link, $account);
     $cids = _linkchecker_link_comment_ids($link, $account);
-    $bids = _linkchecker_link_block_ids($link);
+    $deltas = _linkchecker_link_block_deltas($link);
 
     // If the user does not have access to see this link anywhere, do not
     // display it, for reasons explained in _linkchecker_link_access(). We
     // still need to fill the table row, though, so as not to throw off the
     // number of items in the pager.
-    if (empty($nids) && empty($cids) && empty($bids)) {
+    if (empty($nids) && empty($cids) && empty($deltas)) {
       $rows[] = array(array('data' => t('Permission restrictions deny you access to this broken link.'), 'colspan' => count($header)));
       continue;
     }
@@ -182,8 +182,8 @@ function _linkchecker_report_page($query, $account = NULL) {
 
     // Show link to blocks having this broken link.
     if ($access_administer_blocks) {
-      foreach ($bids as $bid) {
-        $links[] = l(t('Edit block @block', array('@block' => $bid)), 'admin/structure/block/manage/block/' . $bid . '/configure', array('query' => backdrop_get_destination()));
+      foreach ($deltas as $delta) {
+        $links[] = l(t('Edit block @block', array('@block' => $delta)), 'admin/structure/block/manage/' . $delta . '/configure', array('query' => backdrop_get_destination()));
       }
     }
 
