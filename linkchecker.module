@@ -483,7 +483,6 @@ function _linkchecker_check_links() {
   $check_links_max_per_cron_run = ($has_httprl) ? ($linkchecker_check_connections_max * $max_execution_time) : $max_execution_time;
 
   $linkchecker_check_links_interval = $config->get('linkchecker_check_links_interval');
-  $linkchecker_check_links_interval = 0;
   $linkchecker_check_useragent = $config->get('linkchecker_check_useragent');
 
   // Connection limit can be overridden via settings.php. Two connections is the
