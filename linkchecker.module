@@ -1069,7 +1069,9 @@ function linkchecker_node_type_form_submit($form, $form_state) {
   $node_type = $form['#node_type']->type;
 
   $config->set('linkchecker_scan_node_' . $node_type, $form_state['values']['linkchecker_scan_node']);
-  $config->set('linkchecker_scan_comment_' . $node_type, $form_state['values']['linkchecker_scan_comment']);
+  if (module_exists('comment')) {
+    $config->set('linkchecker_scan_comment_' . $node_type, $form_state['values']['linkchecker_scan_comment']);
+  }
   $config->save();
 
   if (!$original_linkchecker_state && $values['linkchecker_scan_node']) {

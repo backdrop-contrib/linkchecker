@@ -281,16 +281,15 @@ function linkchecker_update_1001() {
     return;
   }
 
+  $spec = array(
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'description' => 'The machine_name of the custom block.'
+  );
   db_drop_primary_key('linkchecker_block_custom');
   db_change_field('linkchecker_block_custom', 'bid', 'block_delta',
-    array(
-      'type' => 'varchar',
-      'length' => 255,
-      'not null' => TRUE,
-      'description' => 'The machine_name of the custom block.'
-    ),
-    array(
-      'primary key' => array('block_delta', 'lid'),
-    ),
+    $spec
   );
+  db_add_primary_key('linkchecker_block_custom', array('block_delta', 'lid'));
 }
