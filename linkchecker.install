@@ -224,7 +224,8 @@ function linkchecker_update_1000() {
   $config->set('linkchecker_extract_from_video', update_variable_get('linkchecker_extract_from_video', 0));
   $config->set('linkchecker_filter_blacklist', update_variable_get('linkchecker_filter_blacklist', explode('|', 'filter_autop|insert_block|insert_view|smiley|smileys|weblinks_embed|weblinks_filter')));
   $config->set('linkchecker_ignore_response_codes', update_variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
-  $config->set('linkchecker_impersonate_user', update_variable_get('linkchecker_impersonate_user', ''));
+  $linkchecker_default_impersonate_user = user_load(1);
+  $config->set('linkchecker_impersonate_user', update_variable_get('linkchecker_impersonate_user', $linkchecker_default_impersonate_user->name));
   $config->set('linkchecker_scan_blocks', update_variable_get('linkchecker_scan_blocks', 0));
   $config->set('linkchecker_log_level', update_variable_get('linkchecker_log_level', 6));
 
@@ -275,8 +276,7 @@ function linkchecker_update_1000() {
 /**
  * Update linkchecker_block_custom table to work with custom blocks in Backdrop.
  */
-function linkchecker_update_1002() {
-  // should be 1001
+function linkchecker_update_1001() {
   if (!db_field_exists('linkchecker_block_custom', 'bid')) {
     return;
   }

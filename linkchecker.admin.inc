@@ -285,7 +285,7 @@ function linkchecker_admin_settings_form_validate($form, &$form_state) {
   // Validate impersonation user name.
   $linkchecker_impersonate_user = user_load_by_name($form_state['values']['linkchecker_impersonate_user']);
   if (empty($linkchecker_impersonate_user->uid)) {
-    form_set_error('linkchecker_impersonate_user', t('User account %name cannot found.', array('%name' => $form_state['values']['linkchecker_impersonate_user'])));
+    form_set_error('linkchecker_impersonate_user', t('User account %name not found.', array('%name' => $form_state['values']['linkchecker_impersonate_user'])));
   }
 }
 

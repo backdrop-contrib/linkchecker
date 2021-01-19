@@ -36,7 +36,7 @@ function drush_linkchecker_analyze() {
     drush_die('You MUST configure the site $base_url or provide --uri parameter.');
   }
 
-  module_load_include('admin.inc', 'linkchecker');
+  module_load_include('inc', 'linkchecker', 'linkchecker.admin');
 
   // Fake $form_state to leverage _submit function.
   $form_state = array(
@@ -63,7 +63,7 @@ function drush_linkchecker_clear() {
     drush_die('You MUST configure the site $base_url or provide --uri parameter.');
   }
 
-  module_load_include('admin.inc', 'linkchecker');
+  module_load_include('inc', 'linkchecker', 'linkchecker.admin');
 
   // Fake $form_state to leverage _submit function.
   $form_state = array(
