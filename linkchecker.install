@@ -10,7 +10,7 @@
  */
 function linkchecker_install() {
   $linkchecker_default_impersonate_user = user_load(1);
-  config_set('linkchecker.settings', 'linkchecker_impersonate_user', $linkchecker_default_impersonate_user->name);
+  config_set('linkchecker.settings', 'impersonate_user', $linkchecker_default_impersonate_user->name);
 
   // @todo add message for configuration page
   // admin/config/content/linkchecker
@@ -207,38 +207,38 @@ function linkchecker_update_last_removed() {
 function linkchecker_update_1000() {
   // Migrate variables to config.
   $config = config('linkchecker.settings');
-  $config->set('linkchecker_action_status_code_301', update_variable_get('linkchecker.settings', 'linkchecker_action_status_code_301', 0));
-  $config->set('linkchecker_action_status_code_404', update_variable_get('linkchecker_action_status_code_404', 0));
-  $config->set('linkchecker_check_connections_max', update_variable_get('linkchecker_check_connections_max', 8));
-  $config->set('linkchecker_check_library', update_variable_get('linkchecker_check_library', 'core'));
-  $config->set('linkchecker_check_links_interval', update_variable_get('linkchecker_check_links_interval', 2419200));
-  $config->set('linkchecker_check_links_types', update_variable_get('linkchecker_check_links_types', 1));
-  $config->set('linkchecker_check_useragent', update_variable_get('linkchecker_check_useragent', 'Backdrop CMS (+https://backdropcms.org/)'));
-  $config->set('linkchecker_disable_link_check_for_urls', update_variable_get('linkchecker_disable_link_check_for_urls', "example.com\nexample.net\nexample.org"));
-  $config->set('linkchecker_extract_from_a', update_variable_get('linkchecker_extract_from_a', 1));
-  $config->set('linkchecker_extract_from_audio', update_variable_get('linkchecker_extract_from_audio', 0));
-  $config->set('linkchecker_extract_from_embed', update_variable_get('linkchecker_extract_from_embed', 0));
-  $config->set('linkchecker_extract_from_iframe', update_variable_get('linkchecker_extract_from_iframe', 0));
-  $config->set('linkchecker_extract_from_img', update_variable_get('linkchecker_extract_from_img', 0));
-  $config->set('linkchecker_extract_from_object', update_variable_get('linkchecker_extract_from_object', 0));
-  $config->set('linkchecker_extract_from_video', update_variable_get('linkchecker_extract_from_video', 0));
-  $config->set('linkchecker_filter_blacklist', update_variable_get('linkchecker_filter_blacklist', explode('|', 'filter_autop|insert_block|insert_view|smiley|smileys|weblinks_embed|weblinks_filter')));
-  $config->set('linkchecker_ignore_response_codes', update_variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
+  $config->set('action_status_code_301', update_variable_get('linkchecker_action_status_code_301', 0));
+  $config->set('action_status_code_404', update_variable_get('linkchecker_action_status_code_404', 0));
+  $config->set('check_connections_max', update_variable_get('linkchecker_check_connections_max', 8));
+  $config->set('check_library', update_variable_get('linkchecker_check_library', 'core'));
+  $config->set('check_links_interval', update_variable_get('linkchecker_check_links_interval', 2419200));
+  $config->set('check_links_types', update_variable_get('linkchecker_check_links_types', 1));
+  $config->set('check_useragent', update_variable_get('linkchecker_check_useragent', 'Backdrop CMS (+https://backdropcms.org/)'));
+  $config->set('disable_link_check_for_urls', update_variable_get('linkchecker_disable_link_check_for_urls', "example.com\nexample.net\nexample.org"));
+  $config->set('extract_from_a', update_variable_get('linkchecker_extract_from_a', 1));
+  $config->set('extract_from_audio', update_variable_get('linkchecker_extract_from_audio', 0));
+  $config->set('extract_from_embed', update_variable_get('linkchecker_extract_from_embed', 0));
+  $config->set('extract_from_iframe', update_variable_get('linkchecker_extract_from_iframe', 0));
+  $config->set('extract_from_img', update_variable_get('linkchecker_extract_from_img', 0));
+  $config->set('extract_from_object', update_variable_get('linkchecker_extract_from_object', 0));
+  $config->set('extract_from_video', update_variable_get('linkchecker_extract_from_video', 0));
+  $config->set('filter_blacklist', update_variable_get('linkchecker_filter_blacklist', explode('|', 'filter_autop|insert_block|insert_view|smiley|smileys|weblinks_embed|weblinks_filter')));
+  $config->set('ignore_response_codes', update_variable_get('linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
   $linkchecker_default_impersonate_user = user_load(1);
-  $config->set('linkchecker_impersonate_user', update_variable_get('linkchecker_impersonate_user', $linkchecker_default_impersonate_user->name));
-  $config->set('linkchecker_scan_blocks', update_variable_get('linkchecker_scan_blocks', 0));
-  $config->set('linkchecker_log_level', update_variable_get('linkchecker_log_level', 6));
+  $config->set('impersonate_user', update_variable_get('linkchecker_impersonate_user', $linkchecker_default_impersonate_user->name));
+  $config->set('scan_blocks', update_variable_get('linkchecker_scan_blocks', 0));
+  $config->set('log_level', update_variable_get('linkchecker_log_level', 6));
 
   foreach (node_type_get_names() as $type => $name) {
-    $config->set('linkchecker_scan_node_' . $type, update_variable_get('linkchecker_scan_node_' . $type, FALSE));
-    $config->set('linkchecker_scan_comment_' . $type, update_variable_get('linkchecker_scan_comment_' . $type, FALSE));
+    $config->set('scan_node_' . $type, update_variable_get('linkchecker_scan_node_' . $type, FALSE));
+    $config->set('scan_comment_' . $type, update_variable_get('linkchecker_scan_comment_' . $type, FALSE));
   }
   $config->save();
 
   // Since this is now Backdrop let's update the useragent.
   $user_agent = $config->get('linkchecker_check_useragent');
   if ($user_agent == 'Backdrop (+http://drupal.org/)') {
-    $config->set('linkchecker_check_useragent', 'Backdrop CMS (+https://backdropcms.org/)');
+    $config->set('check_useragent', 'Backdrop CMS (+https://backdropcms.org/)');
     $config->save();
   }
 

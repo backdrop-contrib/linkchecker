@@ -28,21 +28,21 @@ class LinkCheckerLinkExtractionTest extends BackdropWebTestCase {
     $config = config('linkchecker.settings');
 
     // Enable all node type page for link extraction.
-    $config->set('linkchecker_scan_node_page', TRUE);
-    $config->set('linkchecker_scan_blocks', 1);
+    $config->set('scan_node_page', TRUE);
+    $config->set('scan_blocks', 1);
 
     // Core enables the URL filter for "Full HTML" by default.
     // -> Blacklist / Disable URL filter for testing.
-    $config->set('linkchecker_filter_blacklist', array('filter_url' => 'filter_url'));
+    $config->set('filter_blacklist', array('filter_url' => 'filter_url'));
 
     // Extract from all link checker supported HTML tags.
-    $config->set('linkchecker_extract_from_a', 1);
-    $config->set('linkchecker_extract_from_audio', 1);
-    $config->set('linkchecker_extract_from_embed', 1);
-    $config->set('linkchecker_extract_from_iframe', 1);
-    $config->set('linkchecker_extract_from_img', 1);
-    $config->set('linkchecker_extract_from_object', 1);
-    $config->set('linkchecker_extract_from_video', 1);
+    $config->set('extract_from_a', 1);
+    $config->set('extract_from_audio', 1);
+    $config->set('extract_from_embed', 1);
+    $config->set('extract_from_iframe', 1);
+    $config->set('extract_from_img', 1);
+    $config->set('extract_from_object', 1);
+    $config->set('extract_from_video', 1);
 
     $body = <<<EOT
 <!-- UNSUPPORTED for link checking: -->
@@ -188,7 +188,7 @@ EOT;
     $edit["body[$langcode][0][format]"] = 'full_html';
 
     // Extract only full qualified URLs.
-    $config->set('linkchecker_check_links_types', 1);
+    $config->set('check_links_types', 1);
     $config->save();
 
     // Verify path input field appears on add "Basic page" form.
@@ -249,7 +249,7 @@ EOT;
 
     // Extract all URLs including relative path.
     config_set('system.core', 'clean_url', 1);
-    $config->set('linkchecker_check_links_types', 0);
+    $config->set('check_links_types', 0);
     $config->save();
 
     $node = $this->backdropGetNodeByTitle($edit['title']);
@@ -420,20 +420,20 @@ class LinkCheckerInterfaceTest extends BackdropWebTestCase {
     $config = config('linkchecker.settings');
 
     // Enable all node type page for link extraction.
-    $config->set('linkchecker_scan_node_page', TRUE);
+    $config->set('scan_node_page', TRUE);
 
     // Core enables the URL filter for "Full HTML" by default.
     // -> Blacklist / Disable URL filter for testing.
-    $config->set('linkchecker_filter_blacklist', array('filter_url' => 'filter_url'));
+    $config->set('filter_blacklist', array('filter_url' => 'filter_url'));
 
     // Extract from all link checker supported HTML tags.
-    $config->set('linkchecker_extract_from_a', 1);
-    $config->set('linkchecker_extract_from_audio', 1);
-    $config->set('linkchecker_extract_from_embed', 1);
-    $config->set('linkchecker_extract_from_iframe', 1);
-    $config->set('linkchecker_extract_from_img', 1);
-    $config->set('linkchecker_extract_from_object', 1);
-    $config->set('linkchecker_extract_from_video', 1);
+    $config->set('extract_from_a', 1);
+    $config->set('extract_from_audio', 1);
+    $config->set('extract_from_embed', 1);
+    $config->set('extract_from_iframe', 1);
+    $config->set('extract_from_img', 1);
+    $config->set('extract_from_object', 1);
+    $config->set('extract_from_video', 1);
 
     $url1 = 'http://example.com/node/broken/link';
     $body = 'Lorem ipsum dolor sit amet <a href="' . $url1 . '">broken link</a> sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat';
@@ -451,7 +451,7 @@ class LinkCheckerInterfaceTest extends BackdropWebTestCase {
     $edit["body[$langcode][0][format]"] = 'full_html';
 
     // Extract only full qualified URLs.
-    $config->set('linkchecker_check_links_types', 1);
+    $config->set('check_links_types', 1);
     $config->save();
 
     // Verify path input field appears on add "Basic page" form.
@@ -492,7 +492,7 @@ class LinkCheckerInterfaceTest extends BackdropWebTestCase {
 
   public function testLinkCheckerCreateBlockWithBrokenLinks() {
     // Enable all blocks for link extraction.
-    config_set('linkchecker.settings', 'linkchecker_scan_blocks', 1);
+    config_set('linkchecker.settings', 'scan_blocks', 1);
 
     // Confirm that the add block link appears on block overview pages.
     $this->backdropGet('admin/structure/block');

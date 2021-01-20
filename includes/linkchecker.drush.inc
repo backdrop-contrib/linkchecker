@@ -45,7 +45,7 @@ function drush_linkchecker_analyze() {
   );
 
   $node_types = linkchecker_scan_node_types();
-  if (!empty($node_types) || config_get('linkchecker.settings', 'linkchecker_scan_blocks', 0)) {
+  if (!empty($node_types) || config_get('linkchecker.settings', 'scan_blocks')) {
     linkchecker_analyze_links_submit(NULL, $form_state);
     drush_backend_batch_process();
   }
@@ -72,7 +72,7 @@ function drush_linkchecker_clear() {
   );
 
   $node_types = linkchecker_scan_node_types();
-  if (!empty($node_types) || config_get('linkchecker.settings', 'linkchecker_scan_blocks', 0)) {
+  if (!empty($node_types) || config_get('linkchecker.settings', 'scan_blocks')) {
     linkchecker_clear_analyze_links_submit(NULL, $form_state);
     drush_backend_batch_process();
   }

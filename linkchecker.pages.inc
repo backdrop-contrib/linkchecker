@@ -13,7 +13,7 @@
  */
 function linkchecker_admin_report_page() {
 
-  $ignore_response_codes = preg_split('/(\r\n?|\n)/', config_get('linkchecker.settings', 'linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
+  $ignore_response_codes = preg_split('/(\r\n?|\n)/', config_get('linkchecker.settings', 'ignore_response_codes', "200\n206\n302\n304\n401\n403"));
 
   // Search for broken links in nodes and comments and blocks of all users.
   // @todo Try to make UNION'ed subselect resultset smaller.
@@ -55,7 +55,7 @@ function linkchecker_admin_report_page() {
 function linkchecker_user_report_page($account) {
   backdrop_set_title($account->name);
 
-  $ignore_response_codes = preg_split('/(\r\n?|\n)/', config_get('linkchecker.settings', 'linkchecker_ignore_response_codes', "200\n206\n302\n304\n401\n403"));
+  $ignore_response_codes = preg_split('/(\r\n?|\n)/', config_get('linkchecker.settings', 'ignore_response_codes', "200\n206\n302\n304\n401\n403"));
 
   // Build query for broken links in nodes of the current user.
   $subquery2 = db_select('node', 'n');
@@ -257,7 +257,7 @@ function linkchecker_link_edit_form($form, &$form_state, $link) {
     '#default_value' => 0,
     '#type' => 'checkbox',
     '#title' => t('Re-check link status on next cron run'),
-    '#description' => t('Enable this checkbox if you want to re-check the link during the next cron job rather than wait for the next scheduled check on @date.', array('@date' => format_date($link->last_checked + config_get('linkchecker.settings', 'linkchecker_check_links_interval', 2419200)))),
+    '#description' => t('Enable this checkbox if you want to re-check the link during the next cron job rather than wait for the next scheduled check on @date.', array('@date' => format_date($link->last_checked + config_get('linkchecker.settings', 'check_links_interval')))),
   );
 
   $form['buttons']['submit'] = array('#type' => 'submit', '#value' => t('Save configuration'));
