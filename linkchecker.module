@@ -2357,7 +2357,7 @@ function _linkchecker_check_markup($text, $format_id = NULL, $langcode = '', $ca
   $text = str_replace(array("\r\n", "\r"), "\n", $text);
 
   // Get a complete list of filters, ordered properly.
-  $filters = filter_list_format($format->format);
+  $filters = $format->filters;
   $filter_info = filter_get_filters();
 
   // Do not run placeholder or special tag filters used as references to nodes
