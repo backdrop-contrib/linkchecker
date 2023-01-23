@@ -233,7 +233,7 @@ function _linkchecker_user_access_edit_link_settings($link) {
  */
 function _linkchecker_link_access($link) {
   $link = (object) $link;
-  return _linkchecker_link_node_ids($link) || _linkchecker_link_comment_ids($link) || _linkchecker_link_block_ids($link);
+  return (_linkchecker_link_node_ids($link) !== FALSE) || (_linkchecker_link_comment_ids($link) !== FALSE) || (_linkchecker_link_block_ids($link) !== FALSE);
 }
 
 /**
@@ -256,17 +256,20 @@ function _linkchecker_link_access($link) {
  *   additionally be restricted to only those owned by this account. Otherwise,
  *   nodes owned by any user account may be returned.
  *
- * @return array
+ * @return array|bool
  *   An array of node IDs that contain the provided link and that the current
- *   user may be allowed to view.
+ *   user may be allowed to view, or FALSE if they are not allowed access.
  */
 function _linkchecker_link_node_ids($link, $node_author_account = NULL) {
   static $fields_with_node_links = array();
 
   // Exit if all node types are disabled or if the user cannot access content,
   // there is no need to check further.
+  if (!user_access('access content')) {
+    return FALSE;
+  }
   $linkchecker_scan_nodetypes = linkchecker_scan_node_types();
-  if (empty($linkchecker_scan_nodetypes) || !user_access('access content')) {
+  if (empty($linkchecker_scan_nodetypes)) {
     return array();
   }
 
@@ -362,15 +365,18 @@ function _linkchecker_link_node_ids($link, $node_author_account = NULL) {
  *   will additionally be restricted to only those owned by this account.
  *   Otherwise, comments owned by any user account may be returned.
  *
- * @return array
+ * @return array|bool
  *   An array of comment IDs that contain the provided link and that the
- *   current user is allowed to view.
+ *   current user is allowed to view, or FALSE if they are not allowed access.
  */
 function _linkchecker_link_comment_ids($link, $comment_author_account = NULL) {
   // Exit if comments are disabled or if the user cannot access comments, there
   // is no need to check further.
+  if (!user_access('access comments')) {
+    return FALSE;
+  }
   $comment_types = linkchecker_scan_comment_types();
-  if (empty($comment_types) || !user_access('access comments')) {
+  if (empty($comment_types)) {
     return array();
   }
 
@@ -406,9 +412,9 @@ function _linkchecker_link_comment_ids($link, $comment_author_account = NULL) {
  * @param object $link
  *   An object representing the link to check.
  *
- * @return array
+ * @return array|bool
  *   An array of custom block IDs that contain the provided link and that the
- *   current user is allowed to view.
+ *   current user is allowed to view, or FALSE if they are not allowed access.
  */
 function _linkchecker_link_block_ids($link) {
   // Exit if blocks are disabled.
@@ -441,7 +447,13 @@ function _linkchecker_link_block_ids($link) {
   $query->distinct();
   $allowed_bids = $query->execute()->fetchCol();
 
-  return array_intersect($bids, $allowed_bids);
+  $results = array_intersect($bids, $allowed_bids);
+  if ((!empty($bids) && empty($allowed_bids)) || (!empty($allowed_bids) && empty($results))) {
+    return FALSE;
+  }
+  else {
+    return $results;
+  }
 }
 
 /**
