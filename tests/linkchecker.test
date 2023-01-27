@@ -43,6 +43,7 @@ class LinkCheckerLinkExtractionTest extends BackdropWebTestCase {
     $config->set('extract_from_img', 1);
     $config->set('extract_from_object', 1);
     $config->set('extract_from_video', 1);
+    $config->save();
 
     $body = <<<EOT
 <!-- UNSUPPORTED for link checking: -->
@@ -191,10 +192,10 @@ EOT;
     $config->set('check_links_types', 1);
     $config->save();
 
-    // Verify path input field appears on add "Basic page" form.
+    // Verify path input field appears on add "Page" form.
     $this->backdropGet('node/add/page');
     // Verify path input is present.
-    $this->assertFieldByName('path[alias]', '', 'Path input field present on add Basic page form.');
+    $this->assertFieldByName('path[alias]', '', 'Path input field present on add Page form.');
 
     // Save node.
     $this->backdropPost('node/add/page', $edit, t('Save'));
@@ -434,6 +435,7 @@ class LinkCheckerInterfaceTest extends BackdropWebTestCase {
     $config->set('extract_from_img', 1);
     $config->set('extract_from_object', 1);
     $config->set('extract_from_video', 1);
+    $config->save();
 
     $url1 = 'http://example.com/node/broken/link';
     $body = 'Lorem ipsum dolor sit amet <a href="' . $url1 . '">broken link</a> sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat';
@@ -454,14 +456,14 @@ class LinkCheckerInterfaceTest extends BackdropWebTestCase {
     $config->set('check_links_types', 1);
     $config->save();
 
-    // Verify path input field appears on add "Basic page" form.
+    // Verify path input field appears on add "Page" form.
     $this->backdropGet('node/add/page');
     // Verify path input is present.
-    $this->assertFieldByName('path[alias]', '', 'Path input field present on add Basic page form.');
+    $this->assertFieldByName('path[alias]', '', 'Path input field present on add Page form.');
 
     // Save node.
     $this->backdropPost('node/add/page', $edit, t('Save'));
-    $this->assertText(t('@type @title has been created.', array('@type' => 'Basic page', '@title' => $edit['title'])), 'Node was created.');
+    $this->assertText(t('@type @title has been created.', array('@type' => 'Page', '@title' => $edit['title'])), 'Node was created.');
 
     $node = $this->backdropGetNodeByTitle($edit['title']);
     $this->assertTrue($node, 'Node found in database.');
@@ -496,14 +498,14 @@ class LinkCheckerInterfaceTest extends BackdropWebTestCase {
 
     // Confirm that the add block link appears on block overview pages.
     $this->backdropGet('admin/structure/block');
-    $this->assertRaw(l(t('Add block'), 'admin/structure/block/add'), 'Add block link is present on block overview page for default theme.');
+    $this->assertRaw(l(t('Add custom block'), 'admin/structure/block/add'), 'Add custom block link is present on block overview page for default theme.');
 
     $url1 = 'http://example.com/block/broken/link';
     $body = 'Lorem ipsum dolor sit amet <a href="' . $url1 . '">broken link</a> sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat';
 
     // Add a new custom block by filling out the input form on the admin/structure/block/add page.
     $custom_block = array();
-    $custom_block['delta'] = $this->randomName(8);
+    $custom_block['delta'] = strtolower($this->randomName(8));
     $custom_block['info'] = $this->randomName(8);
     $custom_block['title'] = $this->randomName(8);
     $custom_block['body[value]'] = $body;

@@ -155,7 +155,7 @@ function _linkchecker_report_page($query, $account = NULL) {
     // display it, for reasons explained in _linkchecker_link_access(). We
     // still need to fill the table row, though, so as not to throw off the
     // number of items in the pager.
-    if (empty($nids) && empty($cids) && empty($deltas)) {
+    if ($nids === FALSE && $cids === FALSE && $deltas === FALSE) {
       $rows[] = array(array('data' => t('Permission restrictions deny you access to this broken link.'), 'colspan' => count($header)));
       continue;
     }
@@ -167,23 +167,28 @@ function _linkchecker_report_page($query, $account = NULL) {
       $links[] = l(t('Edit link settings'), 'linkchecker/' . $link->lid . '/edit', array('query' => backdrop_get_destination()));
     }
 
-    // Show link to nodes having this broken link.
-    foreach ($nids as $nid) {
-      $links[] = l(t('Edit node @node', array('@node' => $nid)), 'node/' . $nid . '/edit', array('query' => backdrop_get_destination()));
+    if (empty($nids) && empty($cids) && empty($deltas)) {
+      $links[] = t('This link was not found in any content.');
     }
-
-    // Show link to comments having this broken link.
-    $comment_types = linkchecker_scan_comment_types();
-    if (module_exists('comment') && !empty($comment_types)) {
-      foreach ($cids as $cid) {
-        $links[] = l(t('Edit comment @comment', array('@comment' => $cid)), 'comment/' . $cid . '/edit', array('query' => backdrop_get_destination()));
+    else {
+      // Show link to nodes having this broken link.
+      foreach ($nids as $nid) {
+        $links[] = l(t('Edit node @node', array('@node' => $nid)), 'node/' . $nid . '/edit', array('query' => backdrop_get_destination()));
       }
-    }
 
-    // Show link to blocks having this broken link.
-    if ($access_administer_blocks) {
-      foreach ($deltas as $delta) {
-        $links[] = l(t('Edit block @block', array('@block' => $delta)), 'admin/structure/block/manage/' . $delta . '/configure', array('query' => backdrop_get_destination()));
+      // Show link to comments having this broken link.
+      $comment_types = linkchecker_scan_comment_types();
+      if (module_exists('comment') && !empty($comment_types)) {
+        foreach ($cids as $cid) {
+          $links[] = l(t('Edit comment @comment', array('@comment' => $cid)), 'comment/' . $cid . '/edit', array('query' => drupal_get_destination()));
+        }
+      }
+
+      // Show link to blocks having this broken link.
+      if ($access_administer_blocks) {
+        foreach ($deltas as $delta) {
+          $links[] = l(t('Edit block @block', array('@block' => $delta)), 'admin/structure/block/manage/' . $delta . '/configure', array('query' => backdrop_get_destination()));
+        }
       }
     }
 
