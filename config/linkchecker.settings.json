@@ -8,6 +8,7 @@
   "check_links_types": 0,
   "check_useragent": "Backdrop CMS (+https://backdropcms.org/)",
   "disable_link_check_for_urls": "example.com\nexample.net\nexample.org",
+  "exclude": [],
   "extract_from_a": 1,
   "extract_from_audio": 0,
   "extract_from_embed": 0,

@@ -234,7 +234,7 @@ function _linkchecker_user_access_edit_link_settings($link) {
  */
 function _linkchecker_link_access($link) {
   $link = (object) $link;
-  return _linkchecker_link_node_ids($link) || _linkchecker_link_comment_ids($link) || _linkchecker_link_block_deltas($link);
+  return (_linkchecker_link_node_ids($link) !== FALSE) || (_linkchecker_link_comment_ids($link) !== FALSE) || (_linkchecker_link_block_deltas($link) !== FALSE);
 }
 
 /**
@@ -257,17 +257,20 @@ function _linkchecker_link_access($link) {
  *   additionally be restricted to only those owned by this account. Otherwise,
  *   nodes owned by any user account may be returned.
  *
- * @return array
+ * @return array|bool
  *   An array of node IDs that contain the provided link and that the current
- *   user may be allowed to view.
+ *   user may be allowed to view, or FALSE if they are not allowed access.
  */
 function _linkchecker_link_node_ids($link, $node_author_account = NULL) {
   static $fields_with_node_links = array();
 
   // Exit if all content types are disabled or if the user cannot access content,
   // there is no need to check further.
+  if (!user_access('access content')) {
+    return FALSE;
+  }
   $linkchecker_scan_nodetypes = linkchecker_scan_node_types();
-  if (empty($linkchecker_scan_nodetypes) || !user_access('access content')) {
+  if (empty($linkchecker_scan_nodetypes)) {
     return array();
   }
 
@@ -363,15 +366,18 @@ function _linkchecker_link_node_ids($link, $node_author_account = NULL) {
  *   will additionally be restricted to only those owned by this account.
  *   Otherwise, comments owned by any user account may be returned.
  *
- * @return array
+ * @return array|bool
  *   An array of comment IDs that contain the provided link and that the
- *   current user is allowed to view.
+ *   current user is allowed to view, or FALSE if they are not allowed access.
  */
 function _linkchecker_link_comment_ids($link, $comment_author_account = NULL) {
   // Exit if comments are disabled or if the user cannot access comments, there
   // is no need to check further.
+  if (!user_access('access comments')) {
+    return FALSE;
+  }
   $comment_types = linkchecker_scan_comment_types();
-  if (empty($comment_types) || !user_access('access comments')) {
+  if (empty($comment_types)) {
     return array();
   }
 
@@ -407,9 +413,9 @@ function _linkchecker_link_comment_ids($link, $comment_author_account = NULL) {
  * @param object $link
  *   An object representing the link to check.
  *
- * @return array
+ * @return array|bool
  *   An array of custom block IDs that contain the provided link and that the
- *   current user is allowed to view.
+ *   current user is allowed to view, or FALSE if they are not allowed access.
  */
 function _linkchecker_link_block_deltas($link) {
   // Exit if blocks are disabled.
@@ -1111,6 +1117,35 @@ function linkchecker_form_comment_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function linkchecker_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
+  $linkchecker_excludes = config_get('linkchecker.settings', 'exclude');
+  $form['field']['linkchecker_exclude'] = array (
+    '#type' => 'checkbox',
+    '#title' => t('Exclude field from Link Checker scans'),
+    '#description' => t('Force Link Checker to ignore this field when scanning content for broken links.'),
+    '#default_value' => $linkchecker_excludes[$form['#field']['field_name']] ? $linkchecker_excludes[$form['#field']['field_name']] : 0,
+  );
+  $form['#submit'][] = 'linkchecker_form_field_ui_field_edit_form_submit';
+}
+
+
+/**
+ * Custom submit handler for field edit page.
+ */
+function linkchecker_form_field_ui_field_edit_form_submit($form, &$form_state) {
+  $config = config('linkchecker.settings');
+  $linkchecker_excludes = $config->get('exclude');
+  if (!isset($linkchecker_excludes)) {
+    $linkchecker_excludes = array();
+  }
+  $linkchecker_excludes[$form['#field']['field_name']] = $form['field']['linkchecker_exclude']['#value'] ;
+  $config->set('exclude', $linkchecker_excludes);
+  $config->save();
+}
+
+/**
  * Custom submit handler for block add page.
  */
 function linkchecker_block_custom_add_form_submit($form, &$form_state) {
@@ -1124,7 +1159,6 @@ function linkchecker_block_custom_add_form_submit($form, &$form_state) {
  */
 function linkchecker_block_custom_configure_form_submit($form, &$form_state) {
   if (config_get('linkchecker.settings', 'scan_blocks')) {
-    debug($form_state['values']);
     _linkchecker_add_block_custom_links($form_state['values']);
   }
 }
@@ -1133,7 +1167,6 @@ function linkchecker_block_custom_configure_form_submit($form, &$form_state) {
  * Custom submit handler for block delete page.
  */
 function linkchecker_block_custom_delete_form_submit($form, &$form_state) {
-  debug($form_state['values']);
   _linkchecker_delete_block_custom_links($form_state['values']['delta']);
 }
 
@@ -1200,6 +1233,15 @@ function _linkchecker_extract_node_links($node, $return_field_names = FALSE) {
   // found earlier while looping over $text_items_by_field below.
   $text_items_by_field = array_merge($text_items_by_field, _linkchecker_parse_fields('node', $node->type, $node, TRUE));
   $text_items_by_field['title'][] = _filter_url($node->title, $filter);
+  // Filter out the fields that are to be ignored.
+  $linkchecker_excludes = config_get('linkchecker.settings', 'exclude');
+  if (isset($linkchecker_excludes)) {
+    foreach ($linkchecker_excludes as $field => $value) {
+      if ($value == 1) {
+        unset($text_items_by_field[$field]);
+      }
+    }
+  }
   $text_items = _linkchecker_array_values_recursive($text_items_by_field);
 
   // Get the absolute node path for extraction of relative links.

@@ -293,3 +293,15 @@ function linkchecker_update_1001() {
   );
   db_add_primary_key('linkchecker_block_custom', array('block_delta', 'lid'));
 }
+
+/**
+ * Move 'linkchecker_exclude' from variables to config.
+ */
+function linkchecker_update_1002() {
+  // Migrate variables to config.
+  $config = config('linkchecker.settings');
+  $config->set('exclude', update_variable_get('linkchecker_exclude', array()));
+  $config->save();
+
+  update_variable_del('linkchecker_exclude');
+}
