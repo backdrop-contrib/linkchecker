@@ -1125,7 +1125,7 @@ function linkchecker_form_field_ui_field_edit_form_alter(&$form, &$form_state, $
     '#type' => 'checkbox',
     '#title' => t('Exclude field from Link Checker scans'),
     '#description' => t('Force Link Checker to ignore this field when scanning content for broken links.'),
-    '#default_value' => $linkchecker_excludes[$form['#field']['field_name']] ? $linkchecker_excludes[$form['#field']['field_name']] : 0,
+    '#default_value' => isset($linkchecker_excludes[$form['#field']['field_name']]) ? $linkchecker_excludes[$form['#field']['field_name']] : 0,
   );
   $form['#submit'][] = 'linkchecker_form_field_ui_field_edit_form_submit';
 }
