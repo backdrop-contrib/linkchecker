@@ -678,8 +678,8 @@ function _linkchecker_status_handling(&$response, $link) {
             if ($node_original != $node) {
               // Always use the default revision setting. For more information,
               // see node_object_prepare().
-              // @todo fix
-              $node_options = config_get('linkchecker.settings', 'node_options_' . $node->type, array('status', 'promote'));
+              $node_options = config_get('linkchecker.settings', 'node_options_' . $node->type);
+              $node_options = !empty($node_options) ? $node_options : array('status', 'promote');
               $node->revision = in_array('revision', $node_options);
 
               // Generate a log message for the node_revisions table, visible on
