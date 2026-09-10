@@ -20,6 +20,11 @@ define('LINKCHECKER_SCAN_MAX_LINKS_PER_RUN', '100');
 define('LINKCHECKER_RESERVED_DOCUMENTATION_DOMAINS', "example.com\nexample.net\nexample.org");
 
 /**
+ * Fallback codes
+ */
+define('LINKCHECKER_HEAD_FALLBACK_STATUS_CODES', array(400, 401, 403, 404, 405, 406));
+
+/**
  * Implements hook_config_info().
  */
 function linkchecker_config_info() {
@@ -329,7 +334,7 @@ function _linkchecker_link_node_ids($link, $node_author_account = NULL) {
 
       $bundle_instances = field_info_instances('node', $node->type);
       foreach ($bundle_instances as $field_name => $field_instance) {
-        $field = field_info_field($field_name);
+        $field = (array) field_info_field($field_name);
 
         // Field types supported by linkchecker.
         $fields_supported = array(
@@ -553,19 +558,25 @@ function _linkchecker_check_links() {
       }
     }
     else {
-      // Backdrop core.
-      $response = backdrop_http_request($link->url, $options);
+     $response = _linkchecker_http_request($link, $options);
 
-      // Add 'redirect_code' property to core response object for consistency
-      // with HTTPRL object.
-      if ($response->code == 301 && !isset($response->redirect_code)) {
-        $response->redirect_code = $response->code;
+      // Fallback to GET if a HEAD method fails.
+      if ($link->method == 'HEAD' && $config->get('fallback_get_if_head_fails')) {
+        if (in_array($response->code, LINKCHECKER_HEAD_FALLBACK_STATUS_CODES)) {
+          $link->method = 'GET';
+
+          $options['method'] = $link->method;
+
+          // Request text content only (like Firefox/Chrome).
+          $options['headers']['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+
+          // Range: Only request the first 1024 bytes from remote server. This is
+          // required to prevent timeouts on URLs that are large downloads.
+          $options['headers']['Range'] = 'bytes=0-1024';
+
+          _linkchecker_http_request($link, $options);
+        }
       }
-      // Add 'uri' property to core response object for 'fragment' check and
-      // consistency with HTTPRL object.
-      $response->uri = $uri;
-
-      _linkchecker_status_handling($response, $link);
 
       if ((timer_read('page') / 1000) > ($max_execution_time / 2)) {
         // Stop once we have used over half of the maximum execution time.
@@ -582,12 +593,39 @@ function _linkchecker_check_links() {
 }
 
 /**
+ *  HTTP request
+ *
+ * @param object $link
+ * @param array $options
+ *
+ * @return object
+ *   Response object.
+ */
+function _linkchecker_http_request($link, $options) {
+  // Backdrop core.
+  $response = backdrop_http_request($link->url, $options);
+
+  // Add 'redirect_code' property to core response object for consistency
+  // with HTTPRL object.
+  if ($response->code == 301 && !isset($response->redirect_code)) {
+    $response->redirect_code = $response->code;
+  }
+  // Add 'uri' property to core response object for 'fragment' check and
+  // consistency with HTTPRL object.
+  $response->uri = @parse_url($link->url);
+
+  _linkchecker_status_handling($response, $link);
+
+  return $response;
+}
+
+/**
  * Status code handling.
  *
  * @param object $response
  *   An object containing the HTTP request headers, response code, headers,
  *   data and redirect status.
- * @param string $link
+ * @param object $link
  *   An object containing the url, lid and fail_count.
  */
 function _linkchecker_status_handling(&$response, $link) {
@@ -606,8 +644,8 @@ function _linkchecker_status_handling(&$response, $link) {
   if (!isset($response->status_message)) {
     $response->status_message = '';
   }
-  $response->error = trim(backdrop_convert_to_utf8($response->error, 'ISO-8859-1'));
-  $response->status_message = trim(backdrop_convert_to_utf8($response->status_message, 'ISO-8859-1'));
+  $response->error = trim((string) backdrop_convert_to_utf8($response->error, 'ISO-8859-1'));
+  $response->status_message = trim((string) backdrop_convert_to_utf8($response->status_message, 'ISO-8859-1'));
 
   // Destination anchors in HTML documents may be specified either by:
   // - the A element (naming it with the name attribute)
@@ -876,8 +914,6 @@ function _linkchecker_status_handling(&$response, $link) {
       }
   }
 
-  // Free Memory.
-  $response = new stdClass();
 }
 
 /**
@@ -1769,7 +1805,7 @@ function _linkchecker_parse_fields($entity_type, $bundle_name, $entity, $return_
 
   // Collect the fields from this entity_type and bundle.
   foreach (field_info_instances($entity_type, $bundle_name) as $field_name => $instance) {
-    $field = field_info_field($field_name);
+    $field = (array) field_info_field($field_name);
     // #1923328: field_name array may be missing in $entity.
     $entity_field = isset($entity->{$field['field_name']}) ? $entity->{$field['field_name']} : array();
 
@@ -1841,7 +1877,7 @@ function _linkchecker_parse_fields($entity_type, $bundle_name, $entity, $return_
 function _linkchecker_replace_fields($entity_type, $bundle_name, $entity, $old_url, $new_url) {
   // Collect the fields from this entity_type and bundle.
   foreach (field_info_instances($entity_type, $bundle_name) as $field_name => $instance) {
-    $field = field_info_field($field_name);
+    $field = (array) field_info_field($field_name);
     $entity_field =& $entity->{$field['field_name']};
 
     switch ($field['type']) {

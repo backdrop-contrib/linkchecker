@@ -26,6 +26,7 @@
       "filter_html": 0
   },
   "ignore_response_codes": "200\r\n206\r\n302\r\n304\r\n401\r\n403",
+  "fallback_get_if_head_fails": false,
   "impersonate_user": "",
   "scan_blocks": 0,
   "log_level": "6"

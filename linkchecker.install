@@ -305,3 +305,14 @@ function linkchecker_update_1002() {
 
   update_variable_del('linkchecker_exclude');
 }
+
+/**
+ * Add option "fallback_get_if_head_fails".
+ */
+function linkchecker_update_1003() {
+  $config = config('linkchecker.settings');
+  if ($config->get('fallback_get_if_head_fails') === NULL) {
+    $config->set('fallback_get_if_head_fails', FALSE);
+    $config->save();
+  }
+}

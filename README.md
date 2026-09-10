@@ -52,6 +52,7 @@ Current Maintainers
 -------------------
 
 - Herb v/d Dool <https://github.com/herbdool>
+- Seeking co-maintainers.
 
 Credits
 -------
