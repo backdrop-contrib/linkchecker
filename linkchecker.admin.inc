@@ -235,6 +235,14 @@ function linkchecker_admin_settings_form($form_state) {
     '#title' => t("Don't treat these response codes as errors"),
     '#description' => t('One HTTP status code per line, e.g. 403.'),
   );
+  $form['error']['fallback_get_if_head_fails'] = array(
+    '#title' => t('Use GET method if HEAD requests returns an error'),
+    '#description' => t('This is useful for sites that block HEAD requests but allow GET. If enabled, the GET request will only be attempted if the HEAD request returns one of the following status codes: %status_codes, and the status code is treated as an error.', [
+      '%status_codes' => implode(', ', LINKCHECKER_HEAD_FALLBACK_STATUS_CODES),
+    ]),
+    '#type' => 'checkbox',
+    '#default_value' => $config->get('fallback_get_if_head_fails'),
+  );
 
   // Buttons are only required for testing and debugging reasons.
   $description = '<p>' . t('These actions will either clear all link checker tables in the database and/or analyze all selected content types, blocks and fields (see settings above) for new/updated/removed links. Normally there is no need to press one of these buttons. Use this only for immediate cleanup tasks and to force a full re-build of the links to be checked in the linkchecker tables. Keep in mind that all custom link settings will be lost if you clear link data!') . '</p>';
