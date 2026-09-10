@@ -18,6 +18,7 @@ function linkchecker_bee_command() {
     'examples' => array(
       'bee linkchecker-analyze' => bt('Reanalyzes content for links.'),
     ),
+    'bootstrap' => BEE_BOOTSTRAP_FULL,
   );
   $commands['linkchecker-clear'] = array(
     'description' => 'Clears all link data and analyze content for links. WARNING: Custom link check settings are deleted.',
@@ -26,6 +27,7 @@ function linkchecker_bee_command() {
     'examples' => array(
       'bee linkchecker-clear' => bt('Clears all link data and analyze content for links.'),
     ),
+    'bootstrap' => BEE_BOOTSTRAP_FULL,
   );
   $commands['linkchecker-check'] = array(
     'description' => 'Check link status.',
@@ -37,6 +39,7 @@ function linkchecker_bee_command() {
     'examples' => array(
       'bee linkchecker-checker' => bt('Check link status.'),
     ),
+    'bootstrap' => BEE_BOOTSTRAP_FULL,
   );
 
   return $commands;
